@@ -1,34 +1,26 @@
 import { useEffect, useState } from 'react';
 import MarkdownScreen from './MarkdownScreen';
 import WebsiteScreen from './WebsiteScreen';
+import { parse } from 'parse5';
 
 function App() {
   const [code, setCode] = useState("");
   const [jsx, setJsx] = useState([]);
 
-  const parseMarkdownToJsx = (markdown) => {
-    const lines = markdown.split('\n');
-    const jsx = lines.map((line, index) => {
-      if (line.startsWith('# ')) {
-        return <h1 key={index}>{line.substring(2)}</h1>;
-      } else if (line.startsWith('## ')) {
-        return <h2 key={index}>{line.substring(3)}</h2>;
-      } else if (line.match(/^\[Button .*\]\(#.*\)$/)) { // Simple button regex
-        const buttonText = line.match(/\[Button (.*?)\]/)[1];
-        const buttonAction = line.match(/\(#(.*?)\)/)[1];
-        return <button key={index} onClick={() => alert(`Action: ${buttonAction}`)}>{buttonText}</button>;
-      } else if (line.match(/^\{Input .*?\}$/)) { // Simple input regex
-        const placeholder = line.match(/\{Input (.*?)\}/)[1];
-        return <input key={index} placeholder={placeholder} />;
-      } else {
-        return <p key={index}>{line}</p>;
-      }
-    });
-    setJsx(jsx);
-  };
+
+const html = `<div>
+  <p>Hello, <span>world!</span></p>
+</div>`;
+
 
   useEffect(() => {
-    parseMarkdownToJsx(code);
+    const document = parse(html);
+
+    // The `document` now contains the AST of the parsed HTML
+    console.log(document);
+
+
+
   }, [code]);
 
   return (

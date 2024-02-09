@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* Custom button size */
+.btn-small {
+  width: 10px; /* Adjust based on your needs */
+  height: 10px; /* Adjust based on your needs */
+}
+

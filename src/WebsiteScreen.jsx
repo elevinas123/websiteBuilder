@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import Grid from "./Grid"
 
 
 
@@ -17,9 +18,10 @@ export default function WebsiteScreen(props) {
     }, [props.jsx])
 
     return (
-        <div className="w-full h-full ml-2">
-            <div className="w-96 h-96 bg-white ml-20 mt-20 text-black">
-                {parsedCode}
+        <div className="w-full h-full ml-20 text-black flex flex-col mt-2">
+            <div className=" bg-zinc-200 h-32">Nabvbar</div>
+            <div className="w-full h-full bg-white  mt-20 text-black">
+                <Grid />
             </div>
         </div>
     )
