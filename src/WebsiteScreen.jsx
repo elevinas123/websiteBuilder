@@ -9,17 +9,34 @@ export default function WebsiteScreen() {
 
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
-            setGridMoving((i) => {
-                if (!i.setBox) {
-                    return {...i}
-                }
-                let x1 = i.x2
-                let y1 = i.y2
-                let x2 = e.clientX
-                let y2 = e.clientY
-                return { ...i, x1, x2, y1, y2, setBox: false }
-            })
-            console.log(gridMoving)
+            if (gridMoving.type === "moving") {
+                setGridMoving((i) => {
+                    if (!i.setBox) {
+                        return { ...i }
+                    }
+                    let x1 = i.x2
+                    let y1 = i.y2
+                    let x2 = e.clientX
+                    let y2 = e.clientY
+                    return { ...i, x1, x2, y1, y2, setBox: false }
+                })
+                return
+            }
+            if (gridMoving.type === "creating") {
+                setGridMoving((i) => {
+                    if (!i.setBox) {
+                        return { ...i }
+                    }
+                    console.log("from gri", i)
+
+                    let x2 = e.clientX
+                    let y2 = e.clientY
+                    let arr = { ...i, x2, y2, setBox: false }
+                    console.log("from gris", arr)
+
+                    return arr
+                })
+            }
         }
     }
 
