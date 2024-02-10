@@ -1,30 +1,25 @@
 import { useEffect, useRef, useState } from "react"
-import { v4 as uuidv4 } from "uuid"
 import { useAtom } from "jotai"
 import { gridCheckedAtom, gridMovingAtom } from "./atoms"
+import startMovingElement from "./functions/startMovingElement"
+import startCreatingElement from "./functions/startCreatingElement"
+import handleGridMove from "./functions/handleGridMove"
+import handleGridCreation from "./functions/handleGridCreation"
 export default function Grid(props) {
     const gridRef = useRef(null)
     const gridSizeX = 300
     const gridSizeY = 300
     const [size, setSize] = useState({ width: 0, height: 0 })
     const [style, setStyle] = useState({})
-    const [mouseDown, setMouseDown] = useState({ down: false, x1: 0, y1: 0, seconds: 0, milliseconds: 0 })
     const [elements, setElements] = useState([])
     const [gridSelect, setGridSelect] = useState(false)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
+    const [lastClick, setLastClick] = useState(0)
     useEffect(() => {
         console.log("elements", elements)
     }, [elements])
-    const getBoundingBox = (ref) => {
-        //console.log(ref)
-        if (ref.current) {
-            const rect = ref.current.getBoundingClientRect()
-            // rect contains properties: top, right, bottom, left, width, height
-            return rect
-        }
-        return false
-    }
+
     useEffect(() => {
         const gridElement = gridRef.current
         if (!gridElement) return
@@ -71,176 +66,54 @@ export default function Grid(props) {
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
-                handleGridMove()
+                handleGridMove(gridMoving, size.width, size.height, props.parentRef, props.parentSizeX, props.parentSizeY, setStyle, setElements, setGridMoving)
             } else if (gridMoving.type === "creating") {
-                handleGridCreation()
+                handleGridCreation(gridMoving, 0, 0, gridRef, gridSizeX, gridSizeY, setStyle, setElements, setGridMoving)
             }
         }
     }, [gridMoving])
 
-    const calculateGridPos = (itemCords, gridBoundingBox, gridSizeX, gridSizeY) => {
-        let x1 = Math.floor(((itemCords.x1 - gridBoundingBox.left) / gridBoundingBox.width) * gridSizeX)
-        let x2 = Math.floor(((itemCords.x2 - gridBoundingBox.left) / gridBoundingBox.width) * gridSizeX)
-        let y1 = Math.floor(((itemCords.y1 - gridBoundingBox.top) / gridBoundingBox.height) * gridSizeY)
-        let y2 = Math.floor(((itemCords.y2 - gridBoundingBox.top) / gridBoundingBox.height) * gridSizeY)
-        return { x1, x2, y1, y2 }
-    }
-
-    const handleMouseDown = (e) => {
-        e.stopPropagation()
-        let type = "creating"
-        console.log("gridChecked", gridChecked, props.id)
+    const selectElement = () => {
         if (gridChecked !== props.id) {
             console.log("cia")
             setGridSelect(false)
             setGridChecked("")
         }
+    }
+
+    const handleMouseDown = (event) => {
+        event.stopPropagation()
+
+        const now = Date.now()
+        const doubleClickDelay = 300 // Milliseconds considered for double-click
+        const isDoubleClick = now - lastClick <= doubleClickDelay
+
+        setLastClick(now)
+
+        if (isDoubleClick) {
+            // Handle double-click logic here
+            console.log("Double click detected")
+            // Your double-click logic, for example:
+            selectElement()
+        } else {
+            // Single-click logic, delayed to verify it's not a double click
+            setTimeout(() => {
+                if (Date.now() - lastClick >= doubleClickDelay) {
+                    // Handle single-click logic here if no double-click was detected
+                    console.log("Single click detected")
+                    // Your single-click logic here
+                }
+            }, doubleClickDelay)
+        }
+        let type = "creating"
         if (gridSelect && props.level !== 0) {
-            type = "moving"
+            startMovingElement(event, size, props.id, "moving", setGridMoving)
         }
         if (type == "creating") {
-            const uuid = uuidv4()
-            console.log("cia")
-            let boundingBox = getBoundingBox(gridRef)
-            let gridCords = calculateGridPos(
-                { x1: e.clientX, y1: e.clientY, x2: e.clientX, y2: e.clientY },
-                boundingBox,
-                gridSizeX,
-                gridSizeY
-            )
-            const newStyle = {
-            gridColumnStart: e + 1,
-            gridColumnEnd: gridCords.x2 + 2,
-            gridRowStart: gridCords.y1 + 1,
-            gridRowEnd: gridCords.y2 + 2,
-            maxWidth: "100%", // Ensures content does not expand cell
-            maxHeight: "100%", // Ensures content does not expand cell
-            overflow: "hidden", // Prevents content from overflowing
+            startCreatingElement(event, gridRef, gridSizeX, gridSizeY, props.level, props.id, setGridMoving, setElements)
         }
-            setElements((i) => [
-                ...i,
-                <Grid
-                    key={uuid}
-                    className="bg-red-500"
-                    parentRef={gridRef}
-                    id={uuid}
-                    childStyle={newStyle}
-                    parentGridSizeY={gridSizeY}
-                    parentGridSizeX={gridSizeX}
-                    level={props.level + 1}
-                ></Grid>,
-            ])
-        }
-        let gridBoundingBox = getBoundingBox(gridRef)
-        console.log(size.height, size.width)
-        setGridMoving({
-            type: type,
-            id: props.id,
-            moving: true,
-            setBox: true,
-            x1: e.clientX,
-            y1: e.clientY,
-            x2: e.clientX,
-            y2: e.clientY,
-            moved: false,
-            gridBoundingBox: {
-                top: gridBoundingBox.top,
-                bottom: gridBoundingBox.top + size.height,
-                left: gridBoundingBox.left,
-                right: gridBoundingBox.left + size.width,
-            },
-        })
-        return
-        
     }
-    const calculateMovement = (top, right, bottom, left, width, height, parentRef, gridSizeX, gridSizeY) => {
-        //console.log("level", props.level)
-        let parentBoundingBox = getBoundingBox(parentRef)
-        console.log("right", right)
-        console.log("parentBoundingBox", parentBoundingBox)
-        console.log("paskuitinis", { x1: left, y1: top, x2: right, y2: bottom })
-        let gridCords = calculateGridPos(
-            { x1: left, y1: top, x2: right, y2: bottom },
-            parentBoundingBox,
-            gridSizeX,
-            gridSizeY
-        )
-        console.log("gridCords", gridCords)
-        console.log("gridMoving", gridMoving)
-        if (gridMoving.type === "moving") {
-            const desiredSizeX = Math.floor((width / parentBoundingBox.width) * gridSizeX) + 1
-            const desiredSizeY = Math.floor((height / parentBoundingBox.height) * gridSizeY) + 1
-            gridCords.x2 = gridCords.x1 + desiredSizeX
-            gridCords.y2 = gridCords.y1 + desiredSizeY
-        }
-        //console.log("gridCords", desiredSizeX)
-        //console.log("gridCords", desiredSizeY)
 
-        const newStyle = {
-            gridColumnStart: gridCords.x1 + 1,
-            gridColumnEnd: gridCords.x2 + 2,
-            gridRowStart: gridCords.y1 + 1,
-            gridRowEnd: gridCords.y2 + 2,
-            maxWidth: "100%", // Ensures content does not expand cell
-            maxHeight: "100%", // Ensures content does not expand cell
-            overflow: "hidden", // Prevents content from overflowing
-        }
-        //console.log("style", newStyle)
-        if (gridMoving.type === "moving") {
-            setStyle(newStyle)
-        }
-        if (gridMoving.type === "creating") {
-                
-
-                setElements((prevElements) => {
-                    const newElements = prevElements.slice(0, -1);
-                    const lastElement = prevElements[prevElements.length - 1];
-
-                    newElements.push(<Grid
-                        {...lastElement.props}
-                        childStyle={newStyle}
-                        key={lastElement.key || "some-unique-key"} // Adjust key as necessary
-                    />)
-                    return newElements
-                })
-        }
-        console.log("style", newStyle)
-        if (gridMoving.moved === true) {
-            setGridMoving({ moving: false })
-            
-        }
-        setGridMoving((i) => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))
-        //console.log(gridCords)
-        //console.log(gridMoving)
-        //console.log(props.id)
-        return
-    }
-    const handleGridMove = () => {
-        let gridBoundingBox = gridMoving.gridBoundingBox
-
-        let top = gridMoving.y2 - gridMoving.y1 + gridBoundingBox.top
-        let bottom = gridMoving.y2 - gridMoving.y1 + gridBoundingBox.bottom
-        let left = gridMoving.x2 - gridMoving.x1 + gridBoundingBox.left
-        let right = gridMoving.x2 - gridMoving.x1 + gridBoundingBox.right
-        calculateMovement(
-            top,
-            right,
-            bottom,
-            left,
-            size.width,
-            size.height,
-            props.parentRef,
-            props.parentGridSizeX,
-            props.parentBoundingBox
-        )
-    }
-    const handleGridCreation = () => {
-        let top = gridMoving.y1
-        let bottom = gridMoving.y2
-        let left = gridMoving.x1
-        let right = gridMoving.x2
-        calculateMovement(top, right, bottom, left, 0, 0, gridRef, gridSizeX, gridSizeY)
-    }
     const handleMouseUp = (e) => {
         e.stopPropagation()
         console.log("cia123")
@@ -248,8 +121,6 @@ export default function Grid(props) {
         setGridMoving((i) => ({ ...i, x2: e.clientX, y2: e.clientY, moved: true }))
         return
     }
-
-    useEffect(() => {}, [gridRef])
 
     return (
         <div
