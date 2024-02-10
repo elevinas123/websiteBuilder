@@ -8,8 +8,11 @@ export default function WebsiteScreen() {
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
 
     const handleMousemove = (e) => {
-        if (gridMoving.moving && gridMoving.setBox) {
+        if (gridMoving.moving) {
             setGridMoving((i) => {
+                if (!i.setBox) {
+                    return {...i}
+                }
                 let x1 = i.x2
                 let y1 = i.y2
                 let x2 = e.clientX

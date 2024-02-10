@@ -4,8 +4,8 @@ import { useAtom } from "jotai"
 import { gridCheckedAtom, gridMovingAtom } from "./atoms"
 export default function Grid(props) {
     const gridRef = useRef(null)
-    const gridSizeX = 100
-    const gridSizeY = 100
+    const gridSizeX = 1000
+    const gridSizeY = 1000
     const [size, setSize] = useState({ width: 0, height: 0 })
     const [style, setStyle] = useState({})
     const [mouseDown, setMouseDown] = useState({ down: false, x1: 0, y1: 0, seconds: 0, milliseconds: 0 })
@@ -13,8 +13,6 @@ export default function Grid(props) {
     const [gridSelect, setGridSelect] = useState(false)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
-    const [checkedGrid, setCheckedGrid] = useState(false)
-    const checkedGridRef = useRef(checkedGrid)
     const getBoundingBox = (ref) => {
         console.log(ref)
         if (ref.current) {
@@ -99,6 +97,7 @@ export default function Grid(props) {
             setGridMoving({
                 id: props.id,
                 moving: true,
+                setBox: true,
                 x1: e.clientX,
                 y1: e.clientY,
                 x2: e.clientX,
@@ -220,7 +219,7 @@ export default function Grid(props) {
             ref={gridRef}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`grid h-full w-full select-none ${`grid-cols-100`} ${`grid-rows-100`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`grid h-full w-full select-none ${`grid-cols-1000`} ${`grid-rows-1000`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {elements}
         </div>
