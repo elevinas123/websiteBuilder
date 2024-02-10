@@ -1,8 +1,7 @@
 import { useState } from "react"
 
-export default function MarkdownScreen(props) {
+export default function MarkdownScreen() {
     const [text, setText] = useState("")
-
     return (
         <div className="h-full w-full border-r">
             <textarea

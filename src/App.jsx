@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react"
-import MarkdownScreen from "./MarkdownScreen"
-import WebsiteScreen from "./WebsiteScreen"
-import { parse } from "parse5"
+import MarkdownScreen from './MarkdownScreen';
+import WebsiteScreen from './WebsiteScreen';
 
 function App() {
-    return (
-        <div className="flex h-screen w-full flex-row justify-between bg-zinc-600 text-white">
-            <MarkdownScreen />
-            <WebsiteScreen />
-        </div>
-    )
+  
+
+
+  return (
+    <div className="flex flex-row bg-zinc-600 text-white w-full h-screen justify-between">
+      <MarkdownScreen />
+      <WebsiteScreen />
+    </div>
+  );
 }
 
-export default App
+export default App;
