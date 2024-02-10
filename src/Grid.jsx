@@ -6,13 +6,37 @@ export default function Grid(props) {
     const gridRef = useRef(null)
     const gridSizeX = 100
     const gridSizeY = 100
+    const [size, setSize] = useState({width: 0, height: 0})
     const [style, setStyle] = useState({})
     const [mouseDown, setMouseDown] = useState({ down: false, x1: 0, y1: 0, seconds: 0, milliseconds: 0 })
     const [elements, setElements] = useState([])
     const [gridSelect, setGridSelect] = useState(false)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom);
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom);
-    
+    const getBoundingBox = (ref) => {
+        console.log(ref)
+        if (ref.current) {
+            const rect = ref.current.getBoundingClientRect()
+            // rect contains properties: top, right, bottom, left, width, height
+            return rect
+        }
+        return false
+    }
+    useEffect(() => {
+        const gridElement = gridRef.current;
+        if (!gridElement) return;
+
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const {width, height} = entry.contentRect;
+                setSize({width, height});
+            }
+        });
+
+        resizeObserver.observe(gridElement);
+
+        return () => resizeObserver.unobserve(gridElement);
+    }, []); // Empty dependency array ensures this effect runs once on mount
      useEffect(() => {
          // Check if the props.id matches the ID of this item
         
@@ -31,28 +55,36 @@ export default function Grid(props) {
     }, [props.childStyle])
 
     useEffect(() => {
-        if (gridMoving.id === props.id && gridMoving.moved) {
+        if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             handleMove()
         }
     }, [gridMoving])
     
-
-    const getBoundingBox = (ref) => {
-        console.log(ref)
-        if (ref.current) {
-            const rect = ref.current.getBoundingClientRect()
-            // rect contains properties: top, right, bottom, left, width, height
-            return rect
+    const checkRemainder = (num, type) => {
+        if (type === 1) {
+            if (num - Math.floor(num) > 0.5) {
+                return Math.floor(num)
+            } else {
+                return Math.ceil(num)
         }
-        return false
+        }
+        if (num - Math.floor(num) > 0.5) {
+            return Math.ceil(num)
+        } else {
+            return Math.floor(num)
+        }
     }
+    
+    
    
     const calculateGridPos = (itemCords, gridBoundingBox, gridSizeX, gridSizeY) => {
-        let x1 = Math.floor((itemCords.x1 - gridBoundingBox.left)/gridBoundingBox.width*gridSizeX)
-        let x2 = Math.floor((itemCords.x2 - gridBoundingBox.left)/gridBoundingBox.width*gridSizeX)
-        let y1 = Math.floor((itemCords.y1 - gridBoundingBox.top)/gridBoundingBox.height*gridSizeY)
-        let y2 = Math.floor((itemCords.y2 - gridBoundingBox.top)/gridBoundingBox.height*gridSizeY)
-        return {x1, x2, y1, y2}
+    let x1 = Math.floor((itemCords.x1 - gridBoundingBox.left) / gridBoundingBox.width * gridSizeX);
+    let x2 = Math.floor((itemCords.x2 - gridBoundingBox.left) / gridBoundingBox.width * gridSizeX);
+    let y1 = Math.floor((itemCords.y1 - gridBoundingBox.top) / gridBoundingBox.height * gridSizeY);
+    let y2 = Math.floor((itemCords.y2 - gridBoundingBox.top) / gridBoundingBox.height * gridSizeY);
+
+
+    return { x1, x2, y1, y2 };
     }
     
 
@@ -67,7 +99,9 @@ export default function Grid(props) {
         }
         if (gridSelect && props.level !==0) {
             type = "moving"
-            setGridMoving({id: props.id, moving: true, x1: e.clientX, y1: e.clientY, moved: false})
+            let gridBoundingBox = getBoundingBox(gridRef)
+            console.log(size.height, size.width)
+            setGridMoving({id: props.id, moving: true, x1: e.clientX, y1: e.clientY, x2: e.clientX, y2: e.clientY , moved: false, gridBoundingBox: {top: gridBoundingBox.top, bottom: gridBoundingBox.top + size.height, left: gridBoundingBox.left, right: gridBoundingBox.left + size.width}})
         }
         const currentDate = new Date();
         const milliseconds = currentDate.getMilliseconds();
@@ -76,13 +110,16 @@ export default function Grid(props) {
         setMouseDown({ down: true, type:type, x1: e.clientX, y1: e.clientY, milliseconds, seconds })
     }
     const handleMove = () => {
-        let gridBoundingBox = getBoundingBox(gridRef)
+        let gridBoundingBox = gridMoving.gridBoundingBox
         let parentBoundingBox = getBoundingBox(props.parentRef)
+
         let top = gridMoving.y2 - gridMoving.y1 + gridBoundingBox.top
-        let bot = gridMoving.y2 - gridMoving.y1 + gridBoundingBox.bottom
+        let bottom = gridMoving.y2 - gridMoving.y1 + gridBoundingBox.bottom
         let left = gridMoving.x2 - gridMoving.x1 + gridBoundingBox.left
         let right = gridMoving.x2 - gridMoving.x1 + gridBoundingBox.right
-        let gridCords = calculateGridPos({ x1: left, y1: top, x2: right, y2: bot }, parentBoundingBox, props.parentGridSizeX, props.parentGridSizeY)
+        console.log("top", top )
+        console.log("bottom", bottom)
+        let gridCords = calculateGridPos({ x1: left, y1: top, x2: right, y2: bottom }, parentBoundingBox, props.parentGridSizeX, props.parentGridSizeY)
         const newStyle = {
         gridColumnStart: gridCords.x1 + 1,
         gridColumnEnd: gridCords.x2 + 2,
@@ -94,10 +131,9 @@ export default function Grid(props) {
         };
         console.log(style)
         setStyle(newStyle)
-        setGridMoving({moving: false})
-        console.log(props.parentGridSizeX)
-        console.log(props.parentGridSizeY)
-        console.log(gridBoundingBox)
+        if (gridMoving.moved === true) {
+            setGridMoving({moving: false})
+        } setGridMoving(i => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))
         console.log(gridCords)
         console.log(gridMoving)
         console.log(props.id)
@@ -134,6 +170,7 @@ export default function Grid(props) {
         // Assuming you want to add these as classes for Tailwind CSS
         setElements(i => [...i, <Grid key={uuid} className="bg-red-500" parentRef={gridRef} id={uuid} childStyle={childStyle} parentGridSizeY={gridSizeY} parentGridSizeX={gridSizeX} level={props.level+1}></Grid>]);
     }
+    
     useEffect(() => {
     }, [gridRef])
 
