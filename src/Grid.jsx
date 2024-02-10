@@ -13,6 +13,8 @@ export default function Grid(props) {
     const [gridSelect, setGridSelect] = useState(false)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
+    const [checkedGrid, setCheckedGrid] = useState(false)
+    const checkedGridRef = useRef(checkedGrid)
     const getBoundingBox = (ref) => {
         console.log(ref)
         if (ref.current) {
@@ -23,20 +25,32 @@ export default function Grid(props) {
         return false
     }
     useEffect(() => {
-        const gridElement = gridRef.current
-        if (!gridElement) return
+        const gridElement = gridRef.current;
+        if (!gridElement) return;
 
-        const resizeObserver = new ResizeObserver((entries) => {
+        // Counter to keep track of observations
+        let observationCount = 0;
+
+        const resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
-                const { width, height } = entry.contentRect
-                setSize({ width, height })
+                const { width, height } = entry.contentRect;
+                setSize({ width, height });
+
+                observationCount += 1;
+                // Unobserve after the second observation
+                if (observationCount >= 2) {
+                    resizeObserver.unobserve(gridElement);
+                }
             }
-        })
+        });
 
-        resizeObserver.observe(gridElement)
+        resizeObserver.observe(gridElement);
 
-        return () => resizeObserver.unobserve(gridElement)
-    }, []) // Empty dependency array ensures this effect runs once on mount
+        // Cleanup function to disconnect the observer if the component unmounts early
+        return () => resizeObserver.disconnect();
+    }, []); // Empty dependency array ensures this effect runs once on mount
+
+
     useEffect(() => {
         // Check if the props.id matches the ID of this item
 
@@ -60,27 +74,12 @@ export default function Grid(props) {
         }
     }, [gridMoving])
 
-    const checkRemainder = (num, type) => {
-        if (type === 1) {
-            if (num - Math.floor(num) > 0.5) {
-                return Math.floor(num)
-            } else {
-                return Math.ceil(num)
-            }
-        }
-        if (num - Math.floor(num) > 0.5) {
-            return Math.ceil(num)
-        } else {
-            return Math.floor(num)
-        }
-    }
 
     const calculateGridPos = (itemCords, gridBoundingBox, gridSizeX, gridSizeY) => {
         let x1 = Math.floor(((itemCords.x1 - gridBoundingBox.left) / gridBoundingBox.width) * gridSizeX)
         let x2 = Math.floor(((itemCords.x2 - gridBoundingBox.left) / gridBoundingBox.width) * gridSizeX)
         let y1 = Math.floor(((itemCords.y1 - gridBoundingBox.top) / gridBoundingBox.height) * gridSizeY)
         let y2 = Math.floor(((itemCords.y2 - gridBoundingBox.top) / gridBoundingBox.height) * gridSizeY)
-
         return { x1, x2, y1, y2 }
     }
 
@@ -112,6 +111,7 @@ export default function Grid(props) {
                     right: gridBoundingBox.left + size.width,
                 },
             })
+            return
         }
         const currentDate = new Date()
         const milliseconds = currentDate.getMilliseconds()
@@ -135,6 +135,13 @@ export default function Grid(props) {
             props.parentGridSizeX,
             props.parentGridSizeY
         )
+        const desiredSizeX = Math.floor(size.width /  parentBoundingBox.width*props.parentGridSizeX,) +1
+        const desiredSizeY = Math.floor(size.height / parentBoundingBox.height * props.parentGridSizeY) + 1
+        gridCords.x2 = gridCords.x1 + desiredSizeX
+        gridCords.y2 = gridCords.y1 + desiredSizeY
+        console.log("gridCords", desiredSizeX)
+        console.log("gridCords", desiredSizeY)
+        console.log("gridCords", size)
         const newStyle = {
             gridColumnStart: gridCords.x1 + 1,
             gridColumnEnd: gridCords.x2 + 2,
