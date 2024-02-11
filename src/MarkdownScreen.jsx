@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import {  useState } from "react"
 
 export default function MarkdownScreen() {
     const [text, setText] = useState("")

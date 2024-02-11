@@ -1,21 +1,26 @@
 import { useEffect, useRef, useState } from "react"
 import { useAtom } from "jotai"
-import { gridCheckedAtom, gridMovingAtom } from "./atoms"
+import { cursorTypeAtom, gridCheckedAtom, gridMovingAtom } from "./atoms"
 import startMovingElement from "./functions/startMovingElement"
 import startCreatingElement from "./functions/startCreatingElement"
 import handleGridMove from "./functions/handleGridMove"
 import handleGridCreation from "./functions/handleGridCreation"
 export default function Grid(props) {
     const gridRef = useRef(null)
-    const gridSizeX = 300
-    const gridSizeY = 300
+    const gridSizeX = 100
+    const gridSizeY = 100
     const [size, setSize] = useState({ width: 0, height: 0 })
     const [style, setStyle] = useState({})
     const [elements, setElements] = useState([])
     const [gridSelect, setGridSelect] = useState(false)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
-    const [lastClick, setLastClick] = useState(0)
+    const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
+    useEffect(() => {
+        console.log("size setting", props.size)
+        if (!props.size) return
+        setSize(props.size)
+    }, [props.size])
     useEffect(() => {
         console.log("elements", elements)
     }, [elements])
@@ -50,8 +55,8 @@ export default function Grid(props) {
         // Check if the props.id matches the ID of this item
 
         if (props.id === gridChecked && gridChecked !== "" && !gridSelect) {
-            return
-        } else if (gridSelect === true) {
+            setGridSelect(true)
+        } else {
             setGridSelect(false)
         }
     }, [gridChecked, props.id])
@@ -64,53 +69,44 @@ export default function Grid(props) {
     }, [props.childStyle])
 
     useEffect(() => {
-        if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
+        if (gridMoving.id === props.id && gridMoving.moving && (!gridMoving.setBox || gridMoving.moved)) {
             if (gridMoving.type === "moving") {
-                handleGridMove(gridMoving, size.width, size.height, props.parentRef, props.parentSizeX, props.parentSizeY, setStyle, setElements, setGridMoving)
+                console.log("sizew", size)
+                handleGridMove(
+                    gridMoving,
+                    size.width,
+                    size.height,
+                    props.parentRef,
+                    props.parentGridSizeX,
+                    props.parentGridSizeY,
+                    setStyle,
+                    setElements,
+                    setGridMoving
+                )
             } else if (gridMoving.type === "creating") {
                 handleGridCreation(gridMoving, 0, 0, gridRef, gridSizeX, gridSizeY, setStyle, setElements, setGridMoving)
             }
         }
     }, [gridMoving])
 
-    const selectElement = () => {
+    const unselectElement = () => {
         if (gridChecked !== props.id) {
-            console.log("cia")
-            setGridSelect(false)
             setGridChecked("")
+            return
         }
     }
 
     const handleMouseDown = (event) => {
         event.stopPropagation()
 
-        const now = Date.now()
-        const doubleClickDelay = 300 // Milliseconds considered for double-click
-        const isDoubleClick = now - lastClick <= doubleClickDelay
-
-        setLastClick(now)
-
-        if (isDoubleClick) {
-            // Handle double-click logic here
-            console.log("Double click detected")
-            // Your double-click logic, for example:
-            selectElement()
-        } else {
-            // Single-click logic, delayed to verify it's not a double click
-            setTimeout(() => {
-                if (Date.now() - lastClick >= doubleClickDelay) {
-                    // Handle single-click logic here if no double-click was detected
-                    console.log("Single click detected")
-                    // Your single-click logic here
-                }
-            }, doubleClickDelay)
+        if (cursorType === "moving" && props.level !== 0) {
+            console.log("starting size", size)
+            startMovingElement(event, gridRef, size, props.id, "moving", setGridMoving)
+            return
         }
-        let type = "creating"
-        if (gridSelect && props.level !== 0) {
-            startMovingElement(event, size, props.id, "moving", setGridMoving)
-        }
-        if (type == "creating") {
+        if (cursorType == "creating") {
             startCreatingElement(event, gridRef, gridSizeX, gridSizeY, props.level, props.id, setGridMoving, setElements)
+            return
         }
     }
 
@@ -128,7 +124,7 @@ export default function Grid(props) {
             ref={gridRef}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`grid h-full w-full select-none ${`grid-cols-300`} ${`grid-rows-300`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`hover:border-blue-500 grid h-full w-full select-none ${`grid-cols-100`} ${`grid-rows-100`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {elements}
         </div>

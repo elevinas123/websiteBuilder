@@ -6,7 +6,6 @@ import startMovingElement from "./startMovingElement"
 
 export default function startCreatingElement(event, elementRef, elementSizeX, elementSizeY, elementLevel, elementId, setGridMoving, setElements) {
     const uuid = uuidv4()
-    console.log("cia", event)
     let boundingBox = getBoundingBox(elementRef)
     let gridCords = calculatePositionInGrid(
         { x1: event.clientX, y1: event.clientY, x2: event.clientX, y2: event.clientY },

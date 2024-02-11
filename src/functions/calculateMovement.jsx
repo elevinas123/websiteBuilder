@@ -19,22 +19,23 @@ export default function calculateMovement(
     setStyle,
     setElements
 ) {
-    //console.log("level", props.level)
     let parentBoundingBox = getBoundingBox(parentRef)
     console.log("right", right)
     console.log("parentBoundingBox", parentBoundingBox)
     console.log("paskuitinis", { x1: left, y1: top, x2: right, y2: bottom })
     console.log("gridMoving", gridMoving)
     let gridCords = calculatePositionInGrid({ x1: left, y1: top, x2: right, y2: bottom }, parentBoundingBox, gridSizeX, gridSizeY)
-    console.log("gridCords", gridCords)
+    //console.log("gridCords", gridCords)
     if (gridMoving.type === "moving") {
         const desiredSizeX = Math.floor((width / parentBoundingBox.width) * gridSizeX) + 1
         const desiredSizeY = Math.floor((height / parentBoundingBox.height) * gridSizeY) + 1
         gridCords.x2 = gridCords.x1 + desiredSizeX
         gridCords.y2 = gridCords.y1 + desiredSizeY
+        console.log("desiredSizeX", desiredSizeX)
+        console.log("desiredSizeY", desiredSizeY)
+        console.log("width", width)
+        console.log("height", height)
     }
-    //console.log("gridCords", desiredSizeX)
-    //console.log("gridCords", desiredSizeY)
 
     const newStyle = {
         gridColumnStart: gridCords.x1 + 1,
@@ -58,6 +59,7 @@ export default function calculateMovement(
                 <Grid
                     {...lastElement.props}
                     childStyle={newStyle}
+                    size={{width: right-left, height: bottom-top}}
                     key={lastElement.key || "some-unique-key"} // Adjust key as necessary
                 />
             )

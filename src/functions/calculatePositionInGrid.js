@@ -1,5 +1,4 @@
 export default function calculatePositionInGrid(itemCords, gridBoundingBox, gridSizeX, gridSizeY) {
-    console.log(itemCords, gridBoundingBox, gridSizeX, gridSizeY)
     let x1 = Math.floor(((itemCords.x1 - gridBoundingBox.left) / gridBoundingBox.width) * gridSizeX)
     let x2 = Math.floor(((itemCords.x2 - gridBoundingBox.left) / gridBoundingBox.width) * gridSizeX)
     let y1 = Math.floor(((itemCords.y1 - gridBoundingBox.top) / gridBoundingBox.height) * gridSizeY)

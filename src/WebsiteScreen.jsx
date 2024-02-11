@@ -1,11 +1,12 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Grid from "./Grid"
 import { v4 as uuidv4 } from "uuid"
 import { useAtom } from "jotai"
-import { gridMovingAtom } from "./atoms"
+import { cursorTypeAtom, gridMovingAtom } from "./atoms"
 export default function WebsiteScreen() {
     const [mainGridId, setMainGridId] = useState(uuidv4())
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
+    const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
 
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
@@ -42,7 +43,23 @@ export default function WebsiteScreen() {
 
     return (
         <div className="ml-20 mt-2 flex h-full w-full flex-col text-black">
-            <div className=" h-32 bg-zinc-200">Nabvbar</div>
+            <div className=" flex h-32 flex-col bg-zinc-200">
+                <div>Navbar</div>
+                <div className="mt-3">
+                    <button
+                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "moving" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
+                        onClick={() => setCursorType("moving")}
+                    >
+                        moving
+                    </button>
+                    <button
+                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "creating" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
+                        onClick={() => setCursorType("creating")}
+                    >
+                        creating
+                    </button>
+                </div>
+            </div>
             <div className="mt-20 h-2/3 w-3/4  bg-white text-black" onMouseMove={handleMousemove}>
                 <Grid level={0} id={mainGridId} />
             </div>

@@ -2,6 +2,7 @@ import getBoundingBox from "./getBoundingBox"
 
 export default function startMovingElement(event, elementRef, size, id, type, setGridMoving) {
     let gridBoundingBox = getBoundingBox(elementRef)
+    console.log("start", gridBoundingBox, size, event)
     setGridMoving({
         type: type,
         id: id,
