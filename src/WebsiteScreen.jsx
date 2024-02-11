@@ -1,12 +1,44 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Grid from "./Grid"
 import { v4 as uuidv4 } from "uuid"
 import { useAtom } from "jotai"
-import { cursorTypeAtom, gridMovingAtom } from "./atoms"
+import { allElementsAtom, cursorTypeAtom, gridMovingAtom } from "./atoms"
+import getBoundingBox from "./functions/getBoundingBox"
 export default function WebsiteScreen() {
-    const [mainGridId, setMainGridId] = useState(uuidv4())
+    const [mainGridId, setMainGridId] = useState("")
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
+    const [allElements, setAllElements] = useAtom(allElementsAtom)
+    const mainGridRef = useRef(null)
+    useEffect(() => {
+        if (!mainGridRef.current) return
+        const mainId = uuidv4()
+        const mainGridBoundingBox = getBoundingBox(mainGridRef)
+        setAllElements({
+            [mainId]: {
+                item: <Grid key={mainId} className="bg-red-500" id={mainId}></Grid>,
+                id: mainId,
+                gridSize: {
+                    x: 300,
+                    y: 300,
+                },
+                width: mainGridBoundingBox.width,
+                height: mainGridBoundingBox.height,
+                top: mainGridBoundingBox.top,
+                right: mainGridBoundingBox.right,
+                bottom: mainGridBoundingBox.bottom,
+                left: mainGridBoundingBox.left,
+                style: {},
+                parent: null,
+                children: [],
+            },
+        })
+        console.log(allElements)
+        setMainGridId(mainId)
+    }, [mainGridRef])
+    useEffect(() => {
+        console.log(allElements)
+    }, [allElements])
 
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
@@ -60,8 +92,8 @@ export default function WebsiteScreen() {
                     </button>
                 </div>
             </div>
-            <div className="mt-20 h-2/3 w-3/4  bg-white text-black" onMouseMove={handleMousemove}>
-                <Grid level={0} childElements={[]} parentProps={{ level: -1, parentSizeX: 300, parentSizeY: 300}} id={mainGridId} />
+            <div ref={mainGridRef} className="mt-20 h-2/3 w-3/4  bg-white text-black" onMouseMove={handleMousemove}>
+                {mainGridId && allElements[mainGridId].item}
             </div>
         </div>
     )

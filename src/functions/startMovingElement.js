@@ -1,11 +1,16 @@
-import getBoundingBox from "./getBoundingBox"
-
-export default function startMovingElement(event, elementRef, size, id, type, setGridMoving) {
-    let gridBoundingBox = getBoundingBox(elementRef)
-    console.log("start", gridBoundingBox, size, event)
+export default function startMovingElement(event, parentId, elementId, elementHeight, elementWidth, type, allElements, setGridMoving) {
+    const parentElement = allElements[parentId]
+    const parentInfo = {
+        top: parentElement.top,
+        left: parentElement.left,
+        width: parentElement.width,
+        height: parentElement.height,
+        gridSize: parentElement.gridSize,
+    }
+    console.log("labas", allElements[elementId],elementId)
     setGridMoving({
         type: type,
-        id: id,
+        id: elementId,
         moving: true,
         setBox: true,
         x1: event.clientX,
@@ -14,10 +19,10 @@ export default function startMovingElement(event, elementRef, size, id, type, se
         y2: event.clientY,
         moved: false,
         gridBoundingBox: {
-            top: gridBoundingBox.top,
-            bottom: gridBoundingBox.top + size.height,
-            left: gridBoundingBox.left,
-            right: gridBoundingBox.left + size.width,
+            top: parentInfo.top,
+            bottom: parentInfo.top + elementHeight,
+            left: parentInfo.left,
+            right: parentInfo.left + elementWidth,
         },
     })
     return

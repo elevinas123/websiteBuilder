@@ -1,31 +1,21 @@
 import Grid from "../Grid"
 import { v4 as uuidv4 } from "uuid"
-import getBoundingBox from "./getBoundingBox"
 import calculatePositionInGrid from "./calculatePositionInGrid"
 import startMovingElement from "./startMovingElement"
-import { useAtom } from "jotai"
-import { allElementsAtom } from "../atoms"
 
-export default function startCreatingElement(
-    event,
-    elementRef,
-    elementSizeX,
-    elementSizeY,
-    elementLevel,
-    elementId,
-    parentProps,
-    setGridMoving,
-    setAllElements,
-    setParentElements
-) {
+export default function startCreatingElement(event, parentId, allElements, setGridMoving, setAllElements) {
     const uuid = uuidv4()
-    let boundingBox = getBoundingBox(elementRef)
-    let gridCords = calculatePositionInGrid(
-        { x1: event.clientX, y1: event.clientY, x2: event.clientX, y2: event.clientY },
-        boundingBox,
-        elementSizeX,
-        elementSizeY
-    )
+    const parentElement = allElements[parentId]
+    let parentInfo = {
+        top: parentElement.top,
+        bottom: parentElement.bottom,
+        right: parentElement.right,
+        left: parentElement.left,
+        width: parentElement.width,
+        height: parentElement.height,
+        gridSize: parentElement.gridSize,
+    }
+    let gridCords = calculatePositionInGrid({ x1: event.clientX, y1: event.clientY, x2: event.clientX, y2: event.clientY }, parentInfo)
     const newStyle = {
         gridColumnStart: gridCords.x1 + 1,
         gridColumnEnd: gridCords.x2 + 2,
@@ -36,28 +26,27 @@ export default function startCreatingElement(
         overflow: "hidden", // Prevents content from overflowing
     }
 
-    setAllElements((i) => ({
-        ...i,
-        [elementId]: { ...i.elementId, children: [...i.elementId.children, uuid] },
+    setAllElements((elements) => ({
+        ...elements,
+        [parentId]: { ...elements[parentId], children: [...elements[parentId].children, uuid] },
         [uuid]: {
-            item: (
-                <Grid
-                    childElements={[]}
-                    parentProps={parentProps}
-                    key={uuid}
-                    className="bg-red-500"
-                    parentRef={elementRef}
-                    id={uuid}
-                    childStyle={newStyle}
-                    parentSizeX={elementSizeX}
-                    parentSizeY={elementSizeY}
-                    level={elementLevel + 1}
-                ></Grid>
-            ),
-            parent: elementId,
+            item: <Grid key={uuid} className="bg-red-500" id={uuid} childStyle={newStyle}></Grid>,
+            id: uuid,
+            gridSize: {
+                x: 300,
+                y: 300,
+            },
+            width: 1,
+            height: 1,
+            top: event.clientY,
+            right: event.clientX,
+            bottom: event.clientY,
+            left: event.clientX,
+            style: newStyle,
+            parent: parentId,
             children: [],
         },
     }))
     console.log("gridCords", gridCords)
-    startMovingElement(event, elementRef, { height: 0, width: 0 }, elementId, "creating", setGridMoving)
+    startMovingElement(event, parentId, uuid, 0, 0, "creating", allElements, setGridMoving)
 }

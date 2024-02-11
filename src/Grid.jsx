@@ -1,34 +1,24 @@
 import { useEffect, useRef, useState } from "react"
 import { useAtom } from "jotai"
-import { cursorTypeAtom, gridCheckedAtom, gridMovingAtom } from "./atoms"
+import { allElementsAtom, cursorTypeAtom, gridCheckedAtom, gridMovingAtom } from "./atoms"
 import startMovingElement from "./functions/startMovingElement"
 import startCreatingElement from "./functions/startCreatingElement"
 import handleGridMove from "./functions/handleGridMove"
 import handleGridCreation from "./functions/handleGridCreation"
 export default function Grid(props) {
-    const gridRef = useRef(null)
-    const gridSizeX = 300
-    const gridSizeY = 300
-    const [size, setSize] = useState({ width: 0, height: 0 })
     const [style, setStyle] = useState({})
-    const [elements, setElements] = useState([])
     const [gridSelect, setGridSelect] = useState(false)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
-    
+    const [allElements, setAllElements] = useAtom(allElementsAtom)
+
     useEffect(() => {
-        console.log("size setting", props.size)
-        if (!props.size) return
-        setSize(props.size)
-    }, [props.size])
-    useEffect(() => {
-        console.log("elements", props.parentProps.level + 1, elements)
-    }, [elements])
+        console.log("from girds", allElements)
+    }, [allElements])
 
     useEffect(() => {
         // Check if the props.id matches the ID of this item
-
         if (props.id === gridChecked && gridChecked !== "" && !gridSelect) {
             setGridSelect(true)
         } else {
@@ -37,71 +27,33 @@ export default function Grid(props) {
     }, [gridChecked, props.id])
 
     useEffect(() => {
-        if (!props.childStyle) {
-            return
-        }
-        setStyle(props.childStyle)
-    }, [props.childStyle])
-
-    useEffect(() => {
-        if (gridMoving.id === props.id && gridMoving.moving && (!gridMoving.setBox || gridMoving.moved)) {
+        if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
-                handleGridMove(
-                    gridMoving,
-                    size.width,
-                    size.height,
-                    props.parentRef,
-                    props.parentSizeX,
-                    props.parentSizeY,
-                    props.parentProps,
-                    elements,
-                    setStyle,
-                    setElements,
-                    setGridMoving,
-                    props.setParentElements,
-                    props.setGrandParentElements
-                )
+                handleGridMove(gridMoving, allElements[props.id].parent, allElements, setAllElements, setStyle, setGridMoving)
             } else if (gridMoving.type === "creating") {
-                handleGridCreation(
-                    gridMoving,
-                    0,
-                    0,
-                    gridRef,
-                    gridSizeX,
-                    gridSizeY,
-                    props.parentProps,
-                    elements,
-                    setStyle,
-                    setElements,
-                    setGridMoving,
-                    props.setParentElements,
-                    props.setGrandParentElements
-                )
+                handleGridCreation(gridMoving, allElements[props.id].parent, allElements, setAllElements, setGridMoving)
             }
         }
     }, [gridMoving])
 
     const handleMouseDown = (event) => {
         event.stopPropagation()
-        if (cursorType === "moving" && props.parentProps.level + 1 !== 0) {
+        if (cursorType === "moving") {
             setGridChecked(props.id)
-            console.log("starting size", size)
-            startMovingElement(event, gridRef, size, props.id, "moving", setGridMoving)
+            startMovingElement(
+                event,
+                allElements[props.id].parent,
+                props.id,
+                allElements[props.id].width,
+                allElements[props.id].height,
+                "moving",
+                allElements,
+                setGridMoving
+            )
             return
         }
         if (cursorType == "creating") {
-            startCreatingElement(
-                event,
-                gridRef,
-                gridSizeX,
-                gridSizeY,
-                props.parentProps.level + 1,
-                props.id,
-                props,
-                setGridMoving,
-                setElements,
-                props.setParentElements
-            )
+            startCreatingElement(event, props.id, allElements, setGridMoving, setAllElements)
             return
         }
     }
@@ -116,13 +68,12 @@ export default function Grid(props) {
 
     return (
         <div
-            style={style}
-            ref={gridRef}
+            style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             className={`grid h-full w-full select-none hover:border-blue-500 ${`grid-cols-300`} ${`grid-rows-300`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
-            {elements}
+            {allElements[props.id].children.length > 0 && allElements[props.id].children.map((i) => allElements[i].item)}
         </div>
     )
 }
