@@ -16,13 +16,14 @@ export default function Grid(props) {
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
+    
     useEffect(() => {
         console.log("size setting", props.size)
         if (!props.size) return
         setSize(props.size)
     }, [props.size])
     useEffect(() => {
-        console.log("elements", props.level, elements)
+        console.log("elements", props.parentProps.level + 1, elements)
     }, [elements])
 
     useEffect(() => {
@@ -45,7 +46,6 @@ export default function Grid(props) {
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && (!gridMoving.setBox || gridMoving.moved)) {
             if (gridMoving.type === "moving") {
-                console.log("sizew", size, props.level)
                 handleGridMove(
                     gridMoving,
                     size.width,
@@ -54,6 +54,7 @@ export default function Grid(props) {
                     props.parentSizeX,
                     props.parentSizeY,
                     props.parentProps,
+                    elements,
                     setStyle,
                     setElements,
                     setGridMoving,
@@ -69,6 +70,7 @@ export default function Grid(props) {
                     gridSizeX,
                     gridSizeY,
                     props.parentProps,
+                    elements,
                     setStyle,
                     setElements,
                     setGridMoving,
@@ -81,14 +83,25 @@ export default function Grid(props) {
 
     const handleMouseDown = (event) => {
         event.stopPropagation()
-        if (cursorType === "moving" && props.level !== 0) {
+        if (cursorType === "moving" && props.parentProps.level + 1 !== 0) {
             setGridChecked(props.id)
             console.log("starting size", size)
             startMovingElement(event, gridRef, size, props.id, "moving", setGridMoving)
             return
         }
         if (cursorType == "creating") {
-            startCreatingElement(event, gridRef, gridSizeX, gridSizeY, props.level, props.id, props, setGridMoving, setElements, props.setParentElements)
+            startCreatingElement(
+                event,
+                gridRef,
+                gridSizeX,
+                gridSizeY,
+                props.parentProps.level + 1,
+                props.id,
+                props,
+                setGridMoving,
+                setElements,
+                props.setParentElements
+            )
             return
         }
     }

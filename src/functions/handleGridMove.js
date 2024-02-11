@@ -8,6 +8,7 @@ export default function handleGridMove(
     elementSizeX,
     elementSizeY,
     parentProps,
+    childElements,
     setStyle,
     setElements,
     setGridMoving,
@@ -32,6 +33,7 @@ export default function handleGridMove(
         elementSizeX,
         elementSizeY,
         parentProps,
+        childElements,
         setParentElements,
         setGrandParentElements
     )

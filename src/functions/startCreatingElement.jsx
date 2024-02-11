@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from "uuid"
 import getBoundingBox from "./getBoundingBox"
 import calculatePositionInGrid from "./calculatePositionInGrid"
 import startMovingElement from "./startMovingElement"
+import { useAtom } from "jotai"
+import { allElementsAtom } from "../atoms"
 
 export default function startCreatingElement(
     event,
@@ -13,7 +15,7 @@ export default function startCreatingElement(
     elementId,
     parentProps,
     setGridMoving,
-    setElements,
+    setAllElements,
     setParentElements
 ) {
     const uuid = uuidv4()
@@ -33,22 +35,29 @@ export default function startCreatingElement(
         maxHeight: "100%", // Ensures content does not expand cell
         overflow: "hidden", // Prevents content from overflowing
     }
-    setElements((i) => [
+
+    setAllElements((i) => ({
         ...i,
-        <Grid
-            parentProps={parentProps}
-            setParentElements={setElements}
-            setGrandParentElements={setParentElements}
-            key={uuid}
-            className="bg-red-500"
-            parentRef={elementRef}
-            id={uuid}
-            childStyle={newStyle}
-            parentSizeX={elementSizeX}
-            parentSizeY={elementSizeY}
-            level={elementLevel + 1}
-        ></Grid>,
-    ])
+        [elementId]: { ...i.elementId, children: [...i.elementId.children, uuid] },
+        [uuid]: {
+            item: (
+                <Grid
+                    childElements={[]}
+                    parentProps={parentProps}
+                    key={uuid}
+                    className="bg-red-500"
+                    parentRef={elementRef}
+                    id={uuid}
+                    childStyle={newStyle}
+                    parentSizeX={elementSizeX}
+                    parentSizeY={elementSizeY}
+                    level={elementLevel + 1}
+                ></Grid>
+            ),
+            parent: elementId,
+            children: [],
+        },
+    }))
     console.log("gridCords", gridCords)
     startMovingElement(event, elementRef, { height: 0, width: 0 }, elementId, "creating", setGridMoving)
 }

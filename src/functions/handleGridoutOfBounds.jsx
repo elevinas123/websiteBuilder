@@ -1,20 +1,7 @@
 import Grid from "../Grid"
 import calculateMovement from "./calculateMovement"
 
-export default function handleGridoutOfBounds(
-    gridMoving,
-    top,
-    right,
-    bottom,
-    left,
-    width,
-    height,
-    parentProps,
-    setParentElements,
-    setGrandParentElements,
-    level
-) {
-    console.log(level)
+export default function handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, childElements, setParentElements, setGrandParentElements) {
     if (parentProps.level === 0) {
         return true
     }
@@ -54,6 +41,8 @@ export default function handleGridoutOfBounds(
                 parentProps.setParentElements
             )
             console.log("newestStyle", newStyle)
+            console.log("newestStyle", newStyle)
+            console.log("childElements", childElements)
             if (!isAlreadyAdded) {
                 return [
                     ...prevGrandElements,
@@ -62,10 +51,12 @@ export default function handleGridoutOfBounds(
                         {...lastElement.props}
                         parentProps={parentProps.parentProps}
                         size={{ width: width, height: height }}
+                        childElements={childElements}
                         parentRef={parentProps.parentRef}
                         parentSizeX={parentProps.parentSizeX}
                         parentSizeY={parentProps.parentSizeY}
                         setParentElements={parentProps.setParentElements}
+                        setGrandParentElements={parentProps.parentProps.setParentElements}
                         childStyle={newStyle}
                         level={parentProps.level}
                         key={lastElement.key || "some-unique-key"}

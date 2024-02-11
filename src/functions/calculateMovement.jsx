@@ -14,9 +14,26 @@ export default function calculateMovement(
     gridSizeX,
     gridSizeY,
     parentProps,
+    childElements,
     setParentElements,
     setGrandParentElements
 ) {
+    console.log(
+        gridMoving,
+        top,
+        right,
+        bottom,
+        left,
+        width,
+        height,
+        parentRef,
+        gridSizeX,
+        gridSizeY,
+        parentProps,
+        childElements,
+        setParentElements,
+        setGrandParentElements
+    )
     let parentBoundingBox = getBoundingBox(parentRef)
 
     let gridCords = calculatePositionInGrid({ x1: left, y1: top, x2: right, y2: bottom }, parentBoundingBox, gridSizeX, gridSizeY)
@@ -26,7 +43,19 @@ export default function calculateMovement(
     const desiredSizeY = Math.floor((height / parentBoundingBox.height) * gridSizeY) + 1
     if (gridCords.y1 < 0) {
         if (top - parentBoundingBox.top < -30) {
-            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
+            let updated = handleGridoutOfBounds(
+                gridMoving,
+                top,
+                right,
+                bottom,
+                left,
+                width,
+                height,
+                parentProps,
+                childElements,
+                setParentElements,
+                setGrandParentElements
+            )
             if (updated) return false
             gridCords.y1 = 0
         } else {
@@ -36,31 +65,69 @@ export default function calculateMovement(
     if (gridSizeY - gridCords.y2 < 0) {
         console.log("bottom - parentBoundingBox.bottom > 30", top + height - parentBoundingBox.bottom)
         if (top + height - parentBoundingBox.bottom > 30) {
-            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
+            let updated = handleGridoutOfBounds(
+                gridMoving,
+                top,
+                right,
+                bottom,
+                left,
+                width,
+                height,
+                parentProps,
+                childElements,
+                setParentElements,
+                setGrandParentElements
+            )
             if (updated) return false
             gridCords.y2 = gridSizeY
             gridCords.y1 = gridCords.y2 - desiredSizeY
         } else {
-            return false
+            gridCords.y2 = gridSizeY
+            gridCords.y1 = gridCords.y2 - desiredSizeY
         }
     }
     if (gridCords.x1 < 0) {
         if (left - parentBoundingBox.left < -30) {
-            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
+            let updated = handleGridoutOfBounds(
+                gridMoving,
+                top,
+                right,
+                bottom,
+                left,
+                width,
+                height,
+                parentProps,
+                childElements,
+                setParentElements,
+                setGrandParentElements
+            )
             if (updated) return false
-            gridCords.x1 = gridSizeX
+            gridCords.x1 = 0
         } else {
-            return false
+            gridCords.x1 = 0
         }
     }
     if (gridSizeX - gridCords.x2 < 0) {
         if (left + width - parentBoundingBox.right > 30) {
-            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
+            let updated = handleGridoutOfBounds(
+                gridMoving,
+                top,
+                right,
+                bottom,
+                left,
+                width,
+                height,
+                parentProps,
+                childElements,
+                setParentElements,
+                setGrandParentElements
+            )
             if (updated) return false
             gridCords.x2 = gridSizeX
             gridCords.x1 = gridCords.x2 - desiredSizeX
         } else {
-            return false
+            gridCords.x2 = gridSizeX
+            gridCords.x1 = gridCords.x2 - desiredSizeX
         }
     }
 

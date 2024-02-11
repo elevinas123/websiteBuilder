@@ -61,7 +61,7 @@ export default function WebsiteScreen() {
                 </div>
             </div>
             <div className="mt-20 h-2/3 w-3/4  bg-white text-black" onMouseMove={handleMousemove}>
-                <Grid level={0} id={mainGridId} />
+                <Grid level={0} childElements={[]} parentProps={{ level: -1, parentSizeX: 300, parentSizeY: 300}} id={mainGridId} />
             </div>
         </div>
     )
