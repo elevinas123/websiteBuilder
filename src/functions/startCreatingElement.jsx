@@ -2,19 +2,22 @@ import Grid from "../Grid"
 import { v4 as uuidv4 } from "uuid"
 import calculatePositionInGrid from "./calculatePositionInGrid"
 import startMovingElement from "./startMovingElement"
+import getBoundingBox from "./getBoundingBox"
 
-export default function startCreatingElement(event, parentId, allElements, setGridMoving, setAllElements) {
+export default function startCreatingElement(event, parentId, allRefs, allElements, setGridMoving, setAllElements) {
     const uuid = uuidv4()
+    const parentBoundingBox = allRefs[parentId].getBoundingClientRect()
     const parentElement = allElements[parentId]
     let parentInfo = {
-        top: parentElement.top,
-        bottom: parentElement.bottom,
-        right: parentElement.right,
-        left: parentElement.left,
+        top: parentBoundingBox.top,
+        bottom: parentBoundingBox.bottom,
+        right: parentBoundingBox.right,
+        left: parentBoundingBox.left,
         width: parentElement.width,
         height: parentElement.height,
         gridSize: parentElement.gridSize,
     }
+
     let gridCords = calculatePositionInGrid({ x1: event.clientX, y1: event.clientY, x2: event.clientX, y2: event.clientY }, parentInfo)
     const newStyle = {
         gridColumnStart: gridCords.x1 + 1,
@@ -47,6 +50,13 @@ export default function startCreatingElement(event, parentId, allElements, setGr
             children: [],
         },
     }))
-    console.log("gridCords", gridCords)
-    startMovingElement(event, parentId, uuid, 0, 0, "creating", allElements, setGridMoving)
+    const elementInfo = {
+        top: event.clientY,
+        left: event.clientX,
+        width: event.clientX,
+        bottom: event.clientY,
+        height: 0,
+        gridSize: 0,
+    }
+    startMovingElement(event, uuid, parentId, elementInfo, allRefs, "creating", allElements, setGridMoving)
 }

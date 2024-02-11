@@ -16,7 +16,7 @@ export default function WebsiteScreen() {
         const mainGridBoundingBox = getBoundingBox(mainGridRef)
         setAllElements({
             [mainId]: {
-                item: <Grid key={mainId} className="bg-red-500" id={mainId}></Grid>,
+                item: <Grid mainGrid={mainId} key={mainId} className="bg-red-500" id={mainId}></Grid>,
                 id: mainId,
                 gridSize: {
                     x: 300,
@@ -24,21 +24,14 @@ export default function WebsiteScreen() {
                 },
                 width: mainGridBoundingBox.width,
                 height: mainGridBoundingBox.height,
-                top: mainGridBoundingBox.top,
-                right: mainGridBoundingBox.right,
-                bottom: mainGridBoundingBox.bottom,
-                left: mainGridBoundingBox.left,
                 style: {},
                 parent: null,
                 children: [],
             },
         })
-        console.log(allElements)
         setMainGridId(mainId)
     }, [mainGridRef])
-    useEffect(() => {
-        console.log(allElements)
-    }, [allElements])
+
 
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
@@ -60,12 +53,10 @@ export default function WebsiteScreen() {
                     if (!i.setBox) {
                         return { ...i }
                     }
-                    console.log("from gri", i)
 
                     let x2 = e.clientX
                     let y2 = e.clientY
                     let arr = { ...i, x2, y2, setBox: false }
-                    console.log("from gris", arr)
 
                     return arr
                 })

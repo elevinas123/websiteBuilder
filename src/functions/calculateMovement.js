@@ -1,28 +1,26 @@
 import calculatePositionInGrid from "./calculatePositionInGrid"
+import getBoundingBox from "./getBoundingBox"
 import handleGridoutOfBounds from "./handleGridoutOfBounds"
 
-export default function calculateMovement(gridMoving, top, right, bottom, left, parentId, allElements, setAllElements) {
+export default function calculateMovement(gridMoving, top, right, bottom, left, parentId, allRefs, allElements, setAllElements) {
     const parentElement = allElements[parentId]
+    const parentBoundingBox = allRefs[parentId].getBoundingClientRect()
     let parentInfo = {
-        top: parentElement.top,
-        bottom: parentElement.bottom,
-        right: parentElement.right,
-        left: parentElement.left,
+        top: parentBoundingBox.top,
+        bottom: parentBoundingBox.bottom,
+        right: parentBoundingBox.right,
+        left: parentBoundingBox.left,
         width: parentElement.width,
         height: parentElement.height,
         gridSize: parentElement.gridSize,
     }
     let elementMoved = allElements[gridMoving.id]
-    console.log("element", allElements[gridMoving.id], gridMoving.id)
     let gridCords = calculatePositionInGrid({ x1: left, y1: top, x2: right, y2: bottom }, parentInfo)
-    console.log("paskuitinis", { x1: left, y1: top, x2: right, y2: bottom })
-    console.log("parentInfo", parentInfo)
-    console.log("gridCords", gridCords)
     const desiredSizeX = Math.floor((elementMoved.width / parentInfo.width) * parentInfo.gridSize.x)
     const desiredSizeY = Math.floor((elementMoved.height / parentInfo.height) * parentInfo.gridSize.y)
     if (gridCords.y1 < 0) {
         if (top - parentInfo.top < -30) {
-            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, setAllElements)
+            let updated = handleGridoutOfBounds(gridMoving, parentId, setAllElements)
             if (updated) return false
             gridCords.y1 = 0
         } else {
@@ -30,9 +28,8 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
         }
     }
     if (parentInfo.gridSize.y - gridCords.y2 < 0) {
-        console.log("bottom - parentBoundingBox.bottom > 30", top + elementMoved.height - parentInfo.bottom)
         if (top + elementMoved.height - parentInfo.bottom > 30) {
-            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, setAllElements)
+            let updated = handleGridoutOfBounds(gridMoving, parentId, setAllElements)
             if (updated) return false
             gridCords.y2 = parentInfo.gridSize.y
             gridCords.y1 = gridCords.y2 - desiredSizeY
@@ -43,7 +40,7 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
     }
     if (gridCords.x1 < 0) {
         if (left - parentInfo.left < -30) {
-            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, setAllElements)
+            let updated = handleGridoutOfBounds(gridMoving, parentId, setAllElements)
             if (updated) return false
             gridCords.x1 = 0
         } else {
@@ -52,7 +49,7 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
     }
     if (parentInfo.gridSize.x - gridCords.x2 < 0) {
         if (left + elementMoved.width - parentInfo.right > 30) {
-            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, setAllElements)
+            let updated = handleGridoutOfBounds(gridMoving, parentId, setAllElements)
             if (updated) return false
             gridCords.x2 = parentInfo.gridSize.x
             gridCords.x1 = gridCords.x2 - desiredSizeX
