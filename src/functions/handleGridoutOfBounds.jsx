@@ -14,8 +14,9 @@ export default function handleGridoutOfBounds(
     setGrandParentElements,
     level
 ) {
-    if (level === 0) {
-        return
+    console.log(level)
+    if (parentProps.level  === 0) {
+        return true
     }
     if (!setParentElements) {
         return false
@@ -61,6 +62,7 @@ export default function handleGridoutOfBounds(
 
                     <Grid
                         {...lastElement.props}
+                        parentProps={parentProps.parentProps}
                         size={{ width: width, height: height }}
                         parentRef={parentProps.parentRef}
                         parentSizeX={parentProps.parentSizeX}

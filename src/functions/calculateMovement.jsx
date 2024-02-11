@@ -25,6 +25,8 @@ export default function calculateMovement(
     let gridCords = calculatePositionInGrid({ x1: left, y1: top, x2: right, y2: bottom }, parentBoundingBox, gridSizeX, gridSizeY)
     console.log("paskuitinis", { x1: left, y1: top, x2: right, y2: bottom })
     console.log("gridCords", gridCords)
+    const desiredSizeX = Math.floor((width / parentBoundingBox.width) * gridSizeX) + 1
+    const desiredSizeY = Math.floor((height / parentBoundingBox.height) * gridSizeY) + 1
     if (gridCords.y1 < 0) {
         if (top - parentBoundingBox.top < -30) {
             let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
@@ -39,7 +41,8 @@ export default function calculateMovement(
         if (top + height - parentBoundingBox.bottom > 30) {
             let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
             if (updated) return false
-            gridCords.y1 = gridSizeY
+            gridCords.y2 = gridSizeY
+            gridCords.y1 = gridCords.y2 - desiredSizeY
         } else {
             return false
         }
@@ -48,7 +51,7 @@ export default function calculateMovement(
         if (left - parentBoundingBox.left < -30) {
             let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
             if (updated) return false
-            gridCords.y1 = gridSizeY
+            gridCords.x1 = gridSizeX
         } else {
             return false
         }
@@ -57,15 +60,15 @@ export default function calculateMovement(
         if (left + width - parentBoundingBox.right > 30) {
             let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
             if (updated) return false
-            gridCords.y1 = gridSizeY
+            gridCords.x2 = gridSizeX
+            gridCords.x1 = gridCords.x2 - desiredSizeX
         } else {
             return false
         }
     }
     
     if (gridMoving.type === "moving") {
-        const desiredSizeX = Math.floor((width / parentBoundingBox.width) * gridSizeX) + 1
-        const desiredSizeY = Math.floor((height / parentBoundingBox.height) * gridSizeY) + 1
+        
         gridCords.x2 = gridCords.x1 + desiredSizeX
         gridCords.y2 = gridCords.y1 + desiredSizeY
         

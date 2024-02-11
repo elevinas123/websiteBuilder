@@ -7,8 +7,8 @@ import handleGridMove from "./functions/handleGridMove"
 import handleGridCreation from "./functions/handleGridCreation"
 export default function Grid(props) {
     const gridRef = useRef(null)
-    const gridSizeX = 100
-    const gridSizeY = 100
+    const gridSizeX = 300
+    const gridSizeY = 300
     const [size, setSize] = useState({ width: 0, height: 0 })
     const [style, setStyle] = useState({})
     const [elements, setElements] = useState([])
@@ -109,7 +109,7 @@ export default function Grid(props) {
             ref={gridRef}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`grid h-full w-full select-none hover:border-blue-500 ${`grid-cols-100`} ${`grid-rows-100`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`grid h-full w-full select-none hover:border-blue-500 ${`grid-cols-300`} ${`grid-rows-300`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {elements}
         </div>
