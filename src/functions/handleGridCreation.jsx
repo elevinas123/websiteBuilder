@@ -1,10 +1,11 @@
+import Grid from "../Grid"
 import calculateMovement from "./calculateMovement"
 
-export default function handleGridMove(
+export default function handleGridCreation(
     gridMoving,
     elementWidth,
     elementHeight,
-    parentRef,
+    elementRef,
     elementSizeX,
     elementSizeY,
     parentProps,
@@ -14,12 +15,10 @@ export default function handleGridMove(
     setParentElements,
     setGrandParentElements
 ) {
-    let gridBoundingBox = gridMoving.gridBoundingBox
-    console.log(gridBoundingBox)
-    let top = gridMoving.y2 - gridMoving.y1 + gridBoundingBox.top
-    let bottom = gridMoving.y2 - gridMoving.y1 + gridBoundingBox.bottom
-    let left = gridMoving.x2 - gridMoving.x1 + gridBoundingBox.left
-    let right = gridMoving.x2 - gridMoving.x1 + gridBoundingBox.right
+    let top = gridMoving.y1
+    let bottom = gridMoving.y2
+    let left = gridMoving.x1
+    let right = gridMoving.x2
     const newStyle = calculateMovement(
         gridMoving,
         top,
@@ -28,7 +27,7 @@ export default function handleGridMove(
         left,
         elementWidth,
         elementHeight,
-        parentRef,
+        elementRef,
         elementSizeX,
         elementSizeY,
         parentProps,
@@ -39,7 +38,20 @@ export default function handleGridMove(
         setGridMoving((i) => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))
         return
     }
-    setStyle(newStyle)
+    setElements((prevElements) => {
+        const newElements = prevElements.slice(0, -1)
+        const lastElement = prevElements[prevElements.length - 1]
+
+        newElements.push(
+            <Grid
+                {...lastElement.props}
+                childStyle={newStyle}
+                size={{ width: right - left, height: bottom - top }}
+                key={lastElement.key || "some-unique-key"} // Adjust key as necessary
+            />
+        )
+        return newElements
+    })
     if (gridMoving.moved === true) {
         setGridMoving({ moving: false })
     }

@@ -47,13 +47,13 @@ export default function WebsiteScreen() {
                 <div>Navbar</div>
                 <div className="mt-3">
                     <button
-                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "moving" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
+                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "moving" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
                         onClick={() => setCursorType("moving")}
                     >
                         moving
                     </button>
                     <button
-                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "creating" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
+                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "creating" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
                         onClick={() => setCursorType("creating")}
                     >
                         creating

@@ -22,34 +22,10 @@ export default function Grid(props) {
         setSize(props.size)
     }, [props.size])
     useEffect(() => {
-        console.log("elements", elements)
+        console.log("elements", props.level, elements)
     }, [elements])
 
-    useEffect(() => {
-        const gridElement = gridRef.current
-        if (!gridElement) return
-
-        // Counter to keep track of observations
-        let observationCount = 0
-
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (let entry of entries) {
-                const { width, height } = entry.contentRect
-                setSize({ width, height })
-
-                observationCount += 1
-                // Unobserve after the second observation
-                if (observationCount >= 2) {
-                    resizeObserver.unobserve(gridElement)
-                }
-            }
-        })
-
-        resizeObserver.observe(gridElement)
-
-        // Cleanup function to disconnect the observer if the component unmounts early
-        return () => resizeObserver.disconnect()
-    }, []) // Empty dependency array ensures this effect runs once on mount
+    
 
     useEffect(() => {
         // Check if the props.id matches the ID of this item
@@ -71,41 +47,50 @@ export default function Grid(props) {
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && (!gridMoving.setBox || gridMoving.moved)) {
             if (gridMoving.type === "moving") {
-                console.log("sizew", size)
+                console.log("sizew", size, props.level)
                 handleGridMove(
                     gridMoving,
                     size.width,
                     size.height,
                     props.parentRef,
-                    props.parentGridSizeX,
-                    props.parentGridSizeY,
+                    props.parentSizeX,
+                    props.parentSizeY,
+                    props.parentProps,
                     setStyle,
                     setElements,
-                    setGridMoving
+                    setGridMoving,
+                    props.setParentElements,
+                    props.setGrandParentElements
                 )
             } else if (gridMoving.type === "creating") {
-                handleGridCreation(gridMoving, 0, 0, gridRef, gridSizeX, gridSizeY, setStyle, setElements, setGridMoving)
+                handleGridCreation(
+                    gridMoving,
+                    0,
+                    0,
+                    gridRef,
+                    gridSizeX,
+                    gridSizeY,
+                    props.parentProps,
+                    setStyle,
+                    setElements,
+                    setGridMoving,
+                    props.setParentElements,
+                    props.setGrandParentElements
+                )
             }
         }
     }, [gridMoving])
 
-    const unselectElement = () => {
-        if (gridChecked !== props.id) {
-            setGridChecked("")
-            return
-        }
-    }
-
     const handleMouseDown = (event) => {
         event.stopPropagation()
-
         if (cursorType === "moving" && props.level !== 0) {
+            setGridChecked(props.id)
             console.log("starting size", size)
             startMovingElement(event, gridRef, size, props.id, "moving", setGridMoving)
             return
         }
         if (cursorType == "creating") {
-            startCreatingElement(event, gridRef, gridSizeX, gridSizeY, props.level, props.id, setGridMoving, setElements)
+            startCreatingElement(event, gridRef, gridSizeX, gridSizeY, props.level, props.id, props, setGridMoving, setElements, props.setParentElements)
             return
         }
     }
@@ -124,7 +109,7 @@ export default function Grid(props) {
             ref={gridRef}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`hover:border-blue-500 grid h-full w-full select-none ${`grid-cols-100`} ${`grid-rows-100`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`grid h-full w-full select-none hover:border-blue-500 ${`grid-cols-100`} ${`grid-rows-100`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {elements}
         </div>

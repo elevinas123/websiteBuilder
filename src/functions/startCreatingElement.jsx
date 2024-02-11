@@ -4,7 +4,7 @@ import getBoundingBox from "./getBoundingBox"
 import calculatePositionInGrid from "./calculatePositionInGrid"
 import startMovingElement from "./startMovingElement"
 
-export default function startCreatingElement(event, elementRef, elementSizeX, elementSizeY, elementLevel, elementId, setGridMoving, setElements) {
+export default function startCreatingElement(event, elementRef, elementSizeX, elementSizeY, elementLevel, elementId, parentProps, setGridMoving, setElements, setParentElements) {
     const uuid = uuidv4()
     let boundingBox = getBoundingBox(elementRef)
     let gridCords = calculatePositionInGrid(
@@ -25,16 +25,19 @@ export default function startCreatingElement(event, elementRef, elementSizeX, el
     setElements((i) => [
         ...i,
         <Grid
+            parentProps={parentProps}
+            setParentElements={setElements}
+            setGrandParentElements={setParentElements}
             key={uuid}
             className="bg-red-500"
             parentRef={elementRef}
             id={uuid}
             childStyle={newStyle}
-            parentGridSizeX={elementSizeX}
-            parentGridSizeY={elementSizeY}
+            parentSizeX={elementSizeX}
+            parentSizeY={elementSizeY}
             level={elementLevel + 1}
         ></Grid>,
     ])
     console.log("gridCords", gridCords)
-    startMovingElement(event, elementRef, {height: 0, width: 0}, elementId, "creating", setGridMoving)
+    startMovingElement(event, elementRef, { height: 0, width: 0 }, elementId, "creating", setGridMoving)
 }

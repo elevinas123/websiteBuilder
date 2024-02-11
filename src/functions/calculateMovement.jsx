@@ -3,10 +3,10 @@ import React from "react"
 import calculatePositionInGrid from "./calculatePositionInGrid"
 import getBoundingBox from "./getBoundingBox"
 import Grid from "../Grid"
+import handleGridoutOfBounds from "./handleGridoutOfBounds"
 
 export default function calculateMovement(
     gridMoving,
-    setGridMoving,
     top,
     right,
     bottom,
@@ -16,25 +16,59 @@ export default function calculateMovement(
     parentRef,
     gridSizeX,
     gridSizeY,
-    setStyle,
-    setElements
+    parentProps,
+    setParentElements,
+    setGrandParentElements
 ) {
     let parentBoundingBox = getBoundingBox(parentRef)
-    console.log("right", right)
-    console.log("parentBoundingBox", parentBoundingBox)
-    console.log("paskuitinis", { x1: left, y1: top, x2: right, y2: bottom })
-    console.log("gridMoving", gridMoving)
+    
     let gridCords = calculatePositionInGrid({ x1: left, y1: top, x2: right, y2: bottom }, parentBoundingBox, gridSizeX, gridSizeY)
-    //console.log("gridCords", gridCords)
+    console.log("paskuitinis", { x1: left, y1: top, x2: right, y2: bottom })
+    console.log("gridCords", gridCords)
+    if (gridCords.y1 < 0) {
+        if (top - parentBoundingBox.top < -30) {
+            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
+            if (updated) return false
+            gridCords.y1 = 0
+        } else {
+            gridCords.y1 = 0
+        }
+    }
+    if (gridSizeY - gridCords.y2 <0) {
+        console.log("bottom - parentBoundingBox.bottom > 30", top + height - parentBoundingBox.bottom)
+        if (top + height - parentBoundingBox.bottom > 30) {
+            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
+            if (updated) return false
+            gridCords.y1 = gridSizeY
+        } else {
+            return false
+        }
+    }
+    if (gridCords.x1 < 0) {
+        if (left - parentBoundingBox.left < -30) {
+            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
+            if (updated) return false
+            gridCords.y1 = gridSizeY
+        } else {
+            return false
+        }
+    }
+    if (gridSizeX - gridCords.x2 < 0) {
+        if (left + width - parentBoundingBox.right > 30) {
+            let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
+            if (updated) return false
+            gridCords.y1 = gridSizeY
+        } else {
+            return false
+        }
+    }
+    
     if (gridMoving.type === "moving") {
         const desiredSizeX = Math.floor((width / parentBoundingBox.width) * gridSizeX) + 1
         const desiredSizeY = Math.floor((height / parentBoundingBox.height) * gridSizeY) + 1
         gridCords.x2 = gridCords.x1 + desiredSizeX
         gridCords.y2 = gridCords.y1 + desiredSizeY
-        console.log("desiredSizeX", desiredSizeX)
-        console.log("desiredSizeY", desiredSizeY)
-        console.log("width", width)
-        console.log("height", height)
+        
     }
 
     const newStyle = {
@@ -46,33 +80,5 @@ export default function calculateMovement(
         maxHeight: "100%", // Ensures content does not expand cell
         overflow: "hidden", // Prevents content from overflowing
     }
-    //console.log("style", newStyle)
-    if (gridMoving.type === "moving") {
-        setStyle(newStyle)
-    }
-    if (gridMoving.type === "creating") {
-        setElements((prevElements) => {
-            const newElements = prevElements.slice(0, -1)
-            const lastElement = prevElements[prevElements.length - 1]
-
-            newElements.push(
-                <Grid
-                    {...lastElement.props}
-                    childStyle={newStyle}
-                    size={{width: right-left, height: bottom-top}}
-                    key={lastElement.key || "some-unique-key"} // Adjust key as necessary
-                />
-            )
-            return newElements
-        })
-    }
-    console.log("style", newStyle)
-    if (gridMoving.moved === true) {
-        setGridMoving({ moving: false })
-    }
-    setGridMoving((i) => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))
-    //console.log(gridCords)
-    //console.log(gridMoving)
-    //console.log(props.id)
-    return
+    return newStyle
 }
