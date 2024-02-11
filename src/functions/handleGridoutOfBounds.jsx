@@ -15,7 +15,7 @@ export default function handleGridoutOfBounds(
     level
 ) {
     console.log(level)
-    if (parentProps.level  === 0) {
+    if (parentProps.level === 0) {
         return true
     }
     if (!setParentElements) {
@@ -24,8 +24,6 @@ export default function handleGridoutOfBounds(
     if (!setGrandParentElements) {
         return false
     }
-
-    let lastElement
 
     setParentElements((prevElements) => {
         const existingElementIndex = prevElements.findIndex((element) => element.props.id === gridMoving.id)

@@ -1,8 +1,5 @@
-// eslint-disable-next-line no-unused-vars
-import React from "react"
 import calculatePositionInGrid from "./calculatePositionInGrid"
 import getBoundingBox from "./getBoundingBox"
-import Grid from "../Grid"
 import handleGridoutOfBounds from "./handleGridoutOfBounds"
 
 export default function calculateMovement(
@@ -21,7 +18,7 @@ export default function calculateMovement(
     setGrandParentElements
 ) {
     let parentBoundingBox = getBoundingBox(parentRef)
-    
+
     let gridCords = calculatePositionInGrid({ x1: left, y1: top, x2: right, y2: bottom }, parentBoundingBox, gridSizeX, gridSizeY)
     console.log("paskuitinis", { x1: left, y1: top, x2: right, y2: bottom })
     console.log("gridCords", gridCords)
@@ -36,7 +33,7 @@ export default function calculateMovement(
             gridCords.y1 = 0
         }
     }
-    if (gridSizeY - gridCords.y2 <0) {
+    if (gridSizeY - gridCords.y2 < 0) {
         console.log("bottom - parentBoundingBox.bottom > 30", top + height - parentBoundingBox.bottom)
         if (top + height - parentBoundingBox.bottom > 30) {
             let updated = handleGridoutOfBounds(gridMoving, top, right, bottom, left, width, height, parentProps, setParentElements, setGrandParentElements)
@@ -66,12 +63,10 @@ export default function calculateMovement(
             return false
         }
     }
-    
+
     if (gridMoving.type === "moving") {
-        
         gridCords.x2 = gridCords.x1 + desiredSizeX
         gridCords.y2 = gridCords.y1 + desiredSizeY
-        
     }
 
     const newStyle = {

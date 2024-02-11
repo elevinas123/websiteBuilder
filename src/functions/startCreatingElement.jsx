@@ -4,7 +4,18 @@ import getBoundingBox from "./getBoundingBox"
 import calculatePositionInGrid from "./calculatePositionInGrid"
 import startMovingElement from "./startMovingElement"
 
-export default function startCreatingElement(event, elementRef, elementSizeX, elementSizeY, elementLevel, elementId, parentProps, setGridMoving, setElements, setParentElements) {
+export default function startCreatingElement(
+    event,
+    elementRef,
+    elementSizeX,
+    elementSizeY,
+    elementLevel,
+    elementId,
+    parentProps,
+    setGridMoving,
+    setElements,
+    setParentElements
+) {
     const uuid = uuidv4()
     let boundingBox = getBoundingBox(elementRef)
     let gridCords = calculatePositionInGrid(

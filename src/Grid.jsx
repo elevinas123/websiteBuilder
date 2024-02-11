@@ -25,8 +25,6 @@ export default function Grid(props) {
         console.log("elements", props.level, elements)
     }, [elements])
 
-    
-
     useEffect(() => {
         // Check if the props.id matches the ID of this item
 
