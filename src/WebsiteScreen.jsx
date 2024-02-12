@@ -36,6 +36,7 @@ export default function WebsiteScreen() {
         if (gridMoving.moving) {
             if (gridMoving.type === "moving") {
                 setGridMoving((i) => {
+                    if (i.moved) return {...i}
                     if (!i.setBox) {
                         return { ...i }
                     }
@@ -49,6 +50,7 @@ export default function WebsiteScreen() {
             }
             if (gridMoving.type === "creating" || gridMoving.type === "resizing") {
                 setGridMoving((i) => {
+                    if (i.moved) return {...i}
                     if (!i.setBox) {
                         return { ...i }
                     }
