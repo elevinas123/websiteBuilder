@@ -1,6 +1,12 @@
-import calculateMovement from "./calculateMovement"
+import Grid from "../Grid"
+import { v4 as uuidv4 } from "uuid"
+import calculatePositionInGrid from "./calculatePositionInGrid"
+import startMovingElement from "./startMovingElement"
+import getBoundingBox from "./getBoundingBox"
 import { produce } from "immer"
-export default function handleGridCreation(gridMoving, parentId, allRefs, allElements, setAllElements, setGridMoving) {
+import calculateMovement from "./calculateMovement"
+
+export default function handleElementResize(gridMoving, parentId, allRefs, allElements, setAllElements, setGridMoving) {
     let top = gridMoving.y1
     let bottom = gridMoving.y2
     let left = gridMoving.x1

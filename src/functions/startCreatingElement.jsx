@@ -26,7 +26,7 @@ export default function startCreatingElement(event, parentId, allRefs, allElemen
         gridRowEnd: gridCords.y2 + 2,
         maxWidth: "100%", // Ensures content does not expand cell
         maxHeight: "100%", // Ensures content does not expand cell
-        overflow: "hidden", // Prevents content from overflowing
+        
     }
 
     setAllElements((elements) => ({
@@ -36,8 +36,8 @@ export default function startCreatingElement(event, parentId, allRefs, allElemen
             item: <Grid key={uuid} className="bg-red-500" id={uuid} childStyle={newStyle}></Grid>,
             id: uuid,
             gridSize: {
-                x: 300,
-                y: 300,
+                x: 1000,
+                y: 1000,
             },
             width: 1,
             height: 1,

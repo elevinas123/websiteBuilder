@@ -9,13 +9,7 @@ export default function handleGridMove(gridMoving, parentId, allRefs, allElement
     const newStyle = calculateMovement(gridMoving, top, right, bottom, left, parentId, allRefs, allElements, setAllElements)
     if (!newStyle) {
         setGridMoving((i) => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))
-        setAllElements((currentState) =>
-            produce(currentState, (draft) => {
-                if (draft[gridMoving.id]) {
-                    draft[gridMoving.id].style = newStyle
-                }
-            })
-        )
+
         return
     }
     if (gridMoving.moved === true) {

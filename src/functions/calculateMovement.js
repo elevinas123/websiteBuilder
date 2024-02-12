@@ -18,9 +18,13 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
     let gridCords = calculatePositionInGrid({ x1: left, y1: top, x2: right, y2: bottom }, parentInfo)
     const desiredSizeX = Math.floor((elementMoved.width / parentInfo.width) * parentInfo.gridSize.x)
     const desiredSizeY = Math.floor((elementMoved.height / parentInfo.height) * parentInfo.gridSize.y)
+    console.log(desiredSizeX)
+    console.log(desiredSizeY)
+    console.log(parentInfo)
+    console.log(elementMoved)
     if (gridCords.y1 < 0) {
         if (top - parentInfo.top < -30) {
-            let updated = handleGridoutOfBounds(gridMoving, parentId, setAllElements)
+            let updated = handleGridoutOfBounds(gridMoving, parentId, allRefs, allElements, setAllElements)
             if (updated) return false
             gridCords.y1 = 0
         } else {
@@ -29,7 +33,7 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
     }
     if (parentInfo.gridSize.y - gridCords.y2 < 0) {
         if (top + elementMoved.height - parentInfo.bottom > 30) {
-            let updated = handleGridoutOfBounds(gridMoving, parentId, setAllElements)
+            let updated = handleGridoutOfBounds(gridMoving, parentId, allRefs, allElements, setAllElements)
             if (updated) return false
             gridCords.y2 = parentInfo.gridSize.y
             gridCords.y1 = gridCords.y2 - desiredSizeY
@@ -40,7 +44,7 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
     }
     if (gridCords.x1 < 0) {
         if (left - parentInfo.left < -30) {
-            let updated = handleGridoutOfBounds(gridMoving, parentId, setAllElements)
+            let updated = handleGridoutOfBounds(gridMoving, parentId, allRefs, allElements, setAllElements)
             if (updated) return false
             gridCords.x1 = 0
         } else {
@@ -49,7 +53,8 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
     }
     if (parentInfo.gridSize.x - gridCords.x2 < 0) {
         if (left + elementMoved.width - parentInfo.right > 30) {
-            let updated = handleGridoutOfBounds(gridMoving, parentId, setAllElements)
+            let updated = handleGridoutOfBounds(gridMoving, parentId, allRefs, allElements, setAllElements)
+
             if (updated) return false
             gridCords.x2 = parentInfo.gridSize.x
             gridCords.x1 = gridCords.x2 - desiredSizeX
@@ -71,7 +76,7 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
         gridRowEnd: gridCords.y2 + 2,
         maxWidth: "100%", // Ensures content does not expand cell
         maxHeight: "100%", // Ensures content does not expand cell
-        overflow: "hidden", // Prevents content from overflowing
+        
     }
     return newStyle
 }

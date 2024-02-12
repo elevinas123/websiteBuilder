@@ -1,8 +1,27 @@
 import { produce } from "immer"
+import calculateMovement from "./calculateMovement"
 
-export default function handleGridoutOfBounds(gridMoving, parentId, setAllElements) {
+export default function handleGridoutOfBounds(gridMoving, parentId, allRefs, allElements, setAllElements) {
     console.log(gridMoving, parentId, setAllElements)
-
+    const grandFatherId = allElements[parentId].parent
+    const elementBoundingBox = allRefs[gridMoving.id].getBoundingClientRect()
+    let elementInfo = {
+        top: elementBoundingBox.top,
+        bottom: elementBoundingBox.bottom,
+        right: elementBoundingBox.right,
+        left: elementBoundingBox.left,
+    }
+    const newStyle = calculateMovement(
+        gridMoving,
+        elementInfo.top,
+        elementInfo.right,
+        elementInfo.bottom,
+        elementInfo.left,
+        grandFatherId,
+        allRefs, // Assuming this is correctly managed elsewhere to provide necessary references
+        allElements,
+        setAllElements // Be cautious with passing set functions into other functions; ensure this is necessary and handled properly
+    )
     setAllElements((currentElements) =>
         produce(currentElements, (draft) => {
             // Filter out the moving element from its current parent's children
@@ -17,8 +36,12 @@ export default function handleGridoutOfBounds(gridMoving, parentId, setAllElemen
                 draft[newParentId].children.push(gridMoving.id)
             }
 
-            // Update the moving element's parent property
+            // Calculate new style for the moving element
+            
+
+            // Update the moving element's parent property and style
             draft[gridMoving.id].parent = newParentId
+            draft[gridMoving.id].style = newStyle
         })
     )
 }

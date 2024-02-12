@@ -19,8 +19,8 @@ export default function WebsiteScreen() {
                 item: <Grid mainGrid={mainId} key={mainId} className="bg-red-500" id={mainId}></Grid>,
                 id: mainId,
                 gridSize: {
-                    x: 300,
-                    y: 300,
+                    x: 1000,
+                    y: 1000,
                 },
                 width: mainGridBoundingBox.width,
                 height: mainGridBoundingBox.height,
@@ -48,7 +48,7 @@ export default function WebsiteScreen() {
                 })
                 return
             }
-            if (gridMoving.type === "creating") {
+            if (gridMoving.type === "creating" || gridMoving.type === "resizing") {
                 setGridMoving((i) => {
                     if (!i.setBox) {
                         return { ...i }
@@ -70,13 +70,13 @@ export default function WebsiteScreen() {
                 <div>Navbar</div>
                 <div className="mt-3">
                     <button
-                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "moving" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
+                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "moving" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
                         onClick={() => setCursorType("moving")}
                     >
                         moving
                     </button>
                     <button
-                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "creating" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
+                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "creating" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
                         onClick={() => setCursorType("creating")}
                     >
                         creating
