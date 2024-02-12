@@ -17,6 +17,11 @@ export default function Grid(props) {
     const [allElements, setAllElements] = useAtom(allElementsAtom)
     const [allRefs, setAllRefs] = useAtom(allRefsAtom)
     const [style, setStyle] = useState(false)
+    const selecteCursorType = {
+        moving: "cursor-move",
+        resizing: "cursor-ne-resize",
+        creating: "cursor-default",
+    }
 
     useEffect(() => {
         setAllRefs((prevRefs) => ({
@@ -98,7 +103,7 @@ export default function Grid(props) {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative grid h-full w-full select-none  ${`grid-cols-1000`} ${`grid-rows-1000`} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`relative grid h-full w-full select-none  ${`grid-cols-1000`} ${`grid-rows-1000`} ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {allElements[props.id].children.length > 0 && allElements[props.id].children.map((i) => allElements[i].item)}
             {gridChecked === props.id && !props.mainGrid ? (
