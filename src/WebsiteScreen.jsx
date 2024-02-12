@@ -34,9 +34,10 @@ export default function WebsiteScreen() {
 
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
+            console.log(gridMoving.type)
             if (gridMoving.type === "moving") {
                 setGridMoving((i) => {
-                    if (i.moved) return {...i}
+                    if (i.moved) return { ...i }
                     if (!i.setBox) {
                         return { ...i }
                     }
@@ -50,7 +51,7 @@ export default function WebsiteScreen() {
             }
             if (gridMoving.type === "creating" || gridMoving.type === "resizing") {
                 setGridMoving((i) => {
-                    if (i.moved) return {...i}
+                    if (i.moved) return { ...i }
                     if (!i.setBox) {
                         return { ...i }
                     }
@@ -58,6 +59,31 @@ export default function WebsiteScreen() {
                     let x2 = e.clientX
                     let y2 = e.clientY
                     let arr = { ...i, x2, y2, setBox: false }
+
+                    return arr
+                })
+            }
+            if (gridMoving.type === "resizingH") {
+                setGridMoving((i) => {
+                    if (i.moved) return { ...i }
+                    if (!i.setBox) {
+                        return { ...i }
+                    }
+                    let y2 = e.clientY
+                    let arr = { ...i, y2, setBox: false }
+
+                    return arr
+                })
+            }
+            if (gridMoving.type === "resizingW") {
+                setGridMoving((i) => {
+                    if (i.moved) return { ...i }
+                    if (!i.setBox) {
+                        return { ...i }
+                    }
+
+                    let x2 = e.clientX
+                    let arr = { ...i, x2, setBox: false }
 
                     return arr
                 })

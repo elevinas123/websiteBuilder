@@ -20,6 +20,8 @@ export default function Grid(props) {
     const selecteCursorType = {
         moving: "cursor-move",
         resizing: "cursor-ne-resize",
+        resizingH: "cursor-n-resize",
+        resizingT: "cursor-s-resize",
         creating: "cursor-default",
     }
 
@@ -45,7 +47,7 @@ export default function Grid(props) {
                 handleGridMove(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving)
             } else if (gridMoving.type === "creating") {
                 handleGridCreation(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving)
-            } else if (gridMoving.type === "resizing") {
+            } else if (gridMoving.type === "resizing" || gridMoving.type == "resizingW" || gridMoving.type === "resizingH") {
                 handleElementResize(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving)
             }
         }
@@ -85,6 +87,13 @@ export default function Grid(props) {
         const element = allElements[props.id]
         const elementBoundingBox = getBoundingBox(allRefs[props.id])
         const position = event.target.id
+        let cType = "resizing"
+        if (position == 5 || position == 7) {
+            cType = "resizingH"
+        } else if (position == 6 || position == 8) {
+            cType = "resizingW"
+        }
+        console.log("asdasdasd", position)
         let elementInfo = {
             top: elementBoundingBox.top,
             bottom: elementBoundingBox.bottom,
@@ -94,7 +103,7 @@ export default function Grid(props) {
             height: element.height,
             gridSize: element.gridSize,
         }
-        startResizingElement(event, props.id, props.id, elementInfo, allRefs, "resizing", position, setGridMoving)
+        startResizingElement(event, props.id, props.id, elementInfo, allRefs, cType, position, setGridMoving)
     }
 
     return (
@@ -109,23 +118,43 @@ export default function Grid(props) {
             {gridChecked === props.id && !props.mainGrid ? (
                 <div className="absolute h-full w-full bg-blue-300 opacity-65">
                     <div
-                        className=" absolute -left-1 -top-1 z-50 h-2 w-2 cursor-nesw-resize border border-red-500 bg-white opacity-100 "
+                        className=" absolute -left-1 -top-1 z-50 h-2 w-2 cursor-nw-resize border border-red-500 bg-white opacity-100 "
                         id={1}
                         onMouseDown={handleResizeMouseDown}
                     ></div>
                     <div
-                        className="absolute -right-1 -top-1 z-50 h-2 w-2 cursor-nesw-resize border border-red-500 bg-white opacity-100 "
+                        className="absolute -right-1 -top-1 z-50 h-2 w-2 cursor-ne-resize border border-red-500 bg-white opacity-100 "
                         id={2}
                         onMouseDown={handleResizeMouseDown}
                     ></div>
                     <div
-                        className="absolute -bottom-1 -right-1 z-50 h-2 w-2 cursor-nesw-resize border border-red-500 bg-white opacity-100 "
+                        className="absolute -bottom-1 -right-1 z-50 h-2 w-2 cursor-se-resize border border-red-500 bg-white opacity-100 "
                         id={3}
                         onMouseDown={handleResizeMouseDown}
                     ></div>
                     <div
-                        className="absolute -bottom-1 -left-1 z-50 h-2 w-2 cursor-nesw-resize border border-red-500 bg-white opacity-100 "
+                        className="absolute -bottom-1 -left-1 z-50 h-2 w-2 cursor-sw-resize border border-red-500 bg-white opacity-100 "
                         id={4}
+                        onMouseDown={handleResizeMouseDown}
+                    ></div>
+                    <div
+                        className="absolute left-1/2 top-0 z-50 h-2 w-2 -translate-x-1/2 -translate-y-1 transform cursor-n-resize border border-red-500 bg-white opacity-100"
+                        id={5}
+                        onMouseDown={handleResizeMouseDown}
+                    ></div>
+                    <div
+                        className="absolute right-0 top-1/2 z-50 h-2 w-2 -translate-x-1 -translate-y-1/2 transform cursor-e-resize border border-red-500 bg-white opacity-100"
+                        id={6}
+                        onMouseDown={handleResizeMouseDown}
+                    ></div>
+                    <div
+                        className="absolute bottom-0 left-1/2 z-50 h-2 w-2 -translate-x-1/2 -translate-y-1 transform cursor-s-resize border border-red-500 bg-white opacity-100"
+                        id={7}
+                        onMouseDown={handleResizeMouseDown}
+                    ></div>
+                    <div
+                        className="absolute left-0 top-1/2 z-50 h-2 w-2 -translate-x-1 -translate-y-1/2 transform cursor-w-resize border border-red-500 bg-white opacity-100"
+                        id={8}
                         onMouseDown={handleResizeMouseDown}
                     ></div>
                 </div>
