@@ -1,11 +1,13 @@
 import calculateMovement from "./calculateMovement"
 import { produce } from "immer"
 export default function handleGridMove(gridMoving, parentId, allRefs, allElements, setAllElements, setGridMoving) {
+    const difY = gridMoving.y2 - gridMoving.y1
+    const difX = gridMoving.x2 - gridMoving.x1
     let gridBoundingBox = gridMoving.gridBoundingBox
-    let top = gridMoving.y2 - gridMoving.y1 + gridBoundingBox.top
-    let bottom = gridMoving.y2 - gridMoving.y1 + gridBoundingBox.bottom
-    let left = gridMoving.x2 - gridMoving.x1 + gridBoundingBox.left
-    let right = gridMoving.x2 - gridMoving.x1 + gridBoundingBox.right
+    let top = difY + gridBoundingBox.top
+    let bottom = difY + gridBoundingBox.bottom
+    let left = difX + gridBoundingBox.left
+    let right = difX + gridBoundingBox.right
     const newStyle = calculateMovement(gridMoving, top, right, bottom, left, parentId, allRefs, allElements, setAllElements)
     if (!newStyle) {
         setGridMoving((i) => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))
@@ -33,4 +35,6 @@ export default function handleGridMove(gridMoving, parentId, allRefs, allElement
             }
         })
     )
+    
+
 }

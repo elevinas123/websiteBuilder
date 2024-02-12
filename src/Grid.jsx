@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useAtom } from "jotai"
-import { allElementsAtom, allRefsAtom, cursorTypeAtom, gridCheckedAtom, gridMovingAtom } from "./atoms"
+import { allElementsAtom, allRefsAtom, cursorTypeAtom, elementPositionsAtom, gridCheckedAtom, gridMovingAtom } from "./atoms"
 import startMovingElement from "./functions/startMovingElement"
 import startCreatingElement from "./functions/startCreatingElement"
 import handleGridMove from "./functions/handleGridMove"
@@ -16,9 +16,10 @@ export default function Grid(props) {
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
     const [allElements, setAllElements] = useAtom(allElementsAtom)
     const [allRefs, setAllRefs] = useAtom(allRefsAtom)
-    const [style, setStyle] = useState(false)
+    const [elementPositions, setElementPostions] = useAtom(elementPositionsAtom)
+
     const selecteCursorType = {
-        moving: "cursor-move",
+        moving: "cursor-default",
         resizing: "cursor-ne-resize",
         resizingH: "cursor-n-resize",
         resizingT: "cursor-s-resize",
@@ -26,11 +27,21 @@ export default function Grid(props) {
     }
 
     useEffect(() => {
+        if (!gridRef.current) return
+        let childrenIds = allElements[props.id].children.map((id) => ({ [id]: getBoundingBox(allRefs(id)) }))
+        setElementPostions((i) => ({ ...i, ...childrenIds }))
+        console.log(elementPositions)
+    }, [props.id, elementPositions[props.id], gridRef, setElementPostions, allElements[props.id]])
+
+    useEffect(() => {
+        if (!gridRef.current) return
+        const elementBoundingBox = getBoundingBox(gridRef)
+        setElementPostions((i) => ({ ...i, [props.id]: elementBoundingBox }))
         setAllRefs((prevRefs) => ({
             ...prevRefs,
             [props.id]: gridRef.current,
         }))
-    }, [props.id, setAllRefs])
+    }, [props.id, setAllRefs, gridRef, setElementPostions])
 
     useEffect(() => {
         // Check if the props.id matches the ID of this item
@@ -55,6 +66,9 @@ export default function Grid(props) {
 
     const handleMouseDown = (event) => {
         event.stopPropagation()
+        if (gridMoving.id !== props.id) {
+            setGridChecked("")
+        }
         if (cursorType === "moving" && !props.mainGrid) {
             setGridChecked(props.id)
             const element = allElements[props.id]
@@ -72,6 +86,7 @@ export default function Grid(props) {
             return
         }
         if (cursorType == "creating") {
+            setGridChecked(props.id)
             startCreatingElement(event, props.id, allRefs, allElements, setGridMoving, setAllElements)
             return
         }
@@ -84,6 +99,9 @@ export default function Grid(props) {
     }
     const handleResizeMouseDown = (event) => {
         event.stopPropagation()
+        if (gridMoving.id !== props.id) {
+            setGridChecked("")
+        }
         const element = allElements[props.id]
         const elementBoundingBox = getBoundingBox(allRefs[props.id])
         const position = event.target.id
@@ -93,7 +111,6 @@ export default function Grid(props) {
         } else if (position == 6 || position == 8) {
             cType = "resizingW"
         }
-        console.log("asdasdasd", position)
         let elementInfo = {
             top: elementBoundingBox.top,
             bottom: elementBoundingBox.bottom,
@@ -112,11 +129,11 @@ export default function Grid(props) {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative grid h-full w-full select-none  ${`grid-cols-1000`} ${`grid-rows-1000`} ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`relative z-10 grid h-full w-full select-none  ${`grid-cols-1000`} ${`grid-rows-1000`} ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {allElements[props.id].children.length > 0 && allElements[props.id].children.map((i) => allElements[i].item)}
             {gridChecked === props.id && !props.mainGrid ? (
-                <div className="absolute h-full w-full bg-blue-300 opacity-65">
+                <div className="absolute h-full w-full ">
                     <div
                         className=" absolute -left-1 -top-1 z-50 h-2 w-2 cursor-nw-resize border border-red-500 bg-white opacity-100 "
                         id={1}
@@ -137,26 +154,10 @@ export default function Grid(props) {
                         id={4}
                         onMouseDown={handleResizeMouseDown}
                     ></div>
-                    <div
-                        className="absolute left-1/2 top-0 z-50 h-2 w-2 -translate-x-1/2 -translate-y-1 transform cursor-n-resize border border-red-500 bg-white opacity-100"
-                        id={5}
-                        onMouseDown={handleResizeMouseDown}
-                    ></div>
-                    <div
-                        className="absolute right-0 top-1/2 z-50 h-2 w-2 -translate-x-1 -translate-y-1/2 transform cursor-e-resize border border-red-500 bg-white opacity-100"
-                        id={6}
-                        onMouseDown={handleResizeMouseDown}
-                    ></div>
-                    <div
-                        className="absolute bottom-0 left-1/2 z-50 h-2 w-2 -translate-x-1/2 -translate-y-1 transform cursor-s-resize border border-red-500 bg-white opacity-100"
-                        id={7}
-                        onMouseDown={handleResizeMouseDown}
-                    ></div>
-                    <div
-                        className="absolute left-0 top-1/2 z-50 h-2 w-2 -translate-x-1 -translate-y-1/2 transform cursor-w-resize border border-red-500 bg-white opacity-100"
-                        id={8}
-                        onMouseDown={handleResizeMouseDown}
-                    ></div>
+                    <div className="absolute -top-0.5 left-0 right-0 h-1 cursor-n-resize bg-blue-400" id="5" onMouseDown={handleResizeMouseDown}></div>
+                    <div className="absolute -right-0.5 bottom-0 top-0 z-10 w-1 cursor-e-resize bg-blue-400" id="6" onMouseDown={handleResizeMouseDown}></div>
+                    <div className="absolute -bottom-0.5 left-0 right-0 z-10 h-1 cursor-s-resize  bg-blue-400" id="7" onMouseDown={handleResizeMouseDown}></div>
+                    <div className="absolute -left-0.5 bottom-0 top-0 z-10 w-1  cursor-w-resize bg-blue-400" id="8" onMouseDown={handleResizeMouseDown}></div>
                 </div>
             ) : (
                 ""

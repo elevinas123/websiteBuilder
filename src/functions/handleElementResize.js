@@ -6,7 +6,6 @@ export default function handleElementResize(gridMoving, parentId, allRefs, allEl
     let bottom = gridMoving.y2
     let left = gridMoving.x1
     let right = gridMoving.x2
-    console.log(top, bottom, left, right    )
     const newStyle = calculateMovement(gridMoving, top, right, bottom, left, parentId, allRefs, allElements, setAllElements)
     if (!newStyle) {
         setGridMoving((i) => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))

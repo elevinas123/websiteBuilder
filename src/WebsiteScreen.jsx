@@ -34,7 +34,6 @@ export default function WebsiteScreen() {
 
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
-            console.log(gridMoving.type)
             if (gridMoving.type === "moving") {
                 setGridMoving((i) => {
                     if (i.moved) return { ...i }

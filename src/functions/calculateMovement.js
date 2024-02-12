@@ -17,10 +17,6 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
     let gridCords = calculatePositionInGrid({ x1: left, y1: top, x2: right, y2: bottom }, parentInfo)
     const desiredSizeX = Math.floor((elementMoved.width / parentInfo.width) * parentInfo.gridSize.x)
     const desiredSizeY = Math.floor((elementMoved.height / parentInfo.height) * parentInfo.gridSize.y)
-    console.log(desiredSizeX)
-    console.log(desiredSizeY)
-    console.log(parentInfo)
-    console.log(elementMoved)
     if (gridCords.y1 < 0) {
         if (top - parentInfo.top < -30) {
             let updated = handleGridoutOfBounds(gridMoving, parentId, allRefs, allElements, setAllElements)
