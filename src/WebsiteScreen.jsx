@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid"
 import { useAtom } from "jotai"
 import { allElementsAtom, cursorTypeAtom, gridMovingAtom } from "./atoms"
 import getBoundingBox from "./functions/getBoundingBox"
+import ItemInfoScreen from "./ItemInfoScreen"
 export default function WebsiteScreen() {
     const [mainGridId, setMainGridId] = useState("")
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
@@ -91,27 +92,30 @@ export default function WebsiteScreen() {
     }
 
     return (
-        <div className="ml-20 mt-2 flex h-full w-full flex-col text-black">
-            <div className=" flex h-32 flex-col bg-zinc-200">
-                <div>Navbar</div>
-                <div className="mt-3">
-                    <button
-                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "moving" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
-                        onClick={() => setCursorType("moving")}
-                    >
-                        moving
-                    </button>
-                    <button
-                        className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "creating" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
-                        onClick={() => setCursorType("creating")}
-                    >
-                        creating
-                    </button>
+        <div className="flex flex-row w-full h-full">
+            <div className="ml-20 mt-2 flex h-full w-full flex-col text-black">
+                <div className=" flex h-32 flex-col bg-zinc-200">
+                    <div>Navbar</div>
+                    <div className="mt-3">
+                        <button
+                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "moving" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
+                            onClick={() => setCursorType("moving")}
+                        >
+                            moving
+                        </button>
+                        <button
+                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "creating" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
+                            onClick={() => setCursorType("creating")}
+                        >
+                            creating
+                        </button>
+                    </div>
+                </div>
+                <div ref={mainGridRef} className="mt-20 h-2/3 w-3/4  bg-white text-black" onMouseMove={handleMousemove}>
+                    {mainGridId && allElements[mainGridId].item}
                 </div>
             </div>
-            <div ref={mainGridRef} className="mt-20 h-2/3 w-3/4  bg-white text-black" onMouseMove={handleMousemove}>
-                {mainGridId && allElements[mainGridId].item}
-            </div>
+            <ItemInfoScreen />
         </div>
     )
 }

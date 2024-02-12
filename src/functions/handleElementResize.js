@@ -1,7 +1,7 @@
 import { produce } from "immer"
 import calculateMovement from "./calculateMovement"
 
-export default function handleElementResize(gridMoving, parentId, allRefs, allElements, setAllElements, setGridMoving) {
+export default function handleElementResize(gridMoving, parentId, allRefs, allElements, setAllElements, setGridMoving, setElementUpdated) {
     let top = gridMoving.y1
     let bottom = gridMoving.y2
     let left = gridMoving.x1
@@ -24,6 +24,7 @@ export default function handleElementResize(gridMoving, parentId, allRefs, allEl
     )
 
     if (gridMoving.moved === true) {
+        setElementUpdated(gridMoving.id)
         setGridMoving({ moving: false })
     }
     setGridMoving((i) => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))

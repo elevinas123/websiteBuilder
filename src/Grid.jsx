@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useAtom } from "jotai"
-import { allElementsAtom, allRefsAtom, cursorTypeAtom, elementPositionsAtom, gridCheckedAtom, gridMovingAtom } from "./atoms"
+import { allElementsAtom, allRefsAtom, cursorTypeAtom, elementPositionsAtom, elementUpdatedAtom, gridCheckedAtom, gridMovingAtom } from "./atoms"
 import startMovingElement from "./functions/startMovingElement"
 import startCreatingElement from "./functions/startCreatingElement"
 import handleGridMove from "./functions/handleGridMove"
@@ -16,8 +16,8 @@ export default function Grid(props) {
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
     const [allElements, setAllElements] = useAtom(allElementsAtom)
     const [allRefs, setAllRefs] = useAtom(allRefsAtom)
-    const [elementPositions, setElementPostions] = useAtom(elementPositionsAtom)
-
+    const [elementPositions, setElementPositions] = useAtom(elementPositionsAtom)
+    const [elementUpdated, setElementUpdated] = useAtom(elementUpdatedAtom)
     const selecteCursorType = {
         moving: "cursor-default",
         resizing: "cursor-ne-resize",
@@ -28,20 +28,48 @@ export default function Grid(props) {
 
     useEffect(() => {
         if (!gridRef.current) return
-        let childrenIds = allElements[props.id].children.map((id) => ({ [id]: getBoundingBox(allRefs(id)) }))
-        setElementPostions((i) => ({ ...i, ...childrenIds }))
-        console.log(elementPositions)
-    }, [props.id, elementPositions[props.id], gridRef, setElementPostions, allElements[props.id]])
-
-    useEffect(() => {
-        if (!gridRef.current) return
         const elementBoundingBox = getBoundingBox(gridRef)
-        setElementPostions((i) => ({ ...i, [props.id]: elementBoundingBox }))
+        setElementPositions((i) => ({ ...i, [props.id]: elementBoundingBox }))
         setAllRefs((prevRefs) => ({
             ...prevRefs,
             [props.id]: gridRef.current,
         }))
-    }, [props.id, setAllRefs, gridRef, setElementPostions])
+    }, [props.id, setAllRefs, gridRef, setElementPositions])
+
+    useEffect(() => {
+        console.log("hi")
+        if (!gridRef.current) return
+        if (elementUpdated !== props.id) return
+        console.log("labas")
+        setElementPositions((currentPositions) => ({
+             ...currentPositions,
+             [props.id]: getBoundingBox(gridRef)
+         }))
+        setElementUpdated("")
+    }, [elementUpdated, gridRef])
+
+    useEffect(() => {
+        // Initialize an object for child IDs and their bounding boxes
+        let childrenPositions = {}
+        allElements[props.id].children.forEach((id) => {
+            // Assuming allRefs is a map or object where you can access refs by ID
+            if (id in allRefs) {
+                const ref = allRefs[id] // This needs adjustment based on how you actually access refs
+                childrenPositions[id] = ref.getBoundingClientRect()
+            }
+        })
+        // Check if the element's ID exists in elementPositions
+        // Note: Using `in` operator for checking property existence in an object
+
+
+        // Merge the childrenPositions into the existing elementPositions state
+        setElementPositions((currentPositions) => ({
+            ...currentPositions,
+            ...childrenPositions,
+        }))
+
+        console.log(elementPositions) // This will log the stale state due to closure
+    }, [elementPositions[props.id]]) // Removed elementPositions[props.id] due to potential ESLint error
 
     useEffect(() => {
         // Check if the props.id matches the ID of this item
@@ -55,11 +83,11 @@ export default function Grid(props) {
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
-                handleGridMove(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving)
+                handleGridMove(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving, setElementUpdated)
             } else if (gridMoving.type === "creating") {
-                handleGridCreation(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving)
+                handleGridCreation(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving, setElementUpdated)
             } else if (gridMoving.type === "resizing" || gridMoving.type == "resizingW" || gridMoving.type === "resizingH") {
-                handleElementResize(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving)
+                handleElementResize(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving, setElementUpdated)
             }
         }
     }, [gridMoving])
