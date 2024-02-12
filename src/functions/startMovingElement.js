@@ -1,4 +1,3 @@
-import getBoundingBox from "./getBoundingBox"
 export default function startMovingElement(event, elementId, parentId, elementInfo, allRefs, type, allElements, setGridMoving) {
     const elementBoundingBox = allRefs[parentId].getBoundingClientRect()
     setGridMoving({

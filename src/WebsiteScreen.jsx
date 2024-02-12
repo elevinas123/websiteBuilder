@@ -32,7 +32,6 @@ export default function WebsiteScreen() {
         setMainGridId(mainId)
     }, [mainGridRef])
 
-
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
             if (gridMoving.type === "moving") {

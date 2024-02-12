@@ -21,7 +21,7 @@ export default function handleGridMove(gridMoving, parentId, allRefs, allElement
                 }
             })
         )
-        
+
         return
     }
 

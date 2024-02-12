@@ -2,7 +2,6 @@ import Grid from "../Grid"
 import { v4 as uuidv4 } from "uuid"
 import calculatePositionInGrid from "./calculatePositionInGrid"
 import startMovingElement from "./startMovingElement"
-import getBoundingBox from "./getBoundingBox"
 
 export default function startCreatingElement(event, parentId, allRefs, allElements, setGridMoving, setAllElements) {
     const uuid = uuidv4()
@@ -26,7 +25,6 @@ export default function startCreatingElement(event, parentId, allRefs, allElemen
         gridRowEnd: gridCords.y2 + 2,
         maxWidth: "100%", // Ensures content does not expand cell
         maxHeight: "100%", // Ensures content does not expand cell
-        
     }
 
     setAllElements((elements) => ({

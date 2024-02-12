@@ -1,8 +1,3 @@
-import Grid from "../Grid"
-import { v4 as uuidv4 } from "uuid"
-import calculatePositionInGrid from "./calculatePositionInGrid"
-import startMovingElement from "./startMovingElement"
-import getBoundingBox from "./getBoundingBox"
 import { produce } from "immer"
 import calculateMovement from "./calculateMovement"
 

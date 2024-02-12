@@ -1,5 +1,4 @@
 import calculatePositionInGrid from "./calculatePositionInGrid"
-import getBoundingBox from "./getBoundingBox"
 import handleGridoutOfBounds from "./handleGridoutOfBounds"
 
 export default function calculateMovement(gridMoving, top, right, bottom, left, parentId, allRefs, allElements, setAllElements) {
@@ -76,7 +75,6 @@ export default function calculateMovement(gridMoving, top, right, bottom, left, 
         gridRowEnd: gridCords.y2 + 2,
         maxWidth: "100%", // Ensures content does not expand cell
         maxHeight: "100%", // Ensures content does not expand cell
-        
     }
     return newStyle
 }
