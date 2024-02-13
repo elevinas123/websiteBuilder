@@ -1,23 +1,18 @@
 import { useEffect, useRef, useState } from "react"
 import { useAtom } from "jotai"
-import { allElementsAtom, allRefsAtom, cursorTypeAtom, elementPositionsAtom, elementUpdatedAtom, gridCheckedAtom, gridMovingAtom } from "./atoms"
-import startMovingElement from "./functions/startMovingElement"
+import { allElementsAtom, cursorTypeAtom, gridCheckedAtom, gridMovingAtom, startElementBoundingBoxAtom } from "./atoms"
 import startCreatingElement from "./functions/startCreatingElement"
 import handleGridMove from "./functions/handleGridMove"
-import handleGridCreation from "./functions/handleGridCreation"
-import getBoundingBox from "./functions/getBoundingBox"
 import handleElementResize from "./functions/handleElementResize"
-import startResizingElement from "./functions/startResizingElement"
+import startElementInteraction from "./functions/startElementInteraction"
 export default function Grid(props) {
     const gridRef = useRef(null)
     const [gridSelect, setGridSelect] = useState(false)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
-    const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
+    const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [allElements, setAllElements] = useAtom(allElementsAtom)
-    const [allRefs, setAllRefs] = useAtom(allRefsAtom)
-    const [elementPositions, setElementPositions] = useAtom(elementPositionsAtom)
-    const [elementUpdated, setElementUpdated] = useAtom(elementUpdatedAtom)
+    const [startElementBoundingBox, setStartingElementBoundingBox] = useAtom(startElementBoundingBoxAtom)
     const selecteCursorType = {
         moving: "cursor-default",
         resizing: "cursor-ne-resize",
@@ -25,51 +20,6 @@ export default function Grid(props) {
         resizingT: "cursor-s-resize",
         creating: "cursor-default",
     }
-
-    useEffect(() => {
-        if (!gridRef.current) return
-        const elementBoundingBox = getBoundingBox(gridRef)
-        setElementPositions((i) => ({ ...i, [props.id]: elementBoundingBox }))
-        setAllRefs((prevRefs) => ({
-            ...prevRefs,
-            [props.id]: gridRef.current,
-        }))
-    }, [props.id, setAllRefs, gridRef, setElementPositions])
-
-    useEffect(() => {
-        console.log("hi")
-        if (!gridRef.current) return
-        if (elementUpdated !== props.id) return
-        console.log("labas")
-        setElementPositions((currentPositions) => ({
-             ...currentPositions,
-             [props.id]: getBoundingBox(gridRef)
-         }))
-        setElementUpdated("")
-    }, [elementUpdated, gridRef])
-
-    useEffect(() => {
-        // Initialize an object for child IDs and their bounding boxes
-        let childrenPositions = {}
-        allElements[props.id].children.forEach((id) => {
-            // Assuming allRefs is a map or object where you can access refs by ID
-            if (id in allRefs) {
-                const ref = allRefs[id] // This needs adjustment based on how you actually access refs
-                childrenPositions[id] = ref.getBoundingClientRect()
-            }
-        })
-        // Check if the element's ID exists in elementPositions
-        // Note: Using `in` operator for checking property existence in an object
-
-
-        // Merge the childrenPositions into the existing elementPositions state
-        setElementPositions((currentPositions) => ({
-            ...currentPositions,
-            ...childrenPositions,
-        }))
-
-        console.log(elementPositions) // This will log the stale state due to closure
-    }, [elementPositions[props.id]]) // Removed elementPositions[props.id] due to potential ESLint error
 
     useEffect(() => {
         // Check if the props.id matches the ID of this item
@@ -83,66 +33,50 @@ export default function Grid(props) {
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
-                handleGridMove(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving, setElementUpdated)
-            } else if (gridMoving.type === "creating") {
-                handleGridCreation(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving, setElementUpdated)
-            } else if (gridMoving.type === "resizing" || gridMoving.type == "resizingW" || gridMoving.type === "resizingH") {
-                handleElementResize(
-                    gridMoving,
-                    allElements[props.id].parent,
-                    allRefs,
-                    allElements,
-                    setAllElements,
-                    setGridMoving,
-                    setElementUpdated,
-                    elementPositions
-                )
+                handleGridMove(gridMoving, allElements, setGridMoving, setAllElements)
+            } else if (gridMoving.type === "creating" || gridMoving.type === "resizing" || gridMoving.type == "resizingW" || gridMoving.type === "resizingH") {
+                handleElementResize(gridMoving, allElements, setGridMoving, setAllElements)
             }
         }
     }, [gridMoving])
 
     const handleMouseDown = (event) => {
         event.stopPropagation()
+        console.log(startElementBoundingBox)
+        console.log(event.clientX)
+        const mouseX = event.clientX - startElementBoundingBox.left
+        const mouseY = event.clientY - startElementBoundingBox.top
         if (gridMoving.id !== props.id) {
             setGridChecked("")
         }
         if (cursorType === "moving" && !props.mainGrid) {
             setGridChecked(props.id)
-            const element = allElements[props.id]
-            const elementBoundingBox = getBoundingBox(allRefs[props.id])
-            let elementInfo = {
-                top: elementBoundingBox.top,
-                bottom: elementBoundingBox.bottom,
-                right: elementBoundingBox.right,
-                left: elementBoundingBox.left,
-                width: element.width,
-                height: element.height,
-                gridSize: element.gridSize,
-            }
-            startMovingElement(event, props.id, props.id, elementInfo, allRefs, "moving", allElements, setGridMoving)
+
+            startElementInteraction(props.id, mouseX, mouseY, cursorType, setGridMoving)
             return
         }
         if (cursorType == "creating") {
             setGridChecked(props.id)
-            startCreatingElement(event, props.id, allRefs, allElements, setGridMoving, setAllElements)
+            startCreatingElement(mouseX, mouseY, props.id, allElements, setGridMoving, setAllElements)
             return
         }
     }
 
     const handleMouseUp = (event) => {
         event.stopPropagation()
-        setGridMoving((i) => ({ ...i, x2: event.clientX, y2: event.clientY, moved: true }))
+        const mouseX = event.clientX - startElementBoundingBox.left
+        const mouseY = event.clientY - startElementBoundingBox.top
+        setGridMoving((i) => ({ ...i, x2: mouseX, y2: mouseY, moved: true }))
         return
     }
-    
 
     const handleResizeMouseDown = (event) => {
         event.stopPropagation()
+        const mouseX = event.clientX - startElementBoundingBox.left
+        const mouseY = event.clientY - startElementBoundingBox.top
         if (gridMoving.id !== props.id) {
             setGridChecked("")
         }
-        const element = allElements[props.id]
-        const elementBoundingBox = getBoundingBox(allRefs[props.id])
         const position = event.target.id
         let cType = "resizing"
         if (position == 5 || position == 7) {
@@ -150,16 +84,8 @@ export default function Grid(props) {
         } else if (position == 6 || position == 8) {
             cType = "resizingW"
         }
-        let elementInfo = {
-            top: elementBoundingBox.top,
-            bottom: elementBoundingBox.bottom,
-            right: elementBoundingBox.right,
-            left: elementBoundingBox.left,
-            width: element.width,
-            height: element.height,
-            gridSize: element.gridSize,
-        }
-        startResizingElement(event, props.id, props.id, elementInfo, allRefs, cType, position, setGridMoving)
+
+        startElementInteraction(props.id, mouseX, mouseY, cType, setGridMoving)
     }
 
     return (

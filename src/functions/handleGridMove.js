@@ -1,44 +1,31 @@
-import calculateMovement from "./calculateMovement"
 import { produce } from "immer"
-export default function handleGridMove(gridMoving, parentId, allRefs, allElements, setAllElements, setGridMoving, setElementUpdated) {
-    const difY = gridMoving.y2 - gridMoving.y1
-    const difX = gridMoving.x2 - gridMoving.x1
-    let gridBoundingBox = gridMoving.gridBoundingBox
-    let top = difY + gridBoundingBox.top
-    let bottom = difY + gridBoundingBox.bottom
-    let left = difX + gridBoundingBox.left
-    let right = difX + gridBoundingBox.right
-    const newStyle = calculateMovement(gridMoving, top, right, bottom, left, parentId, allRefs, allElements, setAllElements)
-    if (!newStyle) {
-        setGridMoving((i) => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))
+import calculateMovement from "./calculateMovement"
+import calculateNewStyle from "./calculateNewStyle"
 
-        return
-    }
-    if (gridMoving.moved === true) {
-        setAllElements((currentState) =>
-            produce(currentState, (draft) => {
-                if (draft[gridMoving.id]) {
-                    draft[gridMoving.id].style = {
-                        ...draft[gridMoving.id].style, // Keep the existing style properties
-                        ...newStyle, // Update with new style properties
-                    }
-                }
-            })
-        )
-        setElementUpdated(gridMoving.id)
-        setGridMoving({ moving: false })
-        return
-    }
-
-    setGridMoving((i) => ({ ...i, gridBoundingBox: { top, bottom, left, right }, setBox: true }))
+export default function handleElementResize(gridMoving, allElements, setGridMoving, setAllElements) {
+    let top = allElements[gridMoving.id].top
+    let left = allElements[gridMoving.id].left
+    const width = allElements[gridMoving.id].width
+    const height = allElements[gridMoving.id].height
+    const [newLeft, newtop] = calculateMovement(gridMoving, left, top)
+    const newStyle = calculateNewStyle(newLeft, newtop, width, height)
     setAllElements((currentState) =>
         produce(currentState, (draft) => {
-            if (draft[gridMoving.id]) {
-                draft[gridMoving.id].style = {
-                    ...draft[gridMoving.id].style, // Keep the existing style properties
-                    ...newStyle, // Update with new style properties
+            // Update the parent element
+            const element = draft[gridMoving.id]
+            if (element) {
+                element.top = newtop
+                element.left = newLeft
+                element.style = {
+                    ...element.style,
+                    ...newStyle,
                 }
             }
         })
     )
+
+    if (gridMoving.moved === true) {
+        setGridMoving({ moving: false })
+    }
+    setGridMoving((i) => ({ ...i, setBox: true }))
 }
