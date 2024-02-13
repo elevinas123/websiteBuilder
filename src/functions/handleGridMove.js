@@ -16,11 +16,14 @@ export default function handleGridMove(gridMoving, parentId, allRefs, allElement
     }
     if (gridMoving.moved === true) {
         setAllElements((currentState) =>
-        produce(currentState, (draft) => {
-            if (draft[gridMoving.id]) {
-                draft[gridMoving.id].style = newStyle
-            }
-        })
+            produce(currentState, (draft) => {
+                if (draft[gridMoving.id]) {
+                    draft[gridMoving.id].style = {
+                        ...draft[gridMoving.id].style, // Keep the existing style properties
+                        ...newStyle, // Update with new style properties
+                    }
+                }
+            })
         )
         setElementUpdated(gridMoving.id)
         setGridMoving({ moving: false })
@@ -31,7 +34,10 @@ export default function handleGridMove(gridMoving, parentId, allRefs, allElement
     setAllElements((currentState) =>
         produce(currentState, (draft) => {
             if (draft[gridMoving.id]) {
-                draft[gridMoving.id].style = newStyle
+                draft[gridMoving.id].style = {
+                    ...draft[gridMoving.id].style, // Keep the existing style properties
+                    ...newStyle, // Update with new style properties
+                }
             }
         })
     )

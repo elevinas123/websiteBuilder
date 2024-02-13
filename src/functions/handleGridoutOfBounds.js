@@ -40,7 +40,7 @@ export default function handleGridoutOfBounds(gridMoving, parentId, allRefs, all
 
             // Update the moving element's parent property and style
             draft[gridMoving.id].parent = newParentId
-            draft[gridMoving.id].style = newStyle
+            draft[gridMoving.id].style = {...draft[gridMoving.id].style, ...newStyle}
         })
     )
 }

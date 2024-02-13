@@ -19,6 +19,7 @@ export default function startCreatingElement(event, parentId, allRefs, allElemen
 
     let gridCords = calculatePositionInGrid({ x1: event.clientX, y1: event.clientY, x2: event.clientX, y2: event.clientY }, parentInfo)
     const newStyle = {
+        display: "grid",
         gridColumnStart: gridCords.x1 + 1,
         gridColumnEnd: gridCords.x2 + 2,
         gridRowStart: gridCords.y1 + 1,
@@ -44,6 +45,7 @@ export default function startCreatingElement(event, parentId, allRefs, allElemen
             bottom: event.clientY,
             left: event.clientX,
             style: newStyle,
+            text: "",
             parent: parentId,
             children: [],
         },

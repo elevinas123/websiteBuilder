@@ -17,7 +17,7 @@ export default function handleGridCreation(gridMoving, parentId, allRefs, allEle
             if (element) {
                 element.height = Math.max(bottom, top) - Math.min(bottom, top)
                 element.width = Math.max(left, right) - Math.min(left, right)
-                element.style = newStyle // Assuming newStyle is defined and contains the style updates
+                element.style = { ...element.style, ...newStyle }
             }
         })
     )

@@ -125,6 +125,8 @@ export default function Grid(props) {
         setGridMoving((i) => ({ ...i, x2: event.clientX, y2: event.clientY, moved: true }))
         return
     }
+    
+
     const handleResizeMouseDown = (event) => {
         event.stopPropagation()
         if (gridMoving.id !== props.id) {
@@ -160,6 +162,7 @@ export default function Grid(props) {
             className={`relative z-10 grid h-full w-full select-none  ${`grid-cols-1000`} ${`grid-rows-1000`} ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {allElements[props.id].children.length > 0 && allElements[props.id].children.map((i) => allElements[i].item)}
+            {allElements[props.id].text}
             {gridChecked === props.id && !props.mainGrid ? (
                 <div className="absolute h-full w-full ">
                     <div
