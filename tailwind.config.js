@@ -8,6 +8,7 @@ export default {
                 100: "repeat(100, minmax(0, 1fr))",
                 300: "repeat(300, minmax(0, 1fr))",
                 1000: "repeat(1000, minmax(0, 1fr))",
+                10000: "repeat(10000, minmax(0, 1fr))",
                 80: "repeat(80, minmax(0, 1fr))",
             },
             gridTemplateRows: {
@@ -15,6 +16,7 @@ export default {
                 100: "repeat(100, minmax(0, 1fr))",
                 300: "repeat(300, minmax(0, 1fr))",
                 1000: "repeat(1000, minmax(0, 1fr))",
+                10000: "repeat(10000, minmax(0, 1fr))",
                 80: "repeat(80, minmax(0, 1fr))",
             },
         },

@@ -51,7 +51,7 @@ export default function ItemInfoScreen(props) {
                 ...prevElements[gridChecked],
                 style: {
                     ...prevElements[gridChecked].style,
-                    justifyContent: justifyMap[e.target.id] || "flex-start",
+                    justifyContents: justifyMap[e.target.id] || "flex-start",
                 },
             },
         }))

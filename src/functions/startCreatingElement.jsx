@@ -35,8 +35,8 @@ export default function startCreatingElement(event, parentId, allRefs, allElemen
             item: <Grid key={uuid} className="bg-red-500" id={uuid} childStyle={newStyle}></Grid>,
             id: uuid,
             gridSize: {
-                x: 1000,
-                y: 1000,
+                x: 1,
+                y: 1,
             },
             width: 1,
             height: 1,

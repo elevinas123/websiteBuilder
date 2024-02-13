@@ -21,12 +21,15 @@ export default function WebsiteScreen() {
                 item: <Grid mainGrid={mainId} key={mainId} className="bg-red-500" id={mainId}></Grid>,
                 id: mainId,
                 gridSize: {
-                    x: 1000,
-                    y: 1000,
+                    x: Math.floor(mainGridBoundingBox.width / 2),
+                    y: Math.floor(mainGridBoundingBox.height / 2),
                 },
                 width: mainGridBoundingBox.width,
                 height: mainGridBoundingBox.height,
-                style: {},
+                style: {
+                    gridTemplateColumns: `repeat(${Math.floor(mainGridBoundingBox.width / 2)}, 2px)`, // 10 columns, each 4px wide
+                    gridTemplateRows: `repeat(${Math.floor(mainGridBoundingBox.height / 2)}, 2px)`,
+                },
                 parent: null,
                 children: [],
                 text: "",

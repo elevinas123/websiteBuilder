@@ -11,13 +11,24 @@ export default function handleGridCreation(gridMoving, parentId, allRefs, allEle
         return
     }
     const elementId = gridMoving.id
+    const width = Math.max(left, right) - Math.min(left, right)
+    const height = Math.max(bottom, top) - Math.min(bottom, top)
     setAllElements((currentState) =>
         produce(currentState, (draft) => {
             const element = draft[elementId]
             if (element) {
-                element.height = Math.max(bottom, top) - Math.min(bottom, top)
-                element.width = Math.max(left, right) - Math.min(left, right)
-                element.style = { ...element.style, ...newStyle }
+                element.height = height
+                element.width = width
+                element.style = {
+                    ...element.style,
+                    ...newStyle,
+                    gridTemplateColumns: `repeat(${Math.floor(width / 2)}, 2px)`, // 10 columns, each 4px wide
+                    gridTemplateRows: `repeat(${Math.floor(height / 2)}, 2px)`,
+                }
+                element.gridSize = {
+                    x: Math.floor(width / 2),
+                    y: Math.floor(height / 2),
+                }
             }
         })
     )

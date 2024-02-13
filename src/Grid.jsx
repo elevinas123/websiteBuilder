@@ -87,7 +87,16 @@ export default function Grid(props) {
             } else if (gridMoving.type === "creating") {
                 handleGridCreation(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving, setElementUpdated)
             } else if (gridMoving.type === "resizing" || gridMoving.type == "resizingW" || gridMoving.type === "resizingH") {
-                handleElementResize(gridMoving, allElements[props.id].parent, allRefs, allElements, setAllElements, setGridMoving, setElementUpdated)
+                handleElementResize(
+                    gridMoving,
+                    allElements[props.id].parent,
+                    allRefs,
+                    allElements,
+                    setAllElements,
+                    setGridMoving,
+                    setElementUpdated,
+                    elementPositions
+                )
             }
         }
     }, [gridMoving])
@@ -159,7 +168,7 @@ export default function Grid(props) {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative z-10 grid h-full w-full select-none  ${`grid-cols-1000`} ${`grid-rows-1000`} ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`relative z-10 grid h-full w-full select-none   ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {allElements[props.id].children.length > 0 && allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}
