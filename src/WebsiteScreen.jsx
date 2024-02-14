@@ -13,7 +13,7 @@ export default function WebsiteScreen() {
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
     const [startElementBoundingBox, setStartingElementBoundingBox] = useAtom(startElementBoundingBoxAtom)
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
-    const [maingGridOffset, setMaingGridOffset] = useAtom(mainGridOffsetAtom)
+    const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
 
     function roundBoundingBox(boundingBox) {
         return {
@@ -28,6 +28,7 @@ export default function WebsiteScreen() {
     const mainGridRef = useRef(null)
     useEffect(() => {
         if (!mainGridRef.current) return
+        if (mainGridId !== "") return
         const mainId = uuidv4()
         const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainGridRef))
         setStartingElementBoundingBox(mainGridBoundingBox)
@@ -43,6 +44,10 @@ export default function WebsiteScreen() {
                 style: {
                     gridTemplateColumns: `repeat(${10000}, ${gridPixelSize}px)`, // 10 columns, each 4px wide
                     gridTemplateRows: `repeat(${10000}, ${gridPixelSize}px)`,
+                    backgroundColor: "teal",
+                    maxWidth: "100%", // Ensures content does not expand cell
+                    maxHeight: "100%", // Ensures content does not expand cell
+                    display: "grid",
                 },
                 parent: null,
                 children: [],
@@ -61,8 +66,8 @@ export default function WebsiteScreen() {
                 }
                 let x1 = i.x2
                 let y1 = i.y2
-                let x2 = (e.clientX - startElementBoundingBox.left)/gridPixelSize
-                let y2 = (e.clientY - startElementBoundingBox.top)/gridPixelSize
+                let x2 = (e.clientX - startElementBoundingBox.left) / gridPixelSize
+                let y2 = (e.clientY - startElementBoundingBox.top) / gridPixelSize
                 return { ...i, x1, x2, y1, y2, setBox: false }
             })
             return
@@ -103,15 +108,31 @@ export default function WebsiteScreen() {
                         </button>
                     </div>
                 </div>
-                <div
-                    ref={mainGridRef}
-                    tabIndex={0}
-                    onKeyDown={handleTextWritten}
-                    className="mt-20 h-2/3 w-3/4  bg-white text-black overflow-hidden"
-                    onMouseMove={handleMousemove}
-                    
-                >
-                    {mainGridId && allElements[mainGridId].item}
+                <div className="mr-2 h-full w-full bg-red-500">
+                    <div
+                        style={{
+                            maxWidth: "100%", // Ensures content does not expand cell
+                            maxHeight: "100%", // Ensures content does not expand cell
+                        }}
+                        ref={mainGridRef}
+                        onKeyDown={handleTextWritten}
+                        className="mt-20 h-full w-full  overflow-auto bg-white text-black"
+                        onMouseMove={handleMousemove}
+                    >
+                        {allElements[mainGridId.id] &&
+                            allElements[mainGridId.id].children.map((i) => {
+                                if (
+                                    (allElements[i].left > mainGridOffset.left ||
+                                        allElements[i].left + allElements[i].width < mainGridOffset.left + mainGridOffset.width,
+                                    allElements[i].left > mainGridOffset.left ||
+                                        allElements[i].top + allElements[i].height < mainGridOffset.top + mainGridOffset.height)
+                                ) {
+                                    console.log(allElements[i].item, i, mainGridOffset)
+                                    return allElements[i].item
+                                }
+                                return ""
+                            })}
+                    </div>
                 </div>
             </div>
             <ItemInfoScreen />

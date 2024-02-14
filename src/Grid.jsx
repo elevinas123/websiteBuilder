@@ -52,8 +52,8 @@ export default function Grid(props) {
         event.stopPropagation()
         console.log(startElementBoundingBox)
         console.log(event.clientX)
-        const mouseX = (event.clientX) / gridPixelSize
-        const mouseY = (event.clientY) / gridPixelSize
+        const mouseX = (event.clientX - startElementBoundingBox.left) / gridPixelSize
+        const mouseY = (event.clientY - startElementBoundingBox.top) / gridPixelSize
         if (gridMoving.id !== props.id) {
             setGridChecked("")
         }
@@ -75,15 +75,15 @@ export default function Grid(props) {
 
     const handleMouseUp = (event) => {
         event.stopPropagation()
-        const mouseX = (event.clientX) / gridPixelSize
-        const mouseY = (event.clientY) / gridPixelSize
+        const mouseX = (event.clientX - startElementBoundingBox.left) / gridPixelSize
+        const mouseY = (event.clientY - startElementBoundingBox.top) / gridPixelSize
         setGridMoving((i) => ({ ...i, x2: mouseX, y2: mouseY, moved: true }))
         return
     }
 
     const handleResizeMouseDown = (event) => {
-        const mouseX = (event.clientX) / gridPixelSize
-        const mouseY = (event.clientY) / gridPixelSize
+        const mouseX = (event.clientX - startElementBoundingBox.left) / gridPixelSize
+        const mouseY = (event.clientY - startElementBoundingBox.top) / gridPixelSize
         event.stopPropagation()
         if (gridMoving.id !== props.id) {
             setGridChecked("")
@@ -100,7 +100,7 @@ export default function Grid(props) {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative z-10 grid h-full w-full select-none   ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`relative z-10 select-none   ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {allElements[props.id].children.length > 0 &&
                 allElements[props.id].children.map((i) => {
