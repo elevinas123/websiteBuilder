@@ -42,9 +42,6 @@ export default function ItemInfoScreen(props) {
     }
     const changeJustify = (e) => {
         if (gridChecked == "") return
-        console.log(gridChecked)
-        console.log(allElements)
-        console.log(e.target.id)
         setAllElements((prevElements) => ({
             ...prevElements,
             [gridChecked]: {
