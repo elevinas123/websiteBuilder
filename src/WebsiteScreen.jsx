@@ -25,14 +25,16 @@ export default function WebsiteScreen() {
             height: Math.floor(boundingBox.height),
         }
     }
+    useEffect(() => {
+        console.log("allElements", allElements)
+    }, [allElements])
     const mainGridRef = useRef(null)
     useEffect(() => {
         if (!mainGridRef.current) return
         const mainId = uuidv4()
         const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainGridRef))
         setStartingElementBoundingBox(mainGridBoundingBox)
-        setAllElements((i) => ({
-            ...i,
+        setAllElements(({
             [mainId]: {
                 item: <Grid mainGrid={mainId} key={mainId} className="bg-red-500" id={mainId}></Grid>,
                 id: mainId,
@@ -43,6 +45,8 @@ export default function WebsiteScreen() {
                 style: {
                     gridTemplateColumns: `repeat(${10000}, ${gridPixelSize}px)`, // 10 columns, each 4px wide
                     gridTemplateRows: `repeat(${10000}, ${gridPixelSize}px)`,
+                    width: 10000,
+                    height: 10000,
                 },
                 parent: null,
                 children: [],
@@ -61,8 +65,8 @@ export default function WebsiteScreen() {
                 }
                 let x1 = i.x2
                 let y1 = i.y2
-                let x2 = (e.clientX - startElementBoundingBox.left)/gridPixelSize
-                let y2 = (e.clientY - startElementBoundingBox.top)/gridPixelSize
+                let x2 = (e.clientX - startElementBoundingBox.left) / gridPixelSize
+                let y2 = (e.clientY - startElementBoundingBox.top) / gridPixelSize
                 return { ...i, x1, x2, y1, y2, setBox: false }
             })
             return
@@ -107,9 +111,8 @@ export default function WebsiteScreen() {
                     ref={mainGridRef}
                     tabIndex={0}
                     onKeyDown={handleTextWritten}
-                    className="mt-20 h-2/3 w-3/4  bg-white text-black overflow-hidden"
+                    className="bg-red mt-10  h-96 w-96 overflow-scroll text-black"
                     onMouseMove={handleMousemove}
-                    
                 >
                     {mainGridId && allElements[mainGridId].item}
                 </div>

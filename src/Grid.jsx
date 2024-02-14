@@ -33,6 +33,8 @@ export default function Grid(props) {
     }, [gridChecked, props.id])
 
     useEffect(() => {
+        console.log(allElements)
+        console.log(gridMoving)
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
                 handleGridMove(gridMoving, allElements, setGridMoving, setAllElements)
@@ -44,6 +46,7 @@ export default function Grid(props) {
                 console.log("offset", mainGridOffset)
             } else {
                 handleElementResize(gridMoving, allElements, setGridMoving, setAllElements)
+                console.log("cia")
             }
         }
     }, [gridMoving])
@@ -52,8 +55,8 @@ export default function Grid(props) {
         event.stopPropagation()
         console.log(startElementBoundingBox)
         console.log(event.clientX)
-        const mouseX = (event.clientX) / gridPixelSize
-        const mouseY = (event.clientY) / gridPixelSize
+        const mouseX = event.clientX / gridPixelSize
+        const mouseY = event.clientY / gridPixelSize
         if (gridMoving.id !== props.id) {
             setGridChecked("")
         }
@@ -75,15 +78,15 @@ export default function Grid(props) {
 
     const handleMouseUp = (event) => {
         event.stopPropagation()
-        const mouseX = (event.clientX) / gridPixelSize
-        const mouseY = (event.clientY) / gridPixelSize
+        const mouseX = event.clientX / gridPixelSize
+        const mouseY = event.clientY / gridPixelSize
         setGridMoving((i) => ({ ...i, x2: mouseX, y2: mouseY, moved: true }))
         return
     }
 
     const handleResizeMouseDown = (event) => {
-        const mouseX = (event.clientX) / gridPixelSize
-        const mouseY = (event.clientY) / gridPixelSize
+        const mouseX = event.clientX / gridPixelSize
+        const mouseY = event.clientY / gridPixelSize
         event.stopPropagation()
         if (gridMoving.id !== props.id) {
             setGridChecked("")
@@ -104,14 +107,7 @@ export default function Grid(props) {
         >
             {allElements[props.id].children.length > 0 &&
                 allElements[props.id].children.map((i) => {
-                    if (
-                        (allElements[i].left > mainGridOffset.left || allElements[i].left + allElements[i].width < mainGridOffset.left + mainGridOffset.width,
-                        allElements[i].left > mainGridOffset.left || allElements[i].top + allElements[i].height < mainGridOffset.top + mainGridOffset.height)
-                    ) {
-                        console.log(allElements[i].item, i, mainGridOffset)
-                        return allElements[i].item
-                    }
-                    return ""
+                    i.item
                 })}
             {allElements[props.id].text}
             {gridChecked === props.id && !props.mainGrid ? (
