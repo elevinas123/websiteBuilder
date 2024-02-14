@@ -43,6 +43,8 @@ export default function Grid(props) {
     }, [gridChecked, props.id])
 
     useEffect(() => {
+        console.log(allElements)
+        console.log(gridMoving)
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
                 handleGridMove(gridMoving, allElements, setGridMoving, setAllElements)

@@ -1,11 +1,12 @@
 import { useAtom } from "jotai"
 import { useState } from "react"
 import { FaAlignCenter, FaAlignJustify, FaAlignLeft, FaAlignRight } from "react-icons/fa"
-import { allElementsAtom, gridCheckedAtom } from "./atoms"
+import { allElementsAtom, gridCheckedAtom, gridPixelSizeAtom } from "./atoms"
 
 export default function ItemInfoScreen(props) {
     const [allElements, setAllElements] = useAtom(allElementsAtom)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
+    const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
 
     const changeColor = (e) => {
         if (gridChecked == "") return
@@ -149,6 +150,10 @@ export default function ItemInfoScreen(props) {
                     </div>
                     <div></div>
                 </div>
+            </div>
+            <div>
+                <div>GridSize</div>
+                <input className="bg-zinc-200 text-black" onBlur={(e) => setGridPixelSize(e.target.value - 0)} type=""></input>
             </div>
         </div>
     )

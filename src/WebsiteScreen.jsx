@@ -35,7 +35,38 @@ export default function WebsiteScreen() {
             height: Math.floor(boundingBox.height),
         }
     }
-    
+    useEffect(() => {
+
+        setAllElements((currentElements) => {
+            const updatedElements = {}
+
+            // Iterate over each element in the current state
+            Object.entries(currentElements).forEach(([id, element]) => {
+                // Update the style attribute for each element
+                updatedElements[id] = {
+                    ...element, // Spread to copy other properties of the element unchanged
+                    style: {
+                        ...element.style, // Spread to copy existing styles
+                        // Update specific style properties
+                        gridTemplateColumns: `repeat(10000, ${gridPixelSize}px)`,
+                        gridTemplateRows: `repeat(10000, ${gridPixelSize}px)`,
+                    },
+                }
+            })
+
+            return updatedElements // Return the updated elements object to update the state
+        })
+        
+    }, [gridPixelSize[mainGridId]])
+    useEffect(() => {
+        console.log("alll", allElements)
+        console.log(" asdasd", mainGridOffset)
+        console.log(" gridPixelSize", gridPixelSize)
+        mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize
+        mainRef.current.scrollLeft = mainGridOffset.left * gridPixelSize
+        console.log(" scrollTop", mainRef.current.scrollTop)
+        console.log(" scrollLeft", mainRef.current.scrollLeft)
+    }, [allElements])
     const mainRef = useRef(null)
     useEffect(() => {
         if (!mainRef.current) return
