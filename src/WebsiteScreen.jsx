@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from "react"
 import Grid from "./Grid"
 import { v4 as uuidv4 } from "uuid"
 import { useAtom } from "jotai"
-import { allElementsAtom, cursorTypeAtom, gridCheckedAtom, gridMovingAtom, gridPixelSizeAtom, mainGridOffsetAtom, startElementBoundingBoxAtom } from "./atoms"
+import {
+    allElementsAtom,
+    cursorTypeAtom,
+    gridCheckedAtom,
+    gridMovingAtom,
+    gridPixelSizeAtom,
+    mainGridOffsetAtom,
+    mainGridRefAtom,
+    startElementBoundingBoxAtom,
+} from "./atoms"
 import getBoundingBox from "./functions/getBoundingBox"
 import ItemInfoScreen from "./ItemInfoScreen"
 export default function WebsiteScreen() {
@@ -13,8 +22,9 @@ export default function WebsiteScreen() {
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
     const [startElementBoundingBox, setStartingElementBoundingBox] = useAtom(startElementBoundingBoxAtom)
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
-    const [maingGridOffset, setMaingGridOffset] = useAtom(mainGridOffsetAtom)
-
+    const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
+    const [mainGridRef, setMainGridRef] = useAtom(mainGridRefAtom)
+    const [scrollPosition, setScrollPosition] = useState(0)
     function roundBoundingBox(boundingBox) {
         return {
             left: Math.floor(boundingBox.left),
@@ -25,18 +35,16 @@ export default function WebsiteScreen() {
             height: Math.floor(boundingBox.height),
         }
     }
+
+    const mainRef = useRef(null)
     useEffect(() => {
-        console.log("allElements", allElements)
-    }, [allElements])
-    const mainGridRef = useRef(null)
-    useEffect(() => {
-        if (!mainGridRef.current) return
+        if (!mainRef.current) return
         const mainId = uuidv4()
-        const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainGridRef))
+        const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainRef))
         setStartingElementBoundingBox(mainGridBoundingBox)
-        setAllElements(({
+        setAllElements({
             [mainId]: {
-                item: <Grid mainGrid={mainId} key={mainId} className="bg-red-500" id={mainId}></Grid>,
+                item: <Grid mainGrid={mainId} mainRef={mainRef} key={mainId} className="bg-red-500" id={mainId}></Grid>,
                 id: mainId,
                 width: 10000,
                 height: 10000,
@@ -52,9 +60,9 @@ export default function WebsiteScreen() {
                 children: [],
                 text: "",
             },
-        }))
+        })
         setMainGridId(mainId)
-    }, [mainGridRef])
+    }, [mainRef])
 
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
@@ -86,6 +94,10 @@ export default function WebsiteScreen() {
             }))
         }
     }
+    const handleDragStart = (e, index) => {
+        e.preventDefault()
+        mainRef.current.scrollTop = mainGridOffset.top
+    }
 
     return (
         <div className="flex h-full w-full flex-row">
@@ -108,10 +120,11 @@ export default function WebsiteScreen() {
                     </div>
                 </div>
                 <div
-                    ref={mainGridRef}
+                    ref={mainRef}
+                    onScroll={(e) => handleDragStart(e)}
                     tabIndex={0}
                     onKeyDown={handleTextWritten}
-                    className="bg-red mt-10  h-96 w-96 overflow-scroll text-black"
+                    className=" element bg-red mt-10  h-96 w-96 overflow-scroll text-black"
                     onMouseMove={handleMousemove}
                 >
                     {mainGridId && allElements[mainGridId].item}

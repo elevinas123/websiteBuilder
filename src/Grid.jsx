@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react"
 import { useAtom } from "jotai"
-import { allElementsAtom, cursorTypeAtom, gridCheckedAtom, gridMovingAtom, gridPixelSizeAtom, mainGridOffsetAtom, startElementBoundingBoxAtom } from "./atoms"
+import {
+    allElementsAtom,
+    cursorTypeAtom,
+    gridCheckedAtom,
+    gridMovingAtom,
+    gridPixelSizeAtom,
+    mainGridOffsetAtom,
+    mainGridRefAtom,
+    startElementBoundingBoxAtom,
+} from "./atoms"
 import startCreatingElement from "./functions/startCreatingElement"
 import handleGridMove from "./functions/handleGridMove"
 import handleElementResize from "./functions/handleElementResize"
@@ -15,6 +24,7 @@ export default function Grid(props) {
     const [startElementBoundingBox, setStartingElementBoundingBox] = useAtom(startElementBoundingBoxAtom)
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
+
     const selecteCursorType = {
         moving: "cursor-default",
         resizing: "cursor-ne-resize",
@@ -34,19 +44,22 @@ export default function Grid(props) {
 
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
-            console.log(gridMoving)
-            console.log(allElements)
             if (gridMoving.type === "moving") {
                 handleGridMove(gridMoving, allElements, setGridMoving, setAllElements)
                 console.log("asdasd")
             } else if (gridMoving.type === "grid-moving") {
-                console.log(gridMoving)
-                setMainGridOffset((i) => ({ ...i, left: i.left - gridMoving.x2 + gridMoving.x1, top: i.top - gridMoving.y2 + gridMoving.y1 }))
+                if (!props.mainRef) return
+                props.mainRef.current.scrollTop = props.mainRef.current.scrollTop - gridMoving.y2 + gridMoving.y1
+                props.mainRef.current.scrollLeft = props.mainRef.current.scrollLeft - gridMoving.x2 + gridMoving.x1
+                setMainGridOffset((i) => ({
+                    ...i,
+                    left: Math.max(0, i.left - gridMoving.x2 + gridMoving.x1),
+                    top: Math.max(0, i.top - gridMoving.y2 + gridMoving.y1),
+                }))
+
                 if (gridMoving.moved) setGridMoving({ moving: false })
                 else setGridMoving((i) => ({ ...i, setBox: true }))
-                console.log("offset", mainGridOffset)
             } else {
-                console.log("cia")
                 handleElementResize(gridMoving, allElements, setGridMoving, setAllElements)
             }
         }
@@ -54,10 +67,14 @@ export default function Grid(props) {
 
     const handleMouseDown = (event) => {
         event.stopPropagation()
-        console.log(startElementBoundingBox)
-        console.log(event.clientX)
+        event.preventDefault()
         const mouseX = (event.clientX - startElementBoundingBox.left) / gridPixelSize
         const mouseY = (event.clientY - startElementBoundingBox.top) / gridPixelSize
+        console.log(event.clientX)
+        console.log(event.clientY)
+        console.log(startElementBoundingBox)
+        console.log(mouseX)
+        console.log(mouseY)
         if (gridMoving.id !== props.id) {
             setGridChecked("")
         }
@@ -106,10 +123,7 @@ export default function Grid(props) {
             onMouseUp={handleMouseUp}
             className={`relative z-10 grid h-full w-full select-none   ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
-            {allElements[props.id].children.length > 0 &&
-                allElements[props.id].children.map((i) => {
-                    i.item
-                })}
+            {allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}
             {gridChecked === props.id && !props.mainGrid ? (
                 <div className="absolute h-full w-full ">

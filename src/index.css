@@ -7,3 +7,6 @@
     width: 1px; /* Adjust based on your needs */
     height: 1px; /* Adjust based on your needs */
 }
+.element::-webkit-scrollbar {
+  display: none;
+}

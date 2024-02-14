@@ -9,6 +9,7 @@ export default function handleElementResize(gridMoving, allElements, setGridMovi
     const height = allElements[gridMoving.id].height
     const [newLeft, newtop] = calculateMovement(gridMoving, left, top)
     const newStyle = calculateNewStyle(newLeft, newtop, width, height)
+    console.log(newtop)
     setAllElements((currentState) =>
         produce(currentState, (draft) => {
             // Update the parent element
