@@ -35,12 +35,13 @@ export default function WebsiteScreen() {
             height: Math.floor(boundingBox.height),
         }
     }
-
+    
     const mainRef = useRef(null)
     useEffect(() => {
         if (!mainRef.current) return
         const mainId = uuidv4()
         const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainRef))
+        
         setStartingElementBoundingBox(mainGridBoundingBox)
         setAllElements({
             [mainId]: {
@@ -61,9 +62,15 @@ export default function WebsiteScreen() {
                 text: "",
             },
         })
+        
         setMainGridId(mainId)
     }, [mainRef])
-
+    useEffect(() => {
+        mainRef.current.scrollTop = 5000
+        mainRef.current.scrollLeft = 5000
+        console.log(mainRef.current.scrollLeft)
+        setMainGridOffset({ top: 5000, left: 5000, width: 10000, height: 10000 })
+    }, [mainGridId])
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
             setGridMoving((i) => {

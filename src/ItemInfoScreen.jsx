@@ -23,6 +23,7 @@ export default function ItemInfoScreen(props) {
     }
     const changeBorderColor = (e) => {
         if (gridChecked == "") return
+        console.log(e.target.value)
         setAllElements((prevElements) => ({
             ...prevElements,
             [gridChecked]: {

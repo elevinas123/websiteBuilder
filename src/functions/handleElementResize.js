@@ -3,7 +3,6 @@ import calculateNewStyle from "./calculateNewStyle"
 
 export default function handleElementResize(gridMoving, allElements, setGridMoving, setAllElements) {
     let { top, left, width, height } = allElements[gridMoving.id]
-    console.log({ top, left, width, height })
     let deltaX = gridMoving.x2 - gridMoving.x1
     let deltaY = gridMoving.y2 - gridMoving.y1
     // Handle creating and resizing-1

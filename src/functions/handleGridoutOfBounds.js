@@ -2,7 +2,6 @@ import { produce } from "immer"
 import calculateMovement from "./calculateNewStyle"
 
 export default function handleGridoutOfBounds(gridMoving, parentId, allRefs, allElements, setAllElements) {
-    console.log(gridMoving, parentId, setAllElements)
     const grandFatherId = allElements[parentId].parent
     const elementBoundingBox = allRefs[gridMoving.id].getBoundingClientRect()
     let elementInfo = {

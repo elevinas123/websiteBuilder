@@ -46,7 +46,6 @@ export default function Grid(props) {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
                 handleGridMove(gridMoving, allElements, setGridMoving, setAllElements)
-                console.log("asdasd")
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
                 props.mainRef.current.scrollTop = props.mainRef.current.scrollTop - gridMoving.y2 + gridMoving.y1
@@ -70,11 +69,6 @@ export default function Grid(props) {
         event.preventDefault()
         const mouseX = (event.clientX - startElementBoundingBox.left) / gridPixelSize
         const mouseY = (event.clientY - startElementBoundingBox.top) / gridPixelSize
-        console.log(event.clientX)
-        console.log(event.clientY)
-        console.log(startElementBoundingBox)
-        console.log(mouseX)
-        console.log(mouseY)
         if (gridMoving.id !== props.id) {
             setGridChecked("")
         }

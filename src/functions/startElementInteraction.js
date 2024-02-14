@@ -1,5 +1,4 @@
 export default function startElementInteraction(id, x, y, type, setGridMoving) {
-    console.log(id, x, y, type)
     setGridMoving({
         type: type,
         id: id,
