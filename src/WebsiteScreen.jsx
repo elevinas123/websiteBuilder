@@ -31,7 +31,8 @@ export default function WebsiteScreen() {
         const mainId = uuidv4()
         const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainGridRef))
         setStartingElementBoundingBox(mainGridBoundingBox)
-        setAllElements(i =>({...i,
+        setAllElements((i) => ({
+            ...i,
             [mainId]: {
                 item: <Grid mainGrid={mainId} key={mainId} className="bg-red-500" id={mainId}></Grid>,
                 id: mainId,
@@ -40,8 +41,8 @@ export default function WebsiteScreen() {
                 top: 0,
                 left: 0,
                 style: {
-                    gridTemplateColumns: `repeat(${Math.floor(mainGridBoundingBox.width)}, ${gridPixelSize}px)`, // 10 columns, each 4px wide
-                    gridTemplateRows: `repeat(${Math.floor(mainGridBoundingBox.height)}, ${gridPixelSize}px)`,
+                    gridTemplateColumns: `repeat(${10000}, ${gridPixelSize}px)`, // 10 columns, each 4px wide
+                    gridTemplateRows: `repeat(${10000}, ${gridPixelSize}px)`,
                 },
                 parent: null,
                 children: [],
