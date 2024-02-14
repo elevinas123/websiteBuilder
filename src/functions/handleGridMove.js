@@ -26,6 +26,7 @@ export default function handleElementResize(gridMoving, allElements, setGridMovi
 
     if (gridMoving.moved === true) {
         setGridMoving({ moving: false })
+        return
     }
     setGridMoving((i) => ({ ...i, setBox: true }))
 }

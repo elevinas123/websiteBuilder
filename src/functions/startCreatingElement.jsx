@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid"
 import startElementInteraction from "./startElementInteraction"
 import calculateNewStyle from "./calculateNewStyle"
 
-export default function startCreatingElement(x, y, parentId, allElements,  setGridMoving, setAllElements) {
+export default function startCreatingElement(x, y, parentId, allElements, mainGridOffset, setGridMoving, setAllElements) {
     const uuid = uuidv4()
     console.log(x, y, parentId, setGridMoving, setAllElements)
     const newStyle = calculateNewStyle(x, y, 1, 1)
@@ -17,8 +17,8 @@ export default function startCreatingElement(x, y, parentId, allElements,  setGr
             id: uuid,
             width: 1,
             height: 1,
-            left: x - allElements[parentId].left,
-            top: y - allElements[parentId].top,
+            left: x - allElements[parentId].left + mainGridOffset.left,
+            top: y - allElements[parentId].top + mainGridOffset.top,
             style: newStyle,
             text: "",
             parent: parentId,
