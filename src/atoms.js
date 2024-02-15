@@ -12,4 +12,4 @@ export const mainGridRefAtom = atom(null)
 export const startElementBoundingBoxAtom = atom({})
 export const gridPixelSizeAtom = atom(2)
 export const mainGridOffsetAtom = atom({ top: 0, left: 0, width: 10000, height: 10000 })
-
+export const mainGridIdAtom = atom("")

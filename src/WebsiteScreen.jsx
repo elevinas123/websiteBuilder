@@ -8,6 +8,7 @@ import {
     gridCheckedAtom,
     gridMovingAtom,
     gridPixelSizeAtom,
+    mainGridIdAtom,
     mainGridOffsetAtom,
     mainGridRefAtom,
     startElementBoundingBoxAtom,
@@ -15,7 +16,6 @@ import {
 import getBoundingBox from "./functions/getBoundingBox"
 import ItemInfoScreen from "./ItemInfoScreen"
 export default function WebsiteScreen() {
-    const [mainGridId, setMainGridId] = useState("")
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
     const [allElements, setAllElements] = useAtom(allElementsAtom)
@@ -25,6 +25,7 @@ export default function WebsiteScreen() {
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridRef, setMainGridRef] = useAtom(mainGridRefAtom)
     const [scrollPosition, setScrollPosition] = useState(0)
+    const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     function roundBoundingBox(boundingBox) {
         return {
             left: Math.floor(boundingBox.left),
@@ -72,7 +73,7 @@ export default function WebsiteScreen() {
        )
         setAllElements({
             [mainId]: {
-                item: <Grid mainGrid={mainId} mainRef={mainRef} key={mainId} className="bg-red-500" id={mainId}></Grid>,
+                item: <Grid  mainRef={mainRef} key={mainId} className="bg-red-500" id={mainId}></Grid>,
                 id: mainId,
                 width: 10000,
                 height: 10000,
