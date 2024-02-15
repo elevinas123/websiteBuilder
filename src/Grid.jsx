@@ -43,21 +43,20 @@ export default function Grid(props) {
     }, [gridChecked, props.id])
 
     useEffect(() => {
-        console.log(allElements)
-        console.log(gridMoving)
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
                 handleGridMove(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements)
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
-                props.mainRef.current.scrollTop = props.mainRef.current.scrollTop - (gridMoving.y2 + gridMoving.y1) 
-                props.mainRef.current.scrollLeft = props.mainRef.current.scrollLeft - (gridMoving.x2 + gridMoving.x1)
+                
                 setMainGridOffset((i) => ({
                     ...i,
-                    left: Math.max(0, i.left - (gridMoving.x2 + gridMoving.x1) ),
-                    top: Math.max(0, i.top - (gridMoving.y2 + gridMoving.y1) ),
+                    left: Math.max(0, i.left - (gridMoving.x2 - gridMoving.x1) / gridPixelSize),
+                    top: Math.max(0, i.top - (gridMoving.y2 - gridMoving.y1) / gridPixelSize),
                 }))
-
+                console.log(props.mainRef.current.scrollTop)
+                console.log(props.mainRef.current.scrollLeft)
+                console.log(mainGridOffset)
                 if (gridMoving.moved) setGridMoving({ moving: false })
                 else setGridMoving((i) => ({ ...i, setBox: true }))
             } else {
@@ -65,6 +64,11 @@ export default function Grid(props) {
             }
         }
     }, [gridMoving])
+    useEffect(() => {
+        if(!props.mainRef) return
+        props.mainRef.current.scrollTop = mainGridOffset.top 
+        props.mainRef.current.scrollLeft = mainGridOffset.left
+    }, [mainGridOffset])
 
     const handleMouseDown = (event) => {
         event.stopPropagation()

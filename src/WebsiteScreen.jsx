@@ -132,7 +132,7 @@ export default function WebsiteScreen() {
     }
     const handleDragStart = (e, index) => {
         e.preventDefault()
-        mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize
+        mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize * gridPixelSize
     }
 
     return (
