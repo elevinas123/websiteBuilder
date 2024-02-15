@@ -57,16 +57,8 @@ export default function WebsiteScreen() {
             return updatedElements // Return the updated elements object to update the state
         })
         
-    }, [gridPixelSize[mainGridId]])
-    useEffect(() => {
-        console.log("alll", allElements)
-        console.log(" asdasd", mainGridOffset)
-        console.log(" gridPixelSize", gridPixelSize)
-        mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize
-        mainRef.current.scrollLeft = mainGridOffset.left * gridPixelSize
-        console.log(" scrollTop", mainRef.current.scrollTop)
-        console.log(" scrollLeft", mainRef.current.scrollLeft)
-    }, [allElements])
+    }, [gridPixelSize])
+    
     const mainRef = useRef(null)
     useEffect(() => {
         if (!mainRef.current) return
@@ -74,6 +66,10 @@ export default function WebsiteScreen() {
         const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainRef))
         
         setStartingElementBoundingBox(mainGridBoundingBox)
+       const svgSize = gridPixelSize // Your grid pixel size
+       const svgImage = encodeURIComponent(
+           `<svg xmlns="http://www.w3.org/2000/svg" width="${svgSize}" height="${svgSize}"><rect width="100%" height="100%" fill="none" stroke="black" stroke-width="1"/></svg>`
+       )
         setAllElements({
             [mainId]: {
                 item: <Grid mainGrid={mainId} mainRef={mainRef} key={mainId} className="bg-red-500" id={mainId}></Grid>,
@@ -86,6 +82,8 @@ export default function WebsiteScreen() {
                     gridTemplateColumns: `repeat(${10000}, ${gridPixelSize}px)`, // 10 columns, each 4px wide
                     gridTemplateRows: `repeat(${10000}, ${gridPixelSize}px)`,
                     width: 10000,
+                    backgroundImage:  svgImage,
+                    backgroundSize: `${svgSize}px ${svgSize}px`,
                     height: 10000,
                 },
                 parent: null,
@@ -97,10 +95,10 @@ export default function WebsiteScreen() {
         setMainGridId(mainId)
     }, [mainRef])
     useEffect(() => {
-        mainRef.current.scrollTop = 5000
-        mainRef.current.scrollLeft = 5000
+        mainRef.current.scrollTop = 0
+        mainRef.current.scrollLeft = 0
         console.log(mainRef.current.scrollLeft)
-        setMainGridOffset({ top: 5000, left: 5000, width: 10000, height: 10000 })
+        setMainGridOffset({ top: 0, left: 0, width: 10000, height: 10000 })
     }, [mainGridId])
     const handleMousemove = (e) => {
         if (gridMoving.moving) {
@@ -111,8 +109,8 @@ export default function WebsiteScreen() {
                 }
                 let x1 = i.x2
                 let y1 = i.y2
-                let x2 = (e.clientX - startElementBoundingBox.left) / gridPixelSize
-                let y2 = (e.clientY - startElementBoundingBox.top) / gridPixelSize
+                let x2 = (e.clientX - startElementBoundingBox.left)
+                let y2 = (e.clientY - startElementBoundingBox.top)
                 return { ...i, x1, x2, y1, y2, setBox: false }
             })
             return
@@ -134,7 +132,7 @@ export default function WebsiteScreen() {
     }
     const handleDragStart = (e, index) => {
         e.preventDefault()
-        mainRef.current.scrollTop = mainGridOffset.top
+        mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize
     }
 
     return (

@@ -47,21 +47,21 @@ export default function Grid(props) {
         console.log(gridMoving)
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
-                handleGridMove(gridMoving, allElements, setGridMoving, setAllElements)
+                handleGridMove(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements)
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
-                props.mainRef.current.scrollTop = props.mainRef.current.scrollTop - gridMoving.y2 + gridMoving.y1
-                props.mainRef.current.scrollLeft = props.mainRef.current.scrollLeft - gridMoving.x2 + gridMoving.x1
+                props.mainRef.current.scrollTop = props.mainRef.current.scrollTop - (gridMoving.y2 + gridMoving.y1) 
+                props.mainRef.current.scrollLeft = props.mainRef.current.scrollLeft - (gridMoving.x2 + gridMoving.x1)
                 setMainGridOffset((i) => ({
                     ...i,
-                    left: Math.max(0, i.left - gridMoving.x2 + gridMoving.x1),
-                    top: Math.max(0, i.top - gridMoving.y2 + gridMoving.y1),
+                    left: Math.max(0, i.left - (gridMoving.x2 + gridMoving.x1) ),
+                    top: Math.max(0, i.top - (gridMoving.y2 + gridMoving.y1) ),
                 }))
 
                 if (gridMoving.moved) setGridMoving({ moving: false })
                 else setGridMoving((i) => ({ ...i, setBox: true }))
             } else {
-                handleElementResize(gridMoving, allElements, setGridMoving, setAllElements)
+                handleElementResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements)
             }
         }
     }, [gridMoving])
@@ -69,8 +69,8 @@ export default function Grid(props) {
     const handleMouseDown = (event) => {
         event.stopPropagation()
         event.preventDefault()
-        const mouseX = (event.clientX - startElementBoundingBox.left) / gridPixelSize
-        const mouseY = (event.clientY - startElementBoundingBox.top) / gridPixelSize
+        const mouseX = event.clientX - startElementBoundingBox.left
+        const mouseY = event.clientY - startElementBoundingBox.top
         if (gridMoving.id !== props.id) {
             setGridChecked("")
         }
@@ -85,23 +85,23 @@ export default function Grid(props) {
         }
         if (cursorType == "creating") {
             setGridChecked(props.id)
-            startCreatingElement(mouseX, mouseY, props.id, allElements, mainGridOffset, setGridMoving, setAllElements)
+            startCreatingElement(mouseX, mouseY, props.id, allElements, mainGridOffset, gridPixelSize, setGridMoving, setAllElements)
             return
         }
     }
 
     const handleMouseUp = (event) => {
         event.stopPropagation()
-        const mouseX = (event.clientX - startElementBoundingBox.left) / gridPixelSize
-        const mouseY = (event.clientY - startElementBoundingBox.top) / gridPixelSize
+        const mouseX = event.clientX - startElementBoundingBox.left
+        const mouseY = event.clientY - startElementBoundingBox.top
         setGridMoving((i) => ({ ...i, x2: mouseX, y2: mouseY, moved: true }))
         return
     }
 
     const handleResizeMouseDown = (event) => {
         event.stopPropagation()
-        const mouseX = (event.clientX - startElementBoundingBox.left) / gridPixelSize
-        const mouseY = (event.clientY - startElementBoundingBox.top) / gridPixelSize
+        const mouseX = event.clientX - startElementBoundingBox.left
+        const mouseY = event.clientY - startElementBoundingBox.top
         if (gridMoving.id !== props.id) {
             setGridChecked("")
         }

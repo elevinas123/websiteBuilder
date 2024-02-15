@@ -2,12 +2,12 @@ import { produce } from "immer"
 import calculateMovement from "./calculateMovement"
 import calculateNewStyle from "./calculateNewStyle"
 
-export default function handleGridMove(gridMoving, allElements, setGridMoving, setAllElements) {
+export default function handleGridMove(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements) {
     let top = allElements[gridMoving.id].top
     let left = allElements[gridMoving.id].left
     const width = allElements[gridMoving.id].width
     const height = allElements[gridMoving.id].height
-    let [newLeft, newtop] = calculateMovement(gridMoving, left, top)
+    let [newLeft, newtop] = [left + (gridMoving.x2 - gridMoving.x1)/gridPixelSize, top + (gridMoving.y2 - gridMoving.y1)/gridPixelSize]
     const parentId = allElements[gridMoving.id].parent
     const parentInfo = {
         top: allElements[parentId].top,
