@@ -48,8 +48,8 @@ export default function WebsiteScreen() {
                     style: {
                         ...element.style, // Spread to copy existing styles
                         // Update specific style properties
-                        gridTemplateColumns: `repeat(10000, ${gridPixelSize}px)`,
-                        gridTemplateRows: `repeat(10000, ${gridPixelSize}px)`,
+                        gridTemplateColumns: `repeat(${element.width}, ${gridPixelSize}px)`,
+                        gridTemplateRows: `repeat(${element.height}, ${gridPixelSize}px)`,
                     },
                 }
             })
@@ -82,8 +82,7 @@ export default function WebsiteScreen() {
                     gridTemplateColumns: `repeat(${10000}, ${gridPixelSize}px)`, // 10 columns, each 4px wide
                     gridTemplateRows: `repeat(${10000}, ${gridPixelSize}px)`,
                     width: 10000,
-                    backgroundImage:  svgImage,
-                    backgroundSize: `${svgSize}px ${svgSize}px`,
+                    backgroundColor: "gray",
                     height: 10000,
                 },
                 parent: null,
@@ -132,8 +131,31 @@ export default function WebsiteScreen() {
     }
     const handleDragStart = (e, index) => {
         e.preventDefault()
-        mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize * gridPixelSize
+        mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize 
     }
+    useEffect(() => {
+        const handleWheel = (event) => {
+            if (event.ctrlKey) {
+                // Check if the Ctrl key is pressed
+                event.preventDefault() // Prevent the default zoom or scroll action
+
+                if (event.deltaY < 0) {
+                    // Scrolling up, increase gridPixelSize
+                    setGridPixelSize((prevSize) => Math.min(prevSize + 0.5, 32)) // Example max size 100
+                } else {
+                    // Scrolling down, decrease gridPixelSize
+                    setGridPixelSize((prevSize) => Math.max(prevSize - 0.5, 0.5)) // Example min size 1
+                }
+            }
+        }
+
+        window.addEventListener("wheel", handleWheel, { passive: false })
+
+        // Cleanup the event listener on component unmount
+        return () => {
+            window.removeEventListener("wheel", handleWheel)
+        }
+    }, [])
 
     return (
         <div className="flex h-full w-full flex-row">
@@ -142,13 +164,13 @@ export default function WebsiteScreen() {
                     <div>Navbar</div>
                     <div className="mt-3">
                         <button
-                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "moving" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
+                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "moving" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
                             onClick={() => setCursorType("moving")}
                         >
                             moving
                         </button>
                         <button
-                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "creating" ? "bg-blue-400" : "hover:bg-zinc-400"} `}
+                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "creating" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
                             onClick={() => setCursorType("creating")}
                         >
                             creating

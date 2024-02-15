@@ -3,9 +3,9 @@ import { v4 as uuidv4 } from "uuid"
 import startElementInteraction from "./startElementInteraction"
 import calculateNewStyle from "./calculateNewStyle"
 
-export default function startCreatingElement(x, y, parentId, allElements, mainGridOffset, gridPixelSize, setGridMoving, setAllElements) {
+export default function startCreatingElement(x, y, parentId, allElements, mainGridOffset, gridPixelSize, setGridMoving, setAllElements, setGridChecked) {
+    console.log(allElements)
     const uuid = uuidv4()
-    const newStyle = calculateNewStyle(x, y, 1, 1)
     let offSetLeft = mainGridOffset.left
     let offSetTop = mainGridOffset.top
     let pId = parentId
@@ -15,8 +15,9 @@ export default function startCreatingElement(x, y, parentId, allElements, mainGr
         offSetTop -= ell.top
         pId = ell.parent
     }
-    console.log(offSetLeft)
-    console.log(offSetTop)
+    const newStyle = calculateNewStyle(x / gridPixelSize + offSetLeft, y / gridPixelSize + offSetTop, 1, 1, gridPixelSize)
+    console.log(x / gridPixelSize + offSetLeft)
+    console.log(y / gridPixelSize + offSetTop)
     setAllElements((elements) => ({
         ...elements,
         [parentId]: { ...elements[parentId], children: [...elements[parentId].children, uuid] },
@@ -25,14 +26,14 @@ export default function startCreatingElement(x, y, parentId, allElements, mainGr
             id: uuid,
             width: 1,
             height: 1,
-            left: (x + offSetLeft) / gridPixelSize,
-            top: (y + offSetTop) / gridPixelSize,
+            left: (x / gridPixelSize + offSetLeft) ,
+            top: (y / gridPixelSize + offSetTop),
             style: newStyle,
             text: "",
             parent: parentId,
             children: [],
         },
     }))
-
+    setGridChecked(uuid)
     startElementInteraction(uuid, x, y, "creating", setGridMoving)
 }

@@ -26,11 +26,11 @@ export default function Grid(props) {
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
 
     const selecteCursorType = {
-        moving: "cursor-default",
-        resizing: "cursor-ne-resize",
-        resizingH: "cursor-n-resize",
-        resizingT: "cursor-s-resize",
-        creating: "cursor-default",
+        "moving": "cursor-default",
+        "resizing": "cursor-ne-resize",
+        "resizingH": "cursor-n-resize",
+        "resizingT": "cursor-s-resize",
+        "creating": "cursor-default",
     }
 
     useEffect(() => {
@@ -48,7 +48,7 @@ export default function Grid(props) {
                 handleGridMove(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements)
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
-                
+
                 setMainGridOffset((i) => ({
                     ...i,
                     left: Math.max(0, i.left - (gridMoving.x2 - gridMoving.x1) / gridPixelSize),
@@ -60,14 +60,14 @@ export default function Grid(props) {
                 if (gridMoving.moved) setGridMoving({ moving: false })
                 else setGridMoving((i) => ({ ...i, setBox: true }))
             } else {
-                handleElementResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements)
+                handleElementResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements, setCursorType)
             }
         }
     }, [gridMoving])
     useEffect(() => {
-        if(!props.mainRef) return
-        props.mainRef.current.scrollTop = mainGridOffset.top 
-        props.mainRef.current.scrollLeft = mainGridOffset.left
+        if (!props.mainRef) return
+        props.mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize
+        props.mainRef.current.scrollLeft = mainGridOffset.left * gridPixelSize
     }, [mainGridOffset])
 
     const handleMouseDown = (event) => {
@@ -88,8 +88,7 @@ export default function Grid(props) {
             return
         }
         if (cursorType == "creating") {
-            setGridChecked(props.id)
-            startCreatingElement(mouseX, mouseY, props.id, allElements, mainGridOffset, gridPixelSize, setGridMoving, setAllElements)
+            startCreatingElement(mouseX, mouseY, props.id, allElements, mainGridOffset, gridPixelSize, setGridMoving, setAllElements, setGridChecked)
             return
         }
     }
@@ -121,7 +120,7 @@ export default function Grid(props) {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative z-10 grid h-full w-full select-none   ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`relative z-10 grid h-full w-full select-none ${props.mainGrid?"hover:cursor-grab": ""}   ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}

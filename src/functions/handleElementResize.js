@@ -1,7 +1,7 @@
 import { produce } from "immer"
 import calculateNewStyle from "./calculateNewStyle"
 
-export default function handleElementResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements) {
+export default function handleElementResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements, setCursorType) {
     let { top, left, width, height } = allElements[gridMoving.id]
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
@@ -41,7 +41,7 @@ export default function handleElementResize(gridMoving, allElements, gridPixelSi
 
     // Prevent negative dimensions
 
-    let newStyle = calculateNewStyle(left, top, width, height)
+    let newStyle = calculateNewStyle(left, top, width, height, gridPixelSize)
 
     if (gridMoving.moved === true) {
         if (height < 0) {
@@ -52,7 +52,7 @@ export default function handleElementResize(gridMoving, allElements, gridPixelSi
             left += width
             width *= -1
         }
-        newStyle = calculateNewStyle(left, top, width, height)
+        newStyle = calculateNewStyle(left, top, width, height, gridPixelSize)
         setAllElements((currentState) =>
             produce(currentState, (draft) => {
                 const element = draft[gridMoving.id]
@@ -64,13 +64,14 @@ export default function handleElementResize(gridMoving, allElements, gridPixelSi
                     element.style = {
                         ...element.style,
                         ...newStyle,
-                        gridTemplateColumns: `repeat(${width}, 1px)`,
-                        gridTemplateRows: `repeat(${height}, 1px)`,
                     }
                 }
             })
         )
         setGridMoving({ moving: false })
+        if (gridMoving.type === "creating") {
+            setCursorType("moving")
+        }
         return
     }
     setAllElements((currentState) =>
@@ -84,8 +85,6 @@ export default function handleElementResize(gridMoving, allElements, gridPixelSi
                 element.style = {
                     ...element.style,
                     ...newStyle,
-                    gridTemplateColumns: `repeat(${width}, 1px)`,
-                    gridTemplateRows: `repeat(${height}, 1px)`,
                 }
             }
         })

@@ -35,7 +35,7 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, s
         newLeft = 0
     }
     console.log(newtop)
-    const newStyle = calculateNewStyle(newLeft, newtop, width, height)
+    const newStyle = calculateNewStyle(newLeft, newtop, width, height, gridPixelSize)
     setAllElements((currentState) =>
         produce(currentState, (draft) => {
             // Update the parent element
