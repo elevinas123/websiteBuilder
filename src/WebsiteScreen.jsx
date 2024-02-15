@@ -15,6 +15,7 @@ import {
 } from "./atoms"
 import getBoundingBox from "./functions/getBoundingBox"
 import ItemInfoScreen from "./ItemInfoScreen"
+import calculateNewStyle from "./functions/calculateNewStyle"
 export default function WebsiteScreen() {
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
@@ -65,10 +66,7 @@ export default function WebsiteScreen() {
         const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainRef))
 
         setStartingElementBoundingBox(mainGridBoundingBox)
-        const svgSize = gridPixelSize // Your grid pixel size
-        const svgImage = encodeURIComponent(
-            `<svg xmlns="http://www.w3.org/2000/svg" width="${svgSize}" height="${svgSize}"><rect width="100%" height="100%" fill="none" stroke="black" stroke-width="1"/></svg>`
-        )
+
         setAllElements({
             [mainId]: {
                 item: <Grid mainRef={mainRef} key={mainId} className="bg-red-500" id={mainId}></Grid>,
@@ -85,6 +83,23 @@ export default function WebsiteScreen() {
                     height: 10000,
                 },
                 parent: null,
+                children: ["main-webGrid"],
+                text: "",
+            },
+            ["main-webGrid"]: {
+                item: <Grid key={mainId} className="bg-red-500" id={"main-webGrid"}></Grid>,
+                id: "main-webGrid",
+                width: 1920,
+                height: 1080,
+                top: 50,
+                left: 50,
+                style: {
+                    ...calculateNewStyle(50, 50, 1920, 1080, gridPixelSize),
+                    width: 1920,
+                    backgroundColor: "red",
+                    height: 1080,
+                },
+                parent: mainId,
                 children: [],
                 text: "",
             },
@@ -111,6 +126,7 @@ export default function WebsiteScreen() {
                 let y2 = e.clientY - startElementBoundingBox.top
                 return { ...i, x1, x2, y1, y2, setBox: false }
             })
+
             return
         }
     }
@@ -140,10 +156,10 @@ export default function WebsiteScreen() {
 
                 if (event.deltaY < 0) {
                     // Scrolling up, increase gridPixelSize
-                    setGridPixelSize((prevSize) => Math.min(prevSize + 0.5, 32)) // Example max size 100
+                    setGridPixelSize((prevSize) => Math.min(prevSize * 2, 32)) // Example max size 100
                 } else {
                     // Scrolling down, decrease gridPixelSize
-                    setGridPixelSize((prevSize) => Math.max(prevSize - 0.5, 0.5)) // Example min size 1
+                    setGridPixelSize((prevSize) => Math.max(prevSize / 2, 0.1)) // Example min size 1
                 }
             }
         }
@@ -157,8 +173,8 @@ export default function WebsiteScreen() {
     }, [])
 
     return (
-        <div className="flex h-full w-full flex-row">
-            <div className="ml-20 mt-2 flex h-full w-full flex-col text-black">
+        <div className="flex h-full w-2/3 flex-row">
+            <div className=" mt-2 flex h-full w-full flex-col text-black overflow-hidden">
                 <div className=" flex h-32 flex-col bg-zinc-200">
                     <div>Navbar</div>
                     <div className="mt-3">
@@ -181,7 +197,7 @@ export default function WebsiteScreen() {
                     onScroll={(e) => handleDragStart(e)}
                     tabIndex={0}
                     onKeyDown={handleTextWritten}
-                    className=" element bg-red mt-10  h-96 w-96 overflow-scroll text-black"
+                    className=" element bg-red mt-10  h-full w-full overflow-scroll text-black"
                     onMouseMove={handleMousemove}
                 >
                     {mainGridId && allElements[mainGridId].item}

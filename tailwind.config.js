@@ -19,6 +19,7 @@ export default {
                 10000: "repeat(10000, minmax(0, 1fr))",
                 80: "repeat(80, minmax(0, 1fr))",
             },
+            
         },
     },
     plugins: [],

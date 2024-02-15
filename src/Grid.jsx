@@ -26,7 +26,6 @@ export default function Grid(props) {
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
-
     const selecteCursorType = {
         moving: "cursor-default",
         "grid-moving": "cursor-grabbing",
@@ -119,7 +118,7 @@ export default function Grid(props) {
             onMouseUp={handleMouseUp}
             className={`relative z-10 grid h-full w-full select-none   ${selecteCursorType[cursorType]} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
-            {allElements[props.id].children.map((i) => allElements[i].item)}
+            { allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}
             {gridChecked === props.id && !props.mainGrid ? (
                 <div className="absolute h-full w-full ">
