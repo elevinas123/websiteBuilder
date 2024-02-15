@@ -1,36 +1,49 @@
 import { useAtom } from "jotai"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FaAlignCenter, FaAlignJustify, FaAlignLeft, FaAlignRight } from "react-icons/fa"
-import { allElementsAtom, gridCheckedAtom, gridPixelSizeAtom } from "./atoms"
+import { allElementsAtom, gridCheckedAtom, gridPixelSizeAtom, mainGridIdAtom } from "./atoms"
+import justifyCenter from "./functions/justifies/justifyCenter"
+import justifyLeft from "./functions/justifies/justifyLeft"
+import justifyRight from "./functions/justifies/justifyRight"
+import justifyBetween from "./functions/justifies/justifyBetween"
 
-export default function ItemInfoScreen(props) {
+export default function ItemInfoScreen() {
     const [allElements, setAllElements] = useAtom(allElementsAtom)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
+    const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
+    const [itemId, setItemId] = useState("")
 
     const changeColor = (e) => {
         if (gridChecked == "") return
 
         setAllElements((prevElements) => ({
             ...prevElements,
-            [gridChecked]: {
-                ...prevElements[gridChecked],
+            [itemId]: {
+                ...prevElements[itemId],
                 style: {
-                    ...prevElements[gridChecked].style,
+                    ...prevElements[itemId].style,
                     backgroundColor: e.target.value,
                 },
             },
         }))
     }
+    useEffect(() => {
+        if (gridChecked === "") {
+            setItemId(mainGridId)
+        } else {
+            setItemId(gridChecked)
+        }
+        console.log(itemId)
+        console.log(gridChecked)
+    }, [gridChecked, mainGridId])
     const changeBorderColor = (e) => {
-        if (gridChecked == "") return
-        console.log(e.target.value)
         setAllElements((prevElements) => ({
             ...prevElements,
-            [gridChecked]: {
-                ...prevElements[gridChecked],
+            [itemId]: {
+                ...prevElements[itemId],
                 style: {
-                    ...prevElements[gridChecked].style,
+                    ...prevElements[itemId].style,
                     borderColor: e.target.value,
                 },
             },
@@ -46,14 +59,17 @@ export default function ItemInfoScreen(props) {
         if (gridChecked == "") return
         setAllElements((prevElements) => ({
             ...prevElements,
-            [gridChecked]: {
-                ...prevElements[gridChecked],
+            [itemId]: {
+                ...prevElements[itemId],
                 style: {
-                    ...prevElements[gridChecked].style,
+                    ...prevElements[itemId].style,
                     justifyContents: justifyMap[e.target.id] || "flex-start",
                 },
             },
         }))
+    }
+    if (!itemId) {
+        return
     }
 
     return (
@@ -70,47 +86,55 @@ export default function ItemInfoScreen(props) {
                     <div className="ml-4">Design</div>
                 </div>
                 <div className="mt-4 flex flex-row">
-                    <div className="ml-3 rounded p-1 hover:bg-zinc-200" id="left" onClick={changeJustify}>
+                    <div
+                        className="ml-3 rounded p-1 hover:bg-zinc-200"
+                        id="left"
+                        onClick={() => justifyLeft(itemId, allElements, setAllElements, gridPixelSize)}
+                    >
                         <FaAlignLeft />
                     </div>
-                    <div className="ml-3 rounded p-1 hover:bg-zinc-200" id="center" onClick={changeJustify}>
+                    <div
+                        className="ml-3 rounded p-1 hover:bg-zinc-200"
+                        id="center"
+                        onClick={() => justifyCenter(itemId, allElements, setAllElements, gridPixelSize)}
+                    >
                         <FaAlignCenter />
                     </div>
-                    <div className="ml-3 rounded p-1 hover:bg-zinc-200" id="spaceBetween" onClick={changeJustify}>
+                    <div
+                        className="ml-3 rounded p-1 hover:bg-zinc-200"
+                        id="spaceBetween"
+                        onClick={() => justifyBetween(itemId, allElements, setAllElements, gridPixelSize)}
+                    >
                         <FaAlignJustify />
                     </div>
-                    <div className="ml-3 rounded p-1 hover:bg-zinc-200" id="right" onClick={changeJustify}>
+                    <div
+                        className="ml-3 rounded p-1 hover:bg-zinc-200"
+                        id="right"
+                        onClick={() => justifyRight(itemId, allElements, setAllElements, gridPixelSize)}
+                    >
                         <FaAlignRight />
                     </div>
                 </div>
             </div>
             <div className="mt-4 flex flex-row">
                 <div>
-                    <div className="mt-2 flex flex-row border border-white p-1 hover:border hover:border-gray-300">
+                    <div className="mt-2 flex w-20 flex-row border border-white bg-red-500 p-1 hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">X</div>
-                        <div className="ml-3 text-xs text-gray-600">39</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId].top}</div>
                     </div>
                     <div className="mt-2 flex flex-row border border-white p-1 hover:border hover:border-gray-300 ">
-                        <div className="ml-3 text-xs text-gray-400">W</div>
-                        <div className="ml-3 text-xs text-gray-600">39</div>
-                    </div>
-                    <div className="mt-2 flex flex-row border border-white p-1 p-1 hover:border hover:border-gray-300">
-                        <div className="ml-3 text-xs text-gray-400">X</div>
-                        <div className="ml-3 text-xs text-gray-600">39</div>
+                        <div className="ml-3 text-xs text-gray-400">Y</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId].left}</div>
                     </div>
                 </div>
                 <div className="ml-4">
-                    <div className="mt-2 flex flex-row border border-white p-1 p-1 hover:border hover:border-gray-300">
+                    <div className="mt-2 flex flex-row border border-white p-1  hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">X</div>
-                        <div className="ml-3 text-xs text-gray-600">39</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId].width}</div>
                     </div>
-                    <div className="mt-2 flex flex-row border border-white p-1 p-1 hover:border hover:border-gray-300">
+                    <div className="mt-2 flex flex-row border border-white p-1  hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">W</div>
-                        <div className="ml-3 text-xs text-gray-600">39</div>
-                    </div>
-                    <div className="mt-2 flex flex-row border border-white p-1 p-1 hover:border hover:border-gray-300">
-                        <div className="ml-3 text-xs text-gray-400">X</div>
-                        <div className="ml-3 text-xs text-gray-600">39</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId].height}</div>
                     </div>
                 </div>
             </div>
@@ -140,12 +164,7 @@ export default function ItemInfoScreen(props) {
                 <div className="ml-4  text-sm text-black">Border</div>
                 <div className="ml-4 mt-4 flex flex-row ">
                     <div className="flex h-6 flex-row items-center border border-white  p-1 hover:border hover:border-gray-300">
-                        <input
-                            type="color"
-                            className="h-4 w-4"
-                            onChange={changeBorderColor}
-                            value={gridChecked !== "" && allElements[gridChecked].style && allElements[gridChecked].style.borderColor}
-                        ></input>
+                        <input type="color" className="h-4 w-4" onChange={changeBorderColor}></input>
                         <div className="ml-2 flex flex-col text-sm">#f12321</div>
                     </div>
                     <div></div>

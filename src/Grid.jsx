@@ -28,11 +28,12 @@ export default function Grid(props) {
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
 
     const selecteCursorType = {
-        "moving": "cursor-default",
-        "resizing": "cursor-ne-resize",
-        "resizingH": "cursor-n-resize",
-        "resizingT": "cursor-s-resize",
-        "creating": "cursor-default",
+        moving: "cursor-default",
+        "grid-moving": "cursor-grabbing",
+        resizing: "cursor-ne-resize",
+        resizingH: "cursor-n-resize",
+        resizingT: "cursor-s-resize",
+        creating: "cursor-default",
     }
 
     useEffect(() => {
@@ -89,7 +90,7 @@ export default function Grid(props) {
             const position = event.target.id
             let currCursorType = cursorType
             if (position) {
-               currCursorType = "resizing-" + position
+                currCursorType = "resizing-" + position
             }
             setGridChecked(props.id)
 
@@ -110,14 +111,13 @@ export default function Grid(props) {
         return
     }
 
-
     return (
         <div
             ref={gridRef}
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative z-10 grid h-full w-full select-none   ${gridMoving.id === props.id ? selecteCursorType[cursorType] : ""} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`relative z-10 grid h-full w-full select-none   ${selecteCursorType[cursorType]} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}

@@ -37,7 +37,6 @@ export default function WebsiteScreen() {
         }
     }
     useEffect(() => {
-
         setAllElements((currentElements) => {
             const updatedElements = {}
 
@@ -57,23 +56,22 @@ export default function WebsiteScreen() {
 
             return updatedElements // Return the updated elements object to update the state
         })
-        
     }, [gridPixelSize])
-    
+
     const mainRef = useRef(null)
     useEffect(() => {
         if (!mainRef.current) return
         const mainId = uuidv4()
         const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainRef))
-        
+
         setStartingElementBoundingBox(mainGridBoundingBox)
-       const svgSize = gridPixelSize // Your grid pixel size
-       const svgImage = encodeURIComponent(
-           `<svg xmlns="http://www.w3.org/2000/svg" width="${svgSize}" height="${svgSize}"><rect width="100%" height="100%" fill="none" stroke="black" stroke-width="1"/></svg>`
-       )
+        const svgSize = gridPixelSize // Your grid pixel size
+        const svgImage = encodeURIComponent(
+            `<svg xmlns="http://www.w3.org/2000/svg" width="${svgSize}" height="${svgSize}"><rect width="100%" height="100%" fill="none" stroke="black" stroke-width="1"/></svg>`
+        )
         setAllElements({
             [mainId]: {
-                item: <Grid  mainRef={mainRef} key={mainId} className="bg-red-500" id={mainId}></Grid>,
+                item: <Grid mainRef={mainRef} key={mainId} className="bg-red-500" id={mainId}></Grid>,
                 id: mainId,
                 width: 10000,
                 height: 10000,
@@ -91,7 +89,7 @@ export default function WebsiteScreen() {
                 text: "",
             },
         })
-        
+
         setMainGridId(mainId)
     }, [mainRef])
     useEffect(() => {
@@ -109,8 +107,8 @@ export default function WebsiteScreen() {
                 }
                 let x1 = i.x2
                 let y1 = i.y2
-                let x2 = (e.clientX - startElementBoundingBox.left)
-                let y2 = (e.clientY - startElementBoundingBox.top)
+                let x2 = e.clientX - startElementBoundingBox.left
+                let y2 = e.clientY - startElementBoundingBox.top
                 return { ...i, x1, x2, y1, y2, setBox: false }
             })
             return
@@ -132,7 +130,7 @@ export default function WebsiteScreen() {
     }
     const handleDragStart = (e, index) => {
         e.preventDefault()
-        mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize 
+        mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize
     }
     useEffect(() => {
         const handleWheel = (event) => {
