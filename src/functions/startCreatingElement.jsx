@@ -4,20 +4,18 @@ import startElementInteraction from "./startElementInteraction"
 import calculateNewStyle from "./calculateNewStyle"
 
 export default function startCreatingElement(x, y, parentId, allElements, mainGridOffset, gridPixelSize, setGridMoving, setAllElements, setGridChecked) {
-    console.log(allElements)
     const uuid = uuidv4()
     let offSetLeft = mainGridOffset.left
     let offSetTop = mainGridOffset.top
     let pId = parentId
     while (pId !== null) {
         let ell = allElements[pId]
-        offSetLeft -=ell.left
+        offSetLeft -= ell.left
         offSetTop -= ell.top
         pId = ell.parent
     }
     const newStyle = calculateNewStyle(x / gridPixelSize + offSetLeft, y / gridPixelSize + offSetTop, 1, 1, gridPixelSize)
-    console.log(x / gridPixelSize + offSetLeft)
-    console.log(y / gridPixelSize + offSetTop)
+
     setAllElements((elements) => ({
         ...elements,
         [parentId]: { ...elements[parentId], children: [...elements[parentId].children, uuid] },
@@ -26,8 +24,12 @@ export default function startCreatingElement(x, y, parentId, allElements, mainGr
             id: uuid,
             width: 1,
             height: 1,
-            left: (x / gridPixelSize + offSetLeft) ,
-            top: (y / gridPixelSize + offSetTop),
+            left: x / gridPixelSize + offSetLeft,
+            top: y / gridPixelSize + offSetTop,
+            css: {
+                width: "w-1",
+                height: "h-1",
+            },
             style: newStyle,
             text: "",
             parent: parentId,

@@ -7,7 +7,7 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, s
     let left = allElements[gridMoving.id].left
     const width = allElements[gridMoving.id].width
     const height = allElements[gridMoving.id].height
-    let [newLeft, newtop] = [left + (gridMoving.x2 - gridMoving.x1)/gridPixelSize, top + (gridMoving.y2 - gridMoving.y1)/gridPixelSize]
+    let [newLeft, newtop] = [left + (gridMoving.x2 - gridMoving.x1) / gridPixelSize, top + (gridMoving.y2 - gridMoving.y1) / gridPixelSize]
     const parentId = allElements[gridMoving.id].parent
     const parentInfo = {
         top: allElements[parentId].top,
@@ -15,26 +15,19 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, s
         width: allElements[parentId].width,
         height: allElements[parentId].height,
     }
-    console.log(allElements)
-    console.log(gridMoving.id)
-    console.log(top + height, parentInfo.height)
+
     if (newtop + height > parentInfo.height) {
-        console.log("cia")
         newtop = parentInfo.height - height
     }
     if (newtop < 0) {
-        console.log("cia")
-        newtop = 0 
+        newtop = 0
     }
     if (newLeft + width > parentInfo.width) {
-        console.log("cia")
         newLeft = parentInfo.width - width
     }
     if (newLeft < 0) {
-        console.log("cia")
         newLeft = 0
     }
-    console.log(newtop)
     const newStyle = calculateNewStyle(newLeft, newtop, width, height, gridPixelSize)
     setAllElements((currentState) =>
         produce(currentState, (draft) => {

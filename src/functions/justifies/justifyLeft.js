@@ -30,6 +30,13 @@ export default function justifyLeft(parentId, allElements, setAllElements, gridP
         // Add the current child's width to the accumulatedWidth for the next child's position
         accumulatedWidth += updatedElements[childId].width -1 
     })
+    updatedElements[parentId] = {
+        ...updatedElements[parentId],
+        css: {
+            ...updatedElements[parentId].css,
+            justify: "justify-left",
+        },
+    }
 
     // Update the state with the new elements
     setAllElements(updatedElements)

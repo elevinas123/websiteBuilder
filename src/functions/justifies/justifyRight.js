@@ -16,7 +16,7 @@ export default function justifyRight(parentId, allElements, setAllElements) {
 
     // Prepare updated elements with new positions
     const updatedElements = { ...allElements }
-    sortedChildren.forEach((childId, index) => {
+    sortedChildren.forEach((childId) => {
         const child = updatedElements[childId]
 
         // Update left position for each child based on the accumulatedWidth
@@ -34,6 +34,13 @@ export default function justifyRight(parentId, allElements, setAllElements) {
         // Increment accumulatedWidth for the next child's position
         accumulatedWidth += child.width
     })
+    updatedElements[parentId] = {
+        ...updatedElements[parentId],
+        css: {
+            ...updatedElements[parentId].css,
+            justify: "justify-right",
+        },
+    }
 
     // Update the state with the new elements
     setAllElements(updatedElements)

@@ -28,6 +28,7 @@ export default function WebsiteScreen() {
     const [scrollPosition, setScrollPosition] = useState(0)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     function roundBoundingBox(boundingBox) {
+        if (!boundingBox) return
         return {
             left: Math.floor(boundingBox.left),
             top: Math.floor(boundingBox.top),
@@ -82,6 +83,11 @@ export default function WebsiteScreen() {
                     backgroundColor: "gray",
                     height: 10000,
                 },
+                css: {
+                    width: "w-10000",
+                    backgroundColor: "bg-gray",
+                    height: "h-10000",
+                },
                 parent: null,
                 children: ["main-webGrid"],
                 text: "",
@@ -89,15 +95,18 @@ export default function WebsiteScreen() {
             ["main-webGrid"]: {
                 item: <Grid key={mainId} className="bg-red-500" id={"main-webGrid"}></Grid>,
                 id: "main-webGrid",
+                css: {
+                    width: "w-1920",
+                    height: "h-1080",
+                    backgroundColor: "bg-red",
+                },
                 width: 1920,
                 height: 1080,
                 top: 50,
                 left: 50,
                 style: {
                     ...calculateNewStyle(50, 50, 1920, 1080, gridPixelSize),
-                    width: 1920,
                     backgroundColor: "red",
-                    height: 1080,
                 },
                 parent: mainId,
                 children: [],
@@ -107,10 +116,28 @@ export default function WebsiteScreen() {
 
         setMainGridId(mainId)
     }, [mainRef])
+    const handleWindowResize = () => {
+        if (!mainRef.current) return
+        const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainRef))
+        setStartingElementBoundingBox(mainGridBoundingBox)
+    }
+    useEffect(() => {
+        handleWindowResize()
+    }, [mainGridId])
+    useEffect(() => {
+        // Handler to call on window resize
+        
+        window.addEventListener("resize", handleWindowResize)
+
+        // Call handler right away so state gets updated with initial window size
+        // Remove event listener on cleanup
+        return () => window.removeEventListener("resize", handleWindowResize)
+    }, []) // Empty array ensures this effect runs only on mount and unmo
+    
+
     useEffect(() => {
         mainRef.current.scrollTop = 0
         mainRef.current.scrollLeft = 0
-        console.log(mainRef.current.scrollLeft)
         setMainGridOffset({ top: 0, left: 0, width: 10000, height: 10000 })
     }, [mainGridId])
     const handleMousemove = (e) => {
@@ -174,7 +201,7 @@ export default function WebsiteScreen() {
 
     return (
         <div className="flex h-full w-2/3 flex-row">
-            <div className=" mt-2 flex h-full w-full flex-col text-black overflow-hidden">
+            <div className=" mt-2 flex h-full w-full flex-col overflow-hidden text-black">
                 <div className=" flex h-32 flex-col bg-zinc-200">
                     <div>Navbar</div>
                     <div className="mt-3">

@@ -43,6 +43,13 @@ export default function justifyBetween(parentId, allElements, setAllElements) {
             accumulatedWidth += child.width + spaceBetween
         }
     })
+    updatedElements[parentId] = {
+        ...updatedElements[parentId],
+        css: {
+            ...updatedElements[parentId].css,
+        justify: "justify-between",
+        }
+    }
 
     // Update the state with the new elements
     setAllElements(updatedElements)

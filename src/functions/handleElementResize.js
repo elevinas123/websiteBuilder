@@ -65,6 +65,11 @@ export default function handleElementResize(gridMoving, allElements, gridPixelSi
                         ...element.style,
                         ...newStyle,
                     }
+                    element.css = {
+                        ...element.css,
+                        width: `w-${width}`,
+                        height: `w-${height}`,
+                    }
                 }
             })
         )

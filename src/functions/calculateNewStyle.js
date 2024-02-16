@@ -1,5 +1,4 @@
 export default function calculateNewStyle(left, top, width, height, gridPixelSize) {
-    console.log("gridPixelSize", gridPixelSize)
     const newStyle = {
         display: "grid",
         gridTemplateColumns: `repeat(${width}, ${gridPixelSize}px)`,

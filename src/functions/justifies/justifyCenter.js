@@ -39,6 +39,13 @@ export default function justifyCenter(parentId, allElements, setAllElements, gri
         // Add the current child's width to the accumulatedWidth for the next child's position
         accumulatedWidth += childrenWidths[index]-1
     })
+    updatedElements[parentId] = {
+        ...updatedElements[parentId],
+        css: {
+            ...updatedElements[parentId].css,
+            justify: "justify-center",
+        },
+    }
 
     // Update the state with the new elements
     setAllElements(updatedElements)

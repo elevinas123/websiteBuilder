@@ -25,6 +25,10 @@ export default function ItemInfoScreen() {
                     ...prevElements[itemId].style,
                     backgroundColor: e.target.value,
                 },
+                css: {
+                    ...prevElements[itemId].css,
+                    backgroundColor: `bg-${e.target.value}`,
+                },
             },
         }))
     }
@@ -46,28 +50,14 @@ export default function ItemInfoScreen() {
                     ...prevElements[itemId].style,
                     borderColor: e.target.value,
                 },
-            },
-        }))
-    }
-    const justifyMap = {
-        left: "flex-start",
-        center: "center",
-        spaceBetween: "space-between",
-        right: "flex-end",
-    }
-    const changeJustify = (e) => {
-        if (gridChecked == "") return
-        setAllElements((prevElements) => ({
-            ...prevElements,
-            [itemId]: {
-                ...prevElements[itemId],
-                style: {
-                    ...prevElements[itemId].style,
-                    justifyContents: justifyMap[e.target.id] || "flex-start",
+                css: {
+                    ...prevElements[itemId].css,
+                    backgroundColor: `border-${e.target.value}`,
                 },
             },
         }))
     }
+
     if (!itemId) {
         return
     }
