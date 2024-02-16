@@ -52,12 +52,17 @@ export default function WebsiteScreen() {
                         // Update specific style properties
                         gridTemplateColumns: `repeat(${element.width}, ${gridPixelSize}px)`,
                         gridTemplateRows: `repeat(${element.height}, ${gridPixelSize}px)`,
+                        paddingLeft: element.padding.left * gridPixelSize,
+                        paddingRight: element.padding.right * gridPixelSize,
+                        paddingTop: element.padding.top * gridPixelSize,
+                        paddingBottom: element.padding.bottom * gridPixelSize,
                     },
                 }
             })
 
             return updatedElements // Return the updated elements object to update the state
         })
+        console.log(allElements)
     }, [gridPixelSize])
 
     const mainRef = useRef(null)
@@ -79,14 +84,20 @@ export default function WebsiteScreen() {
                 style: {
                     gridTemplateColumns: `repeat(${10000}, ${gridPixelSize}px)`, // 10 columns, each 4px wide
                     gridTemplateRows: `repeat(${10000}, ${gridPixelSize}px)`,
-                    width: 10000,
                     backgroundColor: "gray",
+                    width: 10000,
                     height: 10000,
                 },
                 css: {
                     width: "w-10000",
                     backgroundColor: "bg-gray",
                     height: "h-10000",
+                },
+                padding: {
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
                 },
                 parent: null,
                 children: ["main-webGrid"],
@@ -107,6 +118,16 @@ export default function WebsiteScreen() {
                 style: {
                     ...calculateNewStyle(50, 50, 1920, 1080, gridPixelSize),
                     backgroundColor: "red",
+                    paddingLeft: 50 * gridPixelSize,
+                    paddingRight: 50 * gridPixelSize,
+                    paddingTop: 50 * gridPixelSize,
+                    paddingBottom: 50 * gridPixelSize,
+                },
+                padding: {
+                    top: 50,
+                    left: 50,
+                    right: 50,
+                    bottom: 50,
                 },
                 parent: mainId,
                 children: [],
@@ -216,6 +237,12 @@ export default function WebsiteScreen() {
                             onClick={() => setCursorType("creating")}
                         >
                             creating
+                        </button>
+                        <button
+                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "padding" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
+                            onClick={() => setCursorType("padding")}
+                        >
+                            padding
                         </button>
                     </div>
                 </div>

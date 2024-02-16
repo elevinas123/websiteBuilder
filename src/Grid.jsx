@@ -15,6 +15,7 @@ import startCreatingElement from "./functions/startCreatingElement"
 import handleGridMove from "./functions/handleGridMove"
 import handleElementResize from "./functions/handleElementResize"
 import startElementInteraction from "./functions/startElementInteraction"
+import handlePaddingResize from "./functions/handlePaddingresize"
 export default function Grid(props) {
     const gridRef = useRef(null)
     const [gridSelect, setGridSelect] = useState(false)
@@ -58,7 +59,12 @@ export default function Grid(props) {
                 }))
                 if (gridMoving.moved) setGridMoving({ moving: false })
                 else setGridMoving((i) => ({ ...i, setBox: true }))
-            } else {
+            }
+            else {
+                if (cursorType === "padding") {
+                    handlePaddingResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements, setCursorType)
+                    return
+                }
                 handleElementResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements, setCursorType)
             }
         }
@@ -79,6 +85,17 @@ export default function Grid(props) {
         }
         if (event.button === 1) {
             startElementInteraction(mainGridId, mouseX, mouseY, "grid-moving", setGridMoving)
+            return
+        }
+        if (cursorType === "padding") {
+            const type = event.target.id
+            setGridChecked(props.id)
+
+            setGridChecked(props.id)
+
+            startElementInteraction(props.id, mouseX, mouseY, type, setGridMoving)
+            console.log(gridChecked)
+            console.log(cursorType)
             return
         }
         if (cursorType === "moving" && props.id !== mainGridId) {
@@ -112,11 +129,59 @@ export default function Grid(props) {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative z-10 grid h-full w-full select-none   ${selecteCursorType[cursorType]} ${gridSelect ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`relative z-10 grid h-full w-full box-content  select-none   ${selecteCursorType[cursorType]} ${gridSelect && cursorType !== "padding" ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
-            { allElements[props.id].children.map((i) => allElements[i].item)}
+            {/* Conditionally render the padding resize handles if padding is being adjusted or is non-zero */}
+            {(Object.values(allElements[props.id].padding).some((value) => value > 0) || (cursorType === "padding" && gridChecked === props.id)) && (
+                <div className="pointer-events-none absolute h-full w-full">
+                    {/* Padding area rectangle with resize handles */}
+                    <div
+                        className="pointer-events-auto absolute border-2 border-dashed border-blue-500"
+                        style={{
+                            top: `${allElements[props.id].padding.top * gridPixelSize}px`,
+                            right: `${allElements[props.id].padding.right * gridPixelSize}px`,
+                            bottom: `${allElements[props.id].padding.bottom * gridPixelSize}px`,
+                            left: `${allElements[props.id].padding.left * gridPixelSize}px`,
+                        }}
+                    >
+                        {/* Top resize handle */}
+                        <div
+                            className="absolute left-0 right-0 top-0 h-2 cursor-n-resize"
+                            id="padding-top"
+                            onMouseDown={handleMouseDown}
+                            style={{ top: "-2px" }}
+                        ></div>
+
+                        {/* Right resize handle */}
+                        <div
+                            className="absolute bottom-0 right-0 top-0 w-2 cursor-e-resize"
+                            id="padding-right"
+                            onMouseDown={handleMouseDown}
+                            style={{ right: "-2px" }}
+                        ></div>
+
+                        {/* Bottom resize handle */}
+                        <div
+                            className="absolute bottom-0 left-0 right-0 h-2 cursor-s-resize"
+                            id="padding-bottom"
+                            onMouseDown={handleMouseDown}
+                            style={{ bottom: "-2px" }}
+                        ></div>
+
+                        {/* Left resize handle */}
+                        <div
+                            className="absolute bottom-0 left-0 top-0 w-2 cursor-w-resize"
+                            id="padding-left"
+                            onMouseDown={handleMouseDown}
+                            style={{ left: "-2px" }}
+                        ></div>
+                    </div>
+                </div>
+            )}
+
+            {allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}
-            {gridChecked === props.id && !props.mainGrid ? (
+            {gridChecked === props.id && !props.mainGrid && cursorType !== "padding" ? (
                 <div className="absolute h-full w-full ">
                     <div
                         className=" absolute -left-1 -top-1 z-50 h-2 w-2 cursor-nw-resize border border-red-500 bg-white opacity-100 "

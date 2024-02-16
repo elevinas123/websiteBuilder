@@ -14,7 +14,9 @@ export default function startCreatingElement(x, y, parentId, allElements, mainGr
         offSetTop -= ell.top
         pId = ell.parent
     }
-    const newStyle = calculateNewStyle(x / gridPixelSize + offSetLeft, y / gridPixelSize + offSetTop, 1, 1, gridPixelSize)
+    const left = x / gridPixelSize + offSetLeft - allElements[parentId].padding.left
+    const top =  y / gridPixelSize + offSetTop - allElements[parentId].padding.top
+    const newStyle = calculateNewStyle(left, top, 1, 1, gridPixelSize)
 
     setAllElements((elements) => ({
         ...elements,
@@ -24,14 +26,20 @@ export default function startCreatingElement(x, y, parentId, allElements, mainGr
             id: uuid,
             width: 1,
             height: 1,
-            left: x / gridPixelSize + offSetLeft,
-            top: y / gridPixelSize + offSetTop,
+            left: left,
+            top: top,
             css: {
                 width: "w-1",
                 height: "h-1",
             },
             style: newStyle,
             text: "",
+            padding: {
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+            },
             parent: parentId,
             children: [],
         },
