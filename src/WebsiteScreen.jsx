@@ -25,7 +25,6 @@ export default function WebsiteScreen() {
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridRef, setMainGridRef] = useAtom(mainGridRefAtom)
-    const [scrollPosition, setScrollPosition] = useState(0)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     function roundBoundingBox(boundingBox) {
         if (!boundingBox) return
@@ -39,6 +38,7 @@ export default function WebsiteScreen() {
         }
     }
     useEffect(() => {
+        setMainGridOffset({ top: mainRef.current.scrollTop / gridPixelSize, left: mainRef.current.scrollLeft / gridPixelSize })
         setAllElements((currentElements) => {
             const updatedElements = {}
 
@@ -147,14 +147,13 @@ export default function WebsiteScreen() {
     }, [mainGridId])
     useEffect(() => {
         // Handler to call on window resize
-        
+
         window.addEventListener("resize", handleWindowResize)
 
         // Call handler right away so state gets updated with initial window size
         // Remove event listener on cleanup
         return () => window.removeEventListener("resize", handleWindowResize)
     }, []) // Empty array ensures this effect runs only on mount and unmo
-    
 
     useEffect(() => {
         mainRef.current.scrollTop = 0
@@ -201,14 +200,38 @@ export default function WebsiteScreen() {
             if (event.ctrlKey) {
                 // Check if the Ctrl key is pressed
                 event.preventDefault() // Prevent the default zoom or scroll action
+                let boundingBox = roundBoundingBox(getBoundingBox(mainRef))
+                const cursorX = event.clientX - boundingBox.left
+                const cursorY = event.clientY - boundingBox.top
 
-                if (event.deltaY < 0) {
-                    // Scrolling up, increase gridPixelSize
-                    setGridPixelSize((prevSize) => Math.min(prevSize * 2, 32)) // Example max size 100
-                } else {
-                    // Scrolling down, decrease gridPixelSize
-                    setGridPixelSize((prevSize) => Math.max(prevSize / 2, 0.1)) // Example min size 1
-                }
+                // Assuming the zooming action increments/decrements the gridPixelSize by 20%
+                const zoomInFactor = 1.2
+                const zoomOutFactor = 0.8333 // Approximately the inverse of 1.2
+                const isZoomingIn = event.deltaY < 0
+
+                setGridPixelSize((prevSize) => {
+                    const scaleFactor = isZoomingIn ? zoomInFactor : zoomOutFactor
+                    const newSize = prevSize * scaleFactor
+                    
+                    // Calculate the new scroll positions
+                    let newSizeLeft = cursorX / newSize - boundingBox.right / newSize
+                    let newSizeTop = cursorY / newSize - boundingBox.bottom / newSize
+                    
+                    console.log("boundingBox", boundingBox)
+                    console.log("newSizeLeft", newSizeLeft)
+                    console.log("cursorX", cursorX)
+                    console.log("cursorY", cursorY)
+                    console.log(newSizeTop)
+                    console.log(mainRef.current.scrollLeft)
+                    console.log(mainRef.current.scrollTop)
+                    // Update scroll position
+                    requestAnimationFrame(() => {
+                        mainRef.current.scrollLeft += newSizeLeft
+                        mainRef.current.scrollTop += newSizeTop
+                    })
+
+                    return Math.min(Math.max(newSize, 0.2), 5) // Clamp newSize between min and max values
+                })
             }
         }
 
