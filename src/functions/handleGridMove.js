@@ -7,7 +7,11 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, s
     let left = allElements[gridMoving.id].left
     const width = allElements[gridMoving.id].width
     const height = allElements[gridMoving.id].height
-    let [newLeft, newtop] = [left + (gridMoving.x2 - gridMoving.x1) / gridPixelSize, top + (gridMoving.y2 - gridMoving.y1) / gridPixelSize]
+
+    // Calculate new positions and round them to the nearest whole number
+    let newLeft = Math.round((left + (gridMoving.x2 - gridMoving.x1) / gridPixelSize) * 100) / 100
+    let newTop = Math.round((top + (gridMoving.y2 - gridMoving.y1) / gridPixelSize) * 100) / 100
+
     const parentId = allElements[gridMoving.id].parent
     const parentInfo = {
         top: allElements[parentId].top,
@@ -16,11 +20,12 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, s
         height: allElements[parentId].height,
     }
 
-    if (newtop + height > parentInfo.height) {
-        newtop = parentInfo.height - height
+    // Adjust positions to ensure the moved element remains within its parent's bounds
+    if (newTop + height > parentInfo.height) {
+        newTop = parentInfo.height - height
     }
-    if (newtop < 0) {
-        newtop = 0
+    if (newTop < 0) {
+        newTop = 0
     }
     if (newLeft + width > parentInfo.width) {
         newLeft = parentInfo.width - width
@@ -28,13 +33,15 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, s
     if (newLeft < 0) {
         newLeft = 0
     }
-    const newStyle = calculateNewStyle(newLeft, newtop, width, height, gridPixelSize)
+
+    const newStyle = calculateNewStyle(newLeft, newTop, width, height, gridPixelSize)
+
+    // Update elements' positions and styles
     setAllElements((currentState) =>
         produce(currentState, (draft) => {
-            // Update the parent element
             const element = draft[gridMoving.id]
             if (element) {
-                element.top = newtop
+                element.top = newTop
                 element.left = newLeft
                 element.style = {
                     ...element.style,
@@ -44,9 +51,11 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, s
         })
     )
 
+    // Reset moving state if the move is completed
     if (gridMoving.moved === true) {
         setGridMoving({ moving: false })
         return
     }
+    // Continue moving
     setGridMoving((i) => ({ ...i, setBox: true }))
 }

@@ -40,7 +40,10 @@ export default function handleElementResize(gridMoving, allElements, gridPixelSi
     }
 
     // Prevent negative dimensions
-
+    width = Math.round(width * 100) / 100
+    height = Math.round(height * 100) / 100
+    top = Math.round(top * 100) / 100
+    left = Math.round(left * 100) / 100
     let newStyle = calculateNewStyle(left, top, width, height, gridPixelSize)
 
     if (gridMoving.moved === true) {
@@ -52,6 +55,7 @@ export default function handleElementResize(gridMoving, allElements, gridPixelSi
             left += width
             width *= -1
         }
+        
         newStyle = calculateNewStyle(left, top, width, height, gridPixelSize)
         setAllElements((currentState) =>
             produce(currentState, (draft) => {

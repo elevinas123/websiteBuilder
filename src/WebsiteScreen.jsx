@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useLayoutEffect } from "react"
 import Grid from "./Grid"
 import { v4 as uuidv4 } from "uuid"
 import { useAtom } from "jotai"
@@ -26,6 +26,10 @@ export default function WebsiteScreen() {
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridRef, setMainGridRef] = useAtom(mainGridRefAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
+    const latestValuesRef = useRef({ scrollLeft: 0, scrollTop: 0 })
+    const MIN_GRID_PIXEL_SIZE = 0.2 // Example minimum zoom level
+    const MAX_GRID_PIXEL_SIZE = 10 // Example maximum zoom level
+    const [prevSize, setPrevSize] = useState(2)
     function roundBoundingBox(boundingBox) {
         if (!boundingBox) return
         return {
@@ -37,6 +41,23 @@ export default function WebsiteScreen() {
             height: Math.floor(boundingBox.height),
         }
     }
+    useLayoutEffect(() => {
+        console.log(gridPixelSize, prevSize)
+        if (gridPixelSize === undefined) return // Ensure gridPixelSize is initialized
+
+        // Use the latest event details for calculations
+        const { cursorX, cursorY } = latestValuesRef.current
+        const logicalXPreZoom = (cursorX + mainRef.current.scrollLeft) / prevSize
+        const logicalYPreZoom = (cursorY + mainRef.current.scrollTop) / prevSize
+
+        // Calculate the new scroll positions based on the updated gridPixelSize
+        const newScrollLeft = logicalXPreZoom * gridPixelSize - cursorX
+        const newScrollTop = logicalYPreZoom * gridPixelSize - cursorY
+
+        // Apply the new scroll positions
+        mainRef.current.scrollLeft = newScrollLeft
+        mainRef.current.scrollTop = newScrollTop
+    }, [gridPixelSize]) // This effect runs every time gridPixelSize changes
     useEffect(() => {
         setMainGridOffset({ top: mainRef.current.scrollTop / gridPixelSize, left: mainRef.current.scrollLeft / gridPixelSize })
         setAllElements((currentElements) => {
@@ -62,6 +83,7 @@ export default function WebsiteScreen() {
 
             return updatedElements // Return the updated elements object to update the state
         })
+        setPrevSize(gridPixelSize)
         console.log(allElements)
     }, [gridPixelSize])
 
@@ -198,50 +220,34 @@ export default function WebsiteScreen() {
     useEffect(() => {
         const handleWheel = (event) => {
             if (event.ctrlKey) {
-                // Check if the Ctrl key is pressed
-                event.preventDefault() // Prevent the default zoom or scroll action
-                let boundingBox = roundBoundingBox(getBoundingBox(mainRef))
-                const cursorX = event.clientX - boundingBox.left
-                const cursorY = event.clientY - boundingBox.top
+                event.preventDefault()
 
-                // Assuming the zooming action increments/decrements the gridPixelSize by 20%
-                const zoomInFactor = 1.2
-                const zoomOutFactor = 0.8333 // Approximately the inverse of 1.2
-                const isZoomingIn = event.deltaY < 0
-
+                const scaleFactor = event.deltaY < 0 ? 1.2 : 0.83333 // Adjusting scale factor for zoom in/out
                 setGridPixelSize((prevSize) => {
-                    const scaleFactor = isZoomingIn ? zoomInFactor : zoomOutFactor
-                    const newSize = prevSize * scaleFactor
-                    
-                    // Calculate the new scroll positions
-                    let newSizeLeft = cursorX / newSize - boundingBox.right / newSize
-                    let newSizeTop = cursorY / newSize - boundingBox.bottom / newSize
-                    
-                    console.log("boundingBox", boundingBox)
-                    console.log("newSizeLeft", newSizeLeft)
-                    console.log("cursorX", cursorX)
-                    console.log("cursorY", cursorY)
-                    console.log(newSizeTop)
-                    console.log(mainRef.current.scrollLeft)
-                    console.log(mainRef.current.scrollTop)
-                    // Update scroll position
-                    requestAnimationFrame(() => {
-                        mainRef.current.scrollLeft += newSizeLeft
-                        mainRef.current.scrollTop += newSizeTop
-                    })
+                    // Apply the scale factor and clamp the value between min and max zoom levels
+                    let newSize = prevSize * scaleFactor
+                    newSize = Math.max(MIN_GRID_PIXEL_SIZE, Math.min(newSize, MAX_GRID_PIXEL_SIZE))
 
-                    return Math.min(Math.max(newSize, 0.2), 5) // Clamp newSize between min and max values
+                    // Optionally, round the newSize to a desired precision
+                    // For example, rounding to two decimal places
+                    newSize = Math.round(newSize * 100) / 100
+
+                    return newSize
                 })
+
+                // Capture the latest event details for use in layout effect
+                const boundingBox = mainRef.current.getBoundingClientRect()
+                latestValuesRef.current = {
+                    cursorX: event.clientX - boundingBox.left,
+                    cursorY: event.clientY - boundingBox.top,
+                }
             }
         }
 
         window.addEventListener("wheel", handleWheel, { passive: false })
 
-        // Cleanup the event listener on component unmount
-        return () => {
-            window.removeEventListener("wheel", handleWheel)
-        }
-    }, [])
+        return () => window.removeEventListener("wheel", handleWheel)
+    }, []) // Dependencies are empty to setup and teardown the event listener
 
     return (
         <div className="flex h-full w-2/3 flex-row">
