@@ -7,17 +7,16 @@ export default function startCreatingElement(x, y, parentId, allElements, mainGr
     const uuid = uuidv4()
     let offSetLeft = mainGridOffset.left
     let offSetTop = mainGridOffset.top
-    let pId = parentId
+    let pId = allElements[parentId].parent
     while (pId !== null) {
         let ell = allElements[pId]
-        offSetLeft -= ell.left
-        offSetTop -= ell.top
+        offSetLeft -= ell.left + ell.padding.left
+        offSetTop -= ell.top + ell.padding.top
         pId = ell.parent
     }
-    const left = x / gridPixelSize + offSetLeft - allElements[parentId].padding.left
-    const top =  y / gridPixelSize + offSetTop - allElements[parentId].padding.top
+    const left = x / gridPixelSize + offSetLeft - allElements[parentId].padding.left - allElements[parentId].left
+    const top = y / gridPixelSize + offSetTop - allElements[parentId].padding.top - allElements[parentId].top
     const newStyle = calculateNewStyle(left, top, 1, 1, gridPixelSize)
-
     setAllElements((elements) => ({
         ...elements,
         [parentId]: { ...elements[parentId], children: [...elements[parentId].children, uuid] },

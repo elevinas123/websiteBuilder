@@ -44,6 +44,7 @@ export default function Grid(props) {
             setGridSelect(false)
         }
     }, [gridChecked, props.id])
+    useEffect(() => {}, [allElements[props.id].style])
 
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
@@ -59,8 +60,7 @@ export default function Grid(props) {
                 }))
                 if (gridMoving.moved) setGridMoving({ moving: false })
                 else setGridMoving((i) => ({ ...i, setBox: true }))
-            }
-            else {
+            } else {
                 if (cursorType === "padding") {
                     handlePaddingResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements, setCursorType)
                     return
@@ -129,7 +129,7 @@ export default function Grid(props) {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative z-10 grid h-full w-full box-content  select-none   ${selecteCursorType[cursorType]} ${gridSelect && cursorType !== "padding" ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`relative z-10 box-content grid h-full w-full  select-none   ${selecteCursorType[cursorType]} ${gridSelect && cursorType !== "padding" ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {/* Conditionally render the padding resize handles if padding is being adjusted or is non-zero */}
             {(Object.values(allElements[props.id].padding).some((value) => value > 0) || (cursorType === "padding" && gridChecked === props.id)) && (

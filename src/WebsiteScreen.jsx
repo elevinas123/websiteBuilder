@@ -65,6 +65,7 @@ export default function WebsiteScreen() {
 
             // Iterate over each element in the current state
             Object.entries(currentElements).forEach(([id, element]) => {
+                console.log(element)
                 // Update the style attribute for each element
                 updatedElements[id] = {
                     ...element, // Spread to copy other properties of the element unchanged
@@ -73,6 +74,8 @@ export default function WebsiteScreen() {
                         // Update specific style properties
                         gridTemplateColumns: `repeat(${element.width}, ${gridPixelSize}px)`,
                         gridTemplateRows: `repeat(${element.height}, ${gridPixelSize}px)`,
+                        width: element.width * gridPixelSize,
+                        height: element.height * gridPixelSize,
                         paddingLeft: element.padding.left * gridPixelSize,
                         paddingRight: element.padding.right * gridPixelSize,
                         paddingTop: element.padding.top * gridPixelSize,
@@ -222,7 +225,7 @@ export default function WebsiteScreen() {
             if (event.ctrlKey) {
                 event.preventDefault()
 
-                const scaleFactor = event.deltaY < 0 ? 1.2 : 0.83333 // Adjusting scale factor for zoom in/out
+                const scaleFactor = event.deltaY < 0 ? 2 : 0.5 // Adjusting scale factor for zoom in/out
                 setGridPixelSize((prevSize) => {
                     // Apply the scale factor and clamp the value between min and max zoom levels
                     let newSize = prevSize * scaleFactor
