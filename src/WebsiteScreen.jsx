@@ -3,6 +3,7 @@ import Grid from "./Grid"
 import { v4 as uuidv4 } from "uuid"
 import { useAtom } from "jotai"
 import {
+    HistoryClassAtom,
     allElementsAtom,
     cursorTypeAtom,
     gridCheckedAtom,
@@ -16,6 +17,7 @@ import {
 import getBoundingBox from "./functions/getBoundingBox"
 import ItemInfoScreen from "./ItemInfoScreen"
 import calculateNewStyle from "./functions/calculateNewStyle"
+import UndoTree from "./UndoTree"
 export default function WebsiteScreen() {
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
@@ -24,9 +26,9 @@ export default function WebsiteScreen() {
     const [startElementBoundingBox, setStartingElementBoundingBox] = useAtom(startElementBoundingBoxAtom)
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
-    const [mainGridRef, setMainGridRef] = useAtom(mainGridRefAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     const latestValuesRef = useRef({ scrollLeft: 0, scrollTop: 0 })
+    const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
     const MIN_GRID_PIXEL_SIZE = 0.2 // Example minimum zoom level
     const MAX_GRID_PIXEL_SIZE = 10 // Example maximum zoom level
     const [prevSize, setPrevSize] = useState(2)
@@ -89,6 +91,10 @@ export default function WebsiteScreen() {
         setPrevSize(gridPixelSize)
         console.log(allElements)
     }, [gridPixelSize])
+    useEffect(() => {
+        if (allElements["main-webGrid"]) HistoryClass.performAction(allElements)
+        console.log(HistoryClass)
+    }, [prevSize])
 
     const mainRef = useRef(null)
     useEffect(() => {
@@ -166,9 +172,13 @@ export default function WebsiteScreen() {
         if (!mainRef.current) return
         const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainRef))
         setStartingElementBoundingBox(mainGridBoundingBox)
+        
     }
     useEffect(() => {
         handleWindowResize()
+        if (mainGridId) {
+            setHistoryClass(new UndoTree(allElements))
+        }
     }, [mainGridId])
     useEffect(() => {
         // Handler to call on window resize
@@ -276,6 +286,27 @@ export default function WebsiteScreen() {
                         >
                             padding
                         </button>
+                        <button
+                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "padding" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
+                            onClick={() => {
+                                HistoryClass.undo()
+                                console.log(HistoryClass.currentNode.state)
+
+                                setAllElements({ ...HistoryClass.currentNode.state })
+                            }}
+                        >
+                            Undo
+                        </button>
+                        <button
+                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "padding" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
+                            onClick={() => {
+                                HistoryClass.redo()
+                                console.log(HistoryClass.currentNode)
+                                setAllElements({ ...HistoryClass.currentNode.state })
+                            }}
+                        >
+                            Undo
+                        </button>
                     </div>
                 </div>
                 <div
@@ -289,7 +320,6 @@ export default function WebsiteScreen() {
                     {mainGridId && allElements[mainGridId].item}
                 </div>
             </div>
-            <ItemInfoScreen />
         </div>
     )
 }

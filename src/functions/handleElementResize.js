@@ -1,7 +1,7 @@
 import { produce } from "immer"
 import calculateNewStyle from "./calculateNewStyle"
 
-export default function handleElementResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements, setCursorType) {
+export default function handleElementResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements, setCursorType) {
     let { top, left, width, height } = allElements[gridMoving.id]
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
@@ -78,6 +78,8 @@ export default function handleElementResize(gridMoving, allElements, gridPixelSi
             })
         )
         setGridMoving({ moving: false })
+        HistoryClass.performAction(allElements)
+        console.log(HistoryClass.currentNode)
         if (gridMoving.type === "creating") {
             setCursorType("moving")
         }

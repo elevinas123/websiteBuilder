@@ -2,7 +2,7 @@ import { produce } from "immer"
 import calculateMovement from "./calculateMovement"
 import calculateNewStyle from "./calculateNewStyle"
 
-export default function handleGridMove(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements) {
+export default function handleGridMove(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements) {
     let top = allElements[gridMoving.id].top
     let left = allElements[gridMoving.id].left
     const width = allElements[gridMoving.id].width
@@ -54,6 +54,8 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, s
     // Reset moving state if the move is completed
     if (gridMoving.moved === true) {
         setGridMoving({ moving: false })
+        HistoryClass.performAction(allElements)
+        console.log(HistoryClass.currentNode)
         return
     }
     // Continue moving

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useAtom } from "jotai"
 import {
+    HistoryClassAtom,
     allElementsAtom,
     cursorTypeAtom,
     gridCheckedAtom,
@@ -27,6 +28,7 @@ export default function Grid(props) {
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
+    const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
     const selecteCursorType = {
         moving: "cursor-default",
         "grid-moving": "cursor-grabbing",
@@ -49,7 +51,7 @@ export default function Grid(props) {
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
-                handleGridMove(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements)
+                handleGridMove(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements)
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
 
@@ -58,14 +60,17 @@ export default function Grid(props) {
                     left: Math.max(0, i.left - (gridMoving.x2 - gridMoving.x1) / gridPixelSize),
                     top: Math.max(0, i.top - (gridMoving.y2 - gridMoving.y1) / gridPixelSize),
                 }))
-                if (gridMoving.moved) setGridMoving({ moving: false })
-                else setGridMoving((i) => ({ ...i, setBox: true }))
+                if (gridMoving.moved) {
+                    setGridMoving({ moving: false })
+                    HistoryClass.performAction(allElements)
+                    console.log(HistoryClass.currentNode)
+                } else setGridMoving((i) => ({ ...i, setBox: true }))
             } else {
                 if (cursorType === "padding") {
-                    handlePaddingResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements, setCursorType)
+                    handlePaddingResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements, setCursorType)
                     return
                 }
-                handleElementResize(gridMoving, allElements, gridPixelSize, setGridMoving, setAllElements, setCursorType)
+                handleElementResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements, setCursorType)
             }
         }
     }, [gridMoving])
