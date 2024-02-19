@@ -29,7 +29,7 @@ export default function WebsiteScreen() {
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     const latestValuesRef = useRef({ scrollLeft: 0, scrollTop: 0 })
     const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
-    const MIN_GRID_PIXEL_SIZE = 0.2 // Example minimum zoom level
+    const MIN_GRID_PIXEL_SIZE = 0.25 // Example minimum zoom level
     const MAX_GRID_PIXEL_SIZE = 10 // Example maximum zoom level
     const [prevSize, setPrevSize] = useState(2)
     function roundBoundingBox(boundingBox) {
@@ -67,7 +67,7 @@ export default function WebsiteScreen() {
 
             // Iterate over each element in the current state
             Object.entries(currentElements).forEach(([id, element]) => {
-                console.log(element)
+                console.log("element", element)
                 // Update the style attribute for each element
                 updatedElements[id] = {
                     ...element, // Spread to copy other properties of the element unchanged
@@ -76,8 +76,8 @@ export default function WebsiteScreen() {
                         // Update specific style properties
                         gridTemplateColumns: `repeat(${element.width}, ${gridPixelSize}px)`,
                         gridTemplateRows: `repeat(${element.height}, ${gridPixelSize}px)`,
-                        width: element.width * gridPixelSize,
-                        height: element.height * gridPixelSize,
+                        width: element.width * gridPixelSize + element.padding.left * gridPixelSize + element.padding.right * gridPixelSize,
+                        height: element.height * gridPixelSize + element.padding.top * gridPixelSize + element.padding.bottom * gridPixelSize,
                         paddingLeft: element.padding.left * gridPixelSize,
                         paddingRight: element.padding.right * gridPixelSize,
                         paddingTop: element.padding.top * gridPixelSize,
@@ -235,7 +235,7 @@ export default function WebsiteScreen() {
             if (event.ctrlKey) {
                 event.preventDefault()
 
-                const scaleFactor = event.deltaY < 0 ? 2 : 0.5 // Adjusting scale factor for zoom in/out
+                const scaleFactor = event.deltaY < 0 ? 1.5 : 0.6666 // Adjusting scale factor for zoom in/out
                 setGridPixelSize((prevSize) => {
                     // Apply the scale factor and clamp the value between min and max zoom levels
                     let newSize = prevSize * scaleFactor
@@ -320,6 +320,7 @@ export default function WebsiteScreen() {
                     {mainGridId && allElements[mainGridId].item}
                 </div>
             </div>
+            <ItemInfoScreen />
         </div>
     )
 }

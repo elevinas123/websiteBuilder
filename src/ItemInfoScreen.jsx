@@ -1,11 +1,12 @@
 import { useAtom } from "jotai"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { FaAlignCenter, FaAlignJustify, FaAlignLeft, FaAlignRight } from "react-icons/fa"
-import { allElementsAtom, gridCheckedAtom, gridPixelSizeAtom, mainGridIdAtom } from "./atoms"
+import { HistoryClassAtom, allElementsAtom, gridCheckedAtom, gridPixelSizeAtom, mainGridIdAtom } from "./atoms"
 import justifyCenter from "./functions/justifies/justifyCenter"
 import justifyLeft from "./functions/justifies/justifyLeft"
 import justifyRight from "./functions/justifies/justifyRight"
 import justifyBetween from "./functions/justifies/justifyBetween"
+import { debounce } from "lodash"
 
 export default function ItemInfoScreen() {
     const [allElements, setAllElements] = useAtom(allElementsAtom)
@@ -13,6 +14,24 @@ export default function ItemInfoScreen() {
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     const [itemId, setItemId] = useState("")
+    const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
+    const [updateHistory, setUpdateHistory] = useState(true)
+
+    useEffect(() => {
+        if (itemId === "") return
+        HistoryClass.performAction(allElements)
+    }, [updateHistory])
+    useEffect(() => {
+        if (!HistoryClass) return
+        console.log("consoleLog", HistoryClass.currentNode)
+    }, [allElements])
+
+    const debouncedUpdateHistory = useCallback(
+        debounce(() => {
+            setUpdateHistory((i) => !i)
+        }, 500),
+        []
+    )
 
     const changeColor = (e) => {
         if (gridChecked == "") return
@@ -31,6 +50,7 @@ export default function ItemInfoScreen() {
                 },
             },
         }))
+        debouncedUpdateHistory()
     }
     useEffect(() => {
         if (gridChecked === "") {
@@ -56,9 +76,24 @@ export default function ItemInfoScreen() {
                 },
             },
         }))
+        debouncedUpdateHistory()
     }
 
-    if (!itemId) {
+    const justifyElement = (type) => {
+        if (type === "left") {
+            justifyLeft(itemId, allElements, setAllElements, gridPixelSize)
+        } else if (type === "center") {
+            justifyCenter(itemId, allElements, setAllElements, gridPixelSize)
+        } else if (type === "spaceBetween") {
+            justifyBetween(itemId, allElements, setAllElements, gridPixelSize)
+        } else if (type === "right") {
+            justifyRight(itemId, allElements, setAllElements, gridPixelSize)
+        }
+        setUpdateHistory(i  => !i)
+    }
+    console.log("itemId", itemId)
+    if (itemId === "") {
+
         return
     }
 
@@ -76,32 +111,16 @@ export default function ItemInfoScreen() {
                     <div className="ml-4">Design</div>
                 </div>
                 <div className="mt-4 flex flex-row">
-                    <div
-                        className="ml-3 rounded p-1 hover:bg-zinc-200"
-                        id="left"
-                        onClick={() => justifyLeft(itemId, allElements, setAllElements, gridPixelSize)}
-                    >
+                    <div className="ml-3 rounded p-1 hover:bg-zinc-200" id="left" onClick={() => justifyElement("left")}>
                         <FaAlignLeft />
                     </div>
-                    <div
-                        className="ml-3 rounded p-1 hover:bg-zinc-200"
-                        id="center"
-                        onClick={() => justifyCenter(itemId, allElements, setAllElements, gridPixelSize)}
-                    >
+                    <div className="ml-3 rounded p-1 hover:bg-zinc-200" id="center" onClick={() => justifyElement("center")}>
                         <FaAlignCenter />
                     </div>
-                    <div
-                        className="ml-3 rounded p-1 hover:bg-zinc-200"
-                        id="spaceBetween"
-                        onClick={() => justifyBetween(itemId, allElements, setAllElements, gridPixelSize)}
-                    >
+                    <div className="ml-3 rounded p-1 hover:bg-zinc-200" id="spaceBetween" onClick={() => justifyElement("spaceBetween")}>
                         <FaAlignJustify />
                     </div>
-                    <div
-                        className="ml-3 rounded p-1 hover:bg-zinc-200"
-                        id="right"
-                        onClick={() => justifyRight(itemId, allElements, setAllElements, gridPixelSize)}
-                    >
+                    <div className="ml-3 rounded p-1 hover:bg-zinc-200" id="right" onClick={() => justifyElement("right")}>
                         <FaAlignRight />
                     </div>
                 </div>
@@ -110,21 +129,21 @@ export default function ItemInfoScreen() {
                 <div>
                     <div className="mt-2 flex w-20 flex-row border border-white bg-red-500 p-1 hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">X</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId].top}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].top}</div>
                     </div>
                     <div className="mt-2 flex flex-row border border-white p-1 hover:border hover:border-gray-300 ">
                         <div className="ml-3 text-xs text-gray-400">Y</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId].left}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].left}</div>
                     </div>
                 </div>
                 <div className="ml-4">
                     <div className="mt-2 flex flex-row border border-white p-1  hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">X</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId].width}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].width}</div>
                     </div>
                     <div className="mt-2 flex flex-row border border-white p-1  hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">W</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId].height}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].height}</div>
                     </div>
                 </div>
             </div>
