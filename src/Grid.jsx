@@ -3,10 +3,12 @@ import { useAtom } from "jotai"
 import {
     HistoryClassAtom,
     allElementsAtom,
+    allPositionsAtom,
     cursorTypeAtom,
     gridCheckedAtom,
     gridMovingAtom,
     gridPixelSizeAtom,
+    intersectionLinesAtom,
     mainGridIdAtom,
     mainGridOffsetAtom,
     mainGridRefAtom,
@@ -29,6 +31,9 @@ export default function Grid(props) {
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
+    const [allPositions, setAllPositions] = useAtom(allPositionsAtom)
+    const [intersectionLines, setIntersectionLines] = useAtom(intersectionLinesAtom)
+    const [lines, setLines] = useState([])
     const selecteCursorType = {
         moving: "cursor-default",
         "grid-moving": "cursor-grabbing",
@@ -47,11 +52,55 @@ export default function Grid(props) {
         }
     }, [gridChecked, props.id])
     useEffect(() => {}, [allElements[props.id].style])
-
+    useEffect(() => {
+        if (props.id !== mainGridId) return
+        console.log("intersectionLines", intersectionLines)
+        let absLines = intersectionLines.map((line, index) =>
+            line.type === "horizontal" ? (
+                <div
+                    key={`line-${index}`}
+                    style={{
+                        zIndex: 100,
+                        position: "absolute",
+                        left: `${line.start * gridPixelSize}px`,
+                        width: `${(line.end - line.start) * gridPixelSize}px`,
+                        top: `${line.at * gridPixelSize}px`,
+                        height: `${4 / gridPixelSize}px`,
+                        backgroundColor: "red", // Choose a color that stands out
+                    }}
+                />
+            ) : (
+                <div
+                    key={`line-${index}`}
+                    style={{
+                        zIndex: 100,
+                        position: "absolute",
+                        top: `${line.start * gridPixelSize}px`,
+                        height: `${(line.end - line.start) * gridPixelSize}px`,
+                        left: `${line.at * gridPixelSize}px`,
+                        width: `${4 / gridPixelSize}px`,
+                        backgroundColor: "red", // Choose a color that stands out
+                    }}
+                />
+            )
+        )
+        console.log("lines", absLines)
+        setLines(absLines)
+    }, [intersectionLines])
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
-                handleGridMove(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements)
+                handleGridMove(
+                    gridMoving,
+                    allElements,
+                    gridPixelSize,
+                    HistoryClass,
+                    allPositions,
+                    setGridMoving,
+                    setAllElements,
+                    setAllPositions,
+                    setIntersectionLines
+                )
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
 
@@ -70,7 +119,17 @@ export default function Grid(props) {
                     handlePaddingResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements, setCursorType)
                     return
                 }
-                handleElementResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements, setCursorType)
+                handleElementResize(
+                    gridMoving,
+                    allElements,
+                    gridPixelSize,
+                    HistoryClass,
+                    allPositions,
+                    setGridMoving,
+                    setAllElements,
+                    setCursorType,
+                    setAllPositions
+                )
             }
         }
     }, [gridMoving])
@@ -183,9 +242,10 @@ export default function Grid(props) {
                     </div>
                 </div>
             )}
-
+            {lines}
             {allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}
+            {props.id === "main"}
             {gridChecked === props.id && !props.mainGrid && cursorType !== "padding" ? (
                 <div className="absolute h-full w-full ">
                     <div

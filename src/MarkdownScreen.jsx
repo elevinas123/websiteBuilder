@@ -48,7 +48,6 @@ export default function MarkdownScreen() {
             // Assuming mainId is defined and points to the root of your elements structure
             let code = elementToHTML(mainId, elements)
             setText(code) // Update the state with the generated code
-            console.log("Debounced code generation", elements)
         }, 200),
         [] // Dependencies array is empty, meaning the debounced function will be created once per component mount
     )

@@ -23,7 +23,6 @@ export default function ItemInfoScreen() {
     }, [updateHistory])
     useEffect(() => {
         if (!HistoryClass) return
-        console.log("consoleLog", HistoryClass.currentNode)
     }, [allElements])
 
     const debouncedUpdateHistory = useCallback(
@@ -58,8 +57,6 @@ export default function ItemInfoScreen() {
         } else {
             setItemId(gridChecked)
         }
-        console.log(itemId)
-        console.log(gridChecked)
     }, [gridChecked, mainGridId])
     const changeBorderColor = (e) => {
         setAllElements((prevElements) => ({
@@ -91,7 +88,6 @@ export default function ItemInfoScreen() {
         }
         setUpdateHistory(i  => !i)
     }
-    console.log("itemId", itemId)
     if (itemId === "") {
 
         return

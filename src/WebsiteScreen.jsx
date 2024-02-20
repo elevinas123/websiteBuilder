@@ -11,7 +11,6 @@ import {
     gridPixelSizeAtom,
     mainGridIdAtom,
     mainGridOffsetAtom,
-    mainGridRefAtom,
     startElementBoundingBoxAtom,
 } from "./atoms"
 import getBoundingBox from "./functions/getBoundingBox"
@@ -314,7 +313,7 @@ export default function WebsiteScreen() {
                     onScroll={(e) => handleDragStart(e)}
                     tabIndex={0}
                     onKeyDown={handleTextWritten}
-                    className=" element bg-red mt-10  h-full w-full overflow-scroll text-black"
+                    className="element bg-red mt-10  h-full w-full overflow-scroll text-black"
                     onMouseMove={handleMousemove}
                 >
                     {mainGridId && allElements[mainGridId].item}

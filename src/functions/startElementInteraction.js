@@ -9,6 +9,9 @@ export default function startElementInteraction(id, x, y, type, setGridMoving) {
         y1: y,
         x2: x,
         y2: y,
+        offset: false,
+        offsetLeft: 0,
+        offsetTop: 0,
     })
     return
 }

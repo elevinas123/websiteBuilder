@@ -1,8 +1,19 @@
 import { produce } from "immer"
 import calculateMovement from "./calculateMovement"
 import calculateNewStyle from "./calculateNewStyle"
+import { calculateIntersectLines } from "./calculateIntersectLines"
 
-export default function handleGridMove(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements) {
+export default function handleGridMove(
+    gridMoving,
+    allElements,
+    gridPixelSize,
+    HistoryClass,
+    allPositions,
+    setGridMoving,
+    setAllElements,
+    setAllPositions,
+    setIntersectionLines
+) {
     let top = allElements[gridMoving.id].top
     let left = allElements[gridMoving.id].left
     const width = allElements[gridMoving.id].width
@@ -33,8 +44,53 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, H
     if (newLeft < 0) {
         newLeft = 0
     }
+    const intersections = calculateIntersectLines(gridMoving.id, newLeft, newTop, width, height, allElements, allPositions, setAllPositions)
+    let offsetConfig = {
+        offset: gridMoving.offset,
+        offsetLeft: gridMoving.offsetLeft,
+        offsetTop: gridMoving.offsetTop,
+    }
+    let newStyle = calculateNewStyle(newLeft, newTop, width, height, gridPixelSize)
+    console.log("gridMoving", gridMoving)
 
-    const newStyle = calculateNewStyle(newLeft, newTop, width, height, gridPixelSize)
+    let applyLeftAdjustment = false
+    let applyTopAdjustment = false
+
+    // Determine if horizontal or vertical adjustments should be applied
+    if (gridMoving.offset) {
+        if (Math.abs(gridMoving.offsetLeft) <= 2) {
+            applyLeftAdjustment = true
+        }
+        if (Math.abs(gridMoving.offsetTop) <= 2) {
+            applyTopAdjustment = true
+        }
+    }
+
+    if (intersections.length > 0 || applyLeftAdjustment || applyTopAdjustment) {
+        console.log("Applying minor adjustment due to gridMoving offset:", gridMoving)
+
+        // Calculate new left and top positions based on whether adjustments are applied
+        const adjustedLeft = applyLeftAdjustment ? newLeft - gridMoving.offsetLeft : newLeft
+        const adjustedTop = applyTopAdjustment ? newTop - gridMoving.offsetTop : newTop
+
+        // Apply adjustments to calculate new style
+        newStyle = calculateNewStyle(adjustedLeft, adjustedTop, width, height, gridPixelSize)
+
+        // Update the offset configuration for minor adjustments
+        if (applyLeftAdjustment) {
+            offsetConfig.offsetLeft += (gridMoving.x2 - gridMoving.x1) / gridPixelSize
+        }
+        if (applyTopAdjustment) {
+            offsetConfig.offsetTop += (gridMoving.y2 - gridMoving.y1) / gridPixelSize
+        }
+        offsetConfig.offset = applyLeftAdjustment || applyTopAdjustment || intersections.length > 0
+    } else {
+        // Reset offsetConfig if no adjustments are to be made
+        console.log("Resetting offsetConfig due to significant movement or lack of offset")
+        offsetConfig.offset = false
+        offsetConfig.offsetLeft = 0
+        offsetConfig.offsetTop = 0
+    }
 
     // Update elements' positions and styles
     setAllElements((currentState) =>
@@ -55,9 +111,11 @@ export default function handleGridMove(gridMoving, allElements, gridPixelSize, H
     if (gridMoving.moved === true) {
         setGridMoving({ moving: false })
         HistoryClass.performAction(allElements)
-        console.log(HistoryClass.currentNode)
+        setIntersectionLines([])
+
         return
     }
     // Continue moving
-    setGridMoving((i) => ({ ...i, setBox: true }))
+    setIntersectionLines(intersections)
+    setGridMoving((i) => ({ ...i, setBox: true, ...offsetConfig }))
 }
