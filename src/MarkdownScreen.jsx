@@ -70,35 +70,97 @@ export default function MarkdownScreen() {
     }, [allElements, writeCode])
 
     const [allTextElements, setAllTextElements] = useState({})
-    const [currentElement, setCurrentElement] = useState({ id: "", parentId: null })
+
+    function findElementByChangeRange(changeRange, elements) {
+        let lastOpenElement = null // Keep track of the last open (unclosed) element
+
+        const childElements = elements.map((childId) => allTextElements[childId])
+        console.log("childelements", childElements)
+        for (const element of childElements) {
+            const elRange = element.range
+
+            if (element.tag === "") {
+                lastOpenElement = element
+            }
+            console.log("element", element)
+            console.log("changeRange", changeRange)
+            console.log("elRange", elRange)
+            // Check if the change is within the element's range
+            if (changeRange.startLineNumber >= elRange.startLineNumber && changeRange.endLineNumber <= elRange.endLineNumber) {
+                // Further refine for single-line changes and column ranges
+                // If this element is not closed, mark it as the last open element encountered
+                console.log("cias", element)
+                if (
+                    changeRange.startLineNumber === changeRange.endLineNumber &&
+                    (changeRange.startColumn < elRange.startColumn || changeRange.endColumn > elRange.endColumn)
+                ) {
+                    continue // Skip this element, as the change is outside its column range
+                }
+
+
+                // If this element has children, search within them
+                if (element.children && element.children.length > 0) {
+                    const foundInChild = findElementByChangeRange(changeRange, element.children)
+                    if (foundInChild) {
+                        return foundInChild // Element found in children
+                    }
+                }
+
+                // Prefer returning an open element if no children are in range
+                if (lastOpenElement) {
+                    return lastOpenElement
+                }
+
+                // No deeper match found or no children to search, return the current element
+                return element
+            }
+        }
+
+        // If no matching element is found in the provided range, return the last open element if it exists
+        return lastOpenElement
+    }
+
 
     const handleChange = async (value, event) => {
-        let id = currentElement.id || uuidv4() // Simplify ID assignment
+        // Initialize "main-element" if it doesn't exist
+        let id
+        if (!allTextElements["main-element"]) {
+            allTextElements["main-element"] = {
+                id: "main-element",
+                range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 }, // Default range, adjust as needed
+                text: "",
+                tag: "",
+                parentId: null,
+                children: [],
+            }
+            id = "main-element"
+        } else {
+            let ell = findElementByChangeRange(event.changes[0].range, allTextElements["main-element"].children)
+            if (ell === null) id = "main-element"
+            else {
+                id = ell.id
+                console.log("id", id)
+            }
+        }
 
-        // Handle opening tag "<"
+        // Logic for handling opening tag "<"
         if (event.changes[0].text === "<") {
-            const isNewElement = !currentElement.id || !(id in allTextElements)
-            const parentId = currentElement.id
             const newElement = {
-                id: id,
+                id: uuidv4(), // Always generate a new ID for new elements
                 range: event.changes[0].range,
                 text: "<",
                 tag: "",
-                parentId: parentId,
+                parentId: id,
                 children: [],
             }
 
-            if (isNewElement) {
-                setCurrentElement({ id: id, parentId: parentId })
-            } else {
-                // Link the new element as a child of the current element if it's not a new element
-                newElement.parentId = currentElement.id
-                allTextElements[currentElement.id].children.push(id)
-            }
+            allTextElements[id].children.push(newElement.id) // Link to "main-element" as a child
 
-            setAllTextElements((prev) => ({ ...prev, [id]: newElement }))
+            setAllTextElements((prev) => ({ ...prev, [newElement.id]: newElement }))
+            updateParentRanges(id, { type: "addLine", linesAdded: 1, columnsAdded: 0 })
             return
         }
+
         if (!allTextElements[id]) return
 
         // Append text for existing elements
@@ -113,7 +175,7 @@ export default function MarkdownScreen() {
                 updatedText += event.changes[0].text
             }
             let tagName = allTextElements[id].tag
-
+            let itemLength = 1
             // Handle closing of tag ">"
             if (event.changes[0].text === ">") {
                 if (!tagName) {
@@ -122,6 +184,7 @@ export default function MarkdownScreen() {
                     const closingTag = `</${tagName}>`
                     appendClosingTag(id, closingTag, event)
                     updatedText += closingTag
+                    itemLength += closingTag.length
                 }
             }
 
@@ -130,16 +193,16 @@ export default function MarkdownScreen() {
                 ...prev,
                 [id]: {
                     ...prev[id],
-                    range: updateRange(prev[id].range, event.changes[0]),
+                    range: {
+                        ...prev[id].range,
+                        endColumn: prev[id].range.endColumn + itemLength,
+                    },
                     text: updatedText,
                     tag: tagName,
                 },
             }))
-
+            updateParentRanges(id, { type: "addLine", linesAdded: 1, columnsAdded: event.changes[0].text === "\r\n" ? 1 : 0 })
             // Reset current element if it's a closing tag
-            if (event.changes[0].text === ">" && allTextElements[id].tag) {
-                setCurrentElement({ id: allTextElements[id].parentId, parentId: null })
-            }
         }
     }
 
@@ -174,6 +237,28 @@ export default function MarkdownScreen() {
         }
         editorRef.current.setPosition(newPosition)
         // Adjust cursor position if necessary
+    }
+    function updateParentRanges(childId, changeDetails) {
+        const childElement = allTextElements[childId]
+        if (!childElement || !childElement.parentId) return // Stop if no parent
+
+        const parentElement = allTextElements[childElement.parentId]
+        if (!parentElement) return // Safety check
+
+        // Determine if the change affects the parent's range; adjust logic as needed
+        if (changeDetails.type === "addLine") {
+            parentElement.range.endLineNumber += changeDetails.linesAdded
+            parentElement.range.endColumn += changeDetails.columnsAdded
+        } // Add other types of changes as needed
+
+        // Update the parent element in state; this assumes a React useState setter or similar
+        setAllTextElements((prev) => ({
+            ...prev,
+            [parentElement.id]: parentElement,
+        }))
+
+        // Recursively update the range for the parent's parent, if any
+        updateParentRanges(parentElement.id, changeDetails)
     }
 
     useEffect(() => {
