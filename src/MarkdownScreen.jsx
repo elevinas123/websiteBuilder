@@ -94,6 +94,7 @@ export default function MarkdownScreen() {
                     changeRange.startLineNumber === changeRange.endLineNumber &&
                     (changeRange.startColumn < elRange.startColumn || changeRange.endColumn > elRange.endColumn)
                 ) {
+                    console.log("continued", element, changeRange, elRange)
                     continue // Skip this element, as the change is outside its column range
                 }
 
@@ -101,6 +102,7 @@ export default function MarkdownScreen() {
                 // If this element has children, search within them
                 if (element.children && element.children.length > 0) {
                     const foundInChild = findElementByChangeRange(changeRange, element.children)
+                    console.log("foundInChild", foundInChild)
                     if (foundInChild) {
                         return foundInChild // Element found in children
                     }
@@ -136,6 +138,7 @@ export default function MarkdownScreen() {
             id = "main-element"
         } else {
             let ell = findElementByChangeRange(event.changes[0].range, allTextElements["main-element"].children)
+            console.log("ell", ell)
             if (ell === null) id = "main-element"
             else {
                 id = ell.id
@@ -157,7 +160,7 @@ export default function MarkdownScreen() {
             allTextElements[id].children.push(newElement.id) // Link to "main-element" as a child
 
             setAllTextElements((prev) => ({ ...prev, [newElement.id]: newElement }))
-            updateParentRanges(id, { type: "addLine", linesAdded: 1, columnsAdded: 0 })
+            updateParentRanges(id, { type: "addLine", linesAdded: 0, columnsAdded: 1 })
             return
         }
 
@@ -201,7 +204,7 @@ export default function MarkdownScreen() {
                     tag: tagName,
                 },
             }))
-            updateParentRanges(id, { type: "addLine", linesAdded: 1, columnsAdded: event.changes[0].text === "\r\n" ? 1 : 0 })
+            updateParentRanges(id, { type: "addLine", columnsAdded: 1, linesAdded: event.changes[0].text === "\r\n" ? 1 : 0 })
             // Reset current element if it's a closing tag
         }
     }
