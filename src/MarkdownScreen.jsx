@@ -79,7 +79,7 @@ export default function MarkdownScreen() {
         for (const element of childElements) {
             const elRange = element.range
 
-            if (element.tag === "") {
+            if (!element.tag) {
                 lastOpenElement = element
             }
             console.log("element", element)
@@ -131,8 +131,12 @@ export default function MarkdownScreen() {
                 id: "main-element",
                 range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 }, // Default range, adjust as needed
                 text: "",
-                tag: "",
+                tag: false,
+                startTag: "",
+                atributes: "",
+                endTag: "",
                 parentId: null,
+                startTageNameDone: false,
                 children: [],
             }
             id = "main-element"
@@ -151,10 +155,14 @@ export default function MarkdownScreen() {
             const newElement = {
                 id: uuidv4(), // Always generate a new ID for new elements
                 range: event.changes[0].range,
-                text: "<",
-                tag: "",
+                text: "",
+                tag: false,
+                startTag: "<",
+                endTag: "",
+                atributes: "",
                 parentId: id,
                 children: [],
+                startTageNameDone: false,
             }
 
             allTextElements[id].children.push(newElement.id) // Link to "main-element" as a child
@@ -166,32 +174,40 @@ export default function MarkdownScreen() {
 
         if (!allTextElements[id]) return
 
+        // Example conceptual check for a backspace action
+        if (event.changes[0].text === "" && event.changes[0].rangeLength > 0) {
+            // Backspace action detected
+            handleBackspaceAction(id, event)
+            return
+        }
+
         // Append text for existing elements
         if (id && event.changes[0].text !== "<") {
             console.log("text", allTextElements)
             console.log("id", id)
 
             let updatedText = allTextElements[id].text
-            if (allTextElements[id].tag) {
-                updatedText = insertBeforeClosingTag(updatedText, `</${allTextElements[id].tag}>`, event.changes[0].text)
-            } else {
+            let startTagText = allTextElements[id].startTag
+            if (allTextElements[id].startTageNameDone) {
                 updatedText += event.changes[0].text
+            } else {
+                startTagText += event.changes[0].text
             }
-            let tagName = allTextElements[id].tag
+            let tagName = allTextElements[id].startTag
+            let endTag = false
             let itemLength = 1
             // Handle closing of tag ">"
             if (event.changes[0].text === ">") {
-                if (!tagName) {
+                if (!allTextElements[id].tag) {
                     // Extract tag name and append closing tag if it's the end of an opening tag
-                    tagName = updatedText.match(/<(\w+)/)[1]
-                    const closingTag = `</${tagName}>`
+                    const closingTag = `</${tagName.slice(1)}>`
                     appendClosingTag(id, closingTag, event)
-                    updatedText += closingTag
                     itemLength += closingTag.length
+                    endTag = true
                 }
             }
 
-            // Update element text and range
+            const linesAdded = (event.changes[0].text.match(/\r\n/g) || []).length
             setAllTextElements((prev) => ({
                 ...prev,
                 [id]: {
@@ -199,27 +215,51 @@ export default function MarkdownScreen() {
                     range: {
                         ...prev[id].range,
                         endColumn: prev[id].range.endColumn + itemLength,
+                        endLineNumber: prev[id].range.endLineNumber + linesAdded,
                     },
+                    startTag: startTagText,
+                    startTageNameDone: event.changes[0].text === " " || endTag ? true : prev[id].startTageNameDone,
                     text: updatedText,
-                    tag: tagName,
+                    tag: endTag ? true : prev[id].tag,
+                    endTag: endTag ? `</${tagName.slice(1)}>` : prev[id].endTag,
                 },
             }))
-            updateParentRanges(id, { type: "addLine", columnsAdded: 1, linesAdded: event.changes[0].text === "\r\n" ? 1 : 0 })
+            console.log("event.changes[0].text", JSON.stringify(event.changes[0].text))
+            updateParentRanges(id, {
+                type: "addLine",
+                columnsAdded: 1,
+                linesAdded: linesAdded,
+            })
             // Reset current element if it's a closing tag
         }
     }
 
-    function insertBeforeClosingTag(originalText, closingTag, newText) {
-        // Insert newText before the existing closing tag within originalText
-        const closingTagIndex = originalText.indexOf(closingTag)
-        return originalText.slice(0, closingTagIndex) + newText + originalText.slice(closingTagIndex)
-    }
-    function updateRange(range, change) {
-        return {
-            ...range,
-            endColumn: range.endColumn + 1,
-            endLineNumber: change.text === "\r\n" ? range.endLineNumber + 1 : range.endLineNumber,
+    function handleBackspaceAction(id, event) {
+        const element = allTextElements[id]
+        if (!element) return
+
+        // Determine the impact of the backspace - e.g., remove a character or more
+        const isRemovingSingleCharacter = event.changes[0].rangeLength === 1
+        const newText = isRemovingSingleCharacter
+            ? element.text.slice(0, -1) // Remove last character
+            : "" // Implement logic for more complex removals as needed
+
+        // Update the element's text
+        element.text = newText
+
+        // If the element is now empty, consider removing it or handling as needed
+        if (newText === "") {
+            // Implement logic for handling empty elements, e.g., remove element
+            // Remember to also update parent's children list and ranges if an element is removed
+        } else {
+            // Update the element's range to reflect the removed text
+            // This is a simplified example; you'd need to adjust based on how text was removed
+            element.range.endColumn -= 1
+            setAllTextElements((prev) => ({ ...prev, [id]: element }))
         }
+
+        // Recursively update parent ranges to reflect this change
+        updateParentRanges(id, { type: "removeText", linesRemoved: 0, columnsRemoved: 1 }) // Adjust as needed
     }
 
     function appendClosingTag(id, closingTag, event) {
@@ -253,7 +293,6 @@ export default function MarkdownScreen() {
             parentElement.range.endLineNumber += changeDetails.linesAdded
             parentElement.range.endColumn += changeDetails.columnsAdded
         } // Add other types of changes as needed
-
         // Update the parent element in state; this assumes a React useState setter or similar
         setAllTextElements((prev) => ({
             ...prev,
