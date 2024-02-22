@@ -98,7 +98,6 @@ export default function MarkdownScreen() {
                     continue // Skip this element, as the change is outside its column range
                 }
 
-
                 // If this element has children, search within them
                 if (element.children && element.children.length > 0) {
                     const foundInChild = findElementByChangeRange(changeRange, element.children)
@@ -122,7 +121,6 @@ export default function MarkdownScreen() {
         return lastOpenElement
     }
 
-
     const handleChange = async (value, event) => {
         // Initialize "main-element" if it doesn't exist
         let id
@@ -130,11 +128,14 @@ export default function MarkdownScreen() {
             allTextElements["main-element"] = {
                 id: "main-element",
                 range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 }, // Default range, adjust as needed
-                text: "",
                 tag: false,
-                startTag: "",
-                atributes: "",
-                endTag: "",
+                currentlyEditing: "startTag",
+                parts: [
+                    { type: "startTag", range: event.changes[0].range, content: "" },
+                    { type: "atributes", range: event.changes[0].range, content: "" },
+                    { type: "text", range: event.changes[0].range, content: "" },
+                    { type: "endTag", range: event.changes[0].range, content: "" },
+                ],
                 parentId: null,
                 startTageNameDone: false,
                 children: [],
@@ -155,11 +156,13 @@ export default function MarkdownScreen() {
             const newElement = {
                 id: uuidv4(), // Always generate a new ID for new elements
                 range: event.changes[0].range,
-                text: "",
                 tag: false,
-                startTag: "<",
-                endTag: "",
-                atributes: "",
+                parts: [
+                    { type: "startTag", range: event.changes[0].range, content: "" },
+                    { type: "atributes", range: event.changes[0].range, content: "" },
+                    { type: "text", range: event.changes[0].range, content: "" },
+                    { type: "endTag", range: event.changes[0].range, content: "" },
+                ],
                 parentId: id,
                 children: [],
                 startTageNameDone: false,
@@ -177,7 +180,7 @@ export default function MarkdownScreen() {
         // Example conceptual check for a backspace action
         if (event.changes[0].text === "" && event.changes[0].rangeLength > 0) {
             // Backspace action detected
-            handleBackspaceAction(id, event)
+
             return
         }
 
@@ -208,22 +211,49 @@ export default function MarkdownScreen() {
             }
 
             const linesAdded = (event.changes[0].text.match(/\r\n/g) || []).length
-            setAllTextElements((prev) => ({
-                ...prev,
-                [id]: {
-                    ...prev[id],
-                    range: {
-                        ...prev[id].range,
-                        endColumn: prev[id].range.endColumn + itemLength,
-                        endLineNumber: prev[id].range.endLineNumber + linesAdded,
+            setAllTextElements((prev) => {
+                const element = prev[id]
+
+                // Assuming each part of the element is represented in a list for iteration
+                // Each part has { type: "startTag" | "attributes" | "text" | "endTag", range: {}, content: "" }
+                const parts = element.parts
+
+                let updateFollowingRanges = false
+
+                parts.forEach((part) => {
+                    if (isEditInRange(event.changes[0].range, part.range)) {
+                        // Update this part's content and range
+                        part.content += event.changes[0].text // Simplify for illustration
+                        part.range.endColumn += itemLength // Adjust based on actual logic needed
+                        part.range.endLineNumber += linesAdded
+                        updateFollowingRanges = true
+                    } else if (updateFollowingRanges) {
+                        // Update the range for all subsequent parts
+                        part.range.startColumn += itemLength
+                        part.range.endColumn += itemLength
+                        part.range.startLineNumber += linesAdded
+                        part.range.endLineNumber += linesAdded
+                    }
+                })
+
+                return {
+                    ...prev,
+                    [id]: {
+                        ...prev[id],
+                        range: {
+                            ...prev[id].range,
+                            endColumn: prev[id].range.endColumn + itemLength,
+                            endLineNumber: prev[id].range.endLineNumber + linesAdded,
+                        },
+                        parts: parts,
+                        startTag: startTagText,
+                        startTageNameDone: event.changes[0].text === " " || endTag ? true : prev[id].startTageNameDone,
+                        text: updatedText,
+                        tag: endTag ? true : prev[id].tag,
+                        endTag: endTag ? `</${tagName.slice(1)}>` : prev[id].endTag,
                     },
-                    startTag: startTagText,
-                    startTageNameDone: event.changes[0].text === " " || endTag ? true : prev[id].startTageNameDone,
-                    text: updatedText,
-                    tag: endTag ? true : prev[id].tag,
-                    endTag: endTag ? `</${tagName.slice(1)}>` : prev[id].endTag,
-                },
-            }))
+                }
+            })
             console.log("event.changes[0].text", JSON.stringify(event.changes[0].text))
             updateParentRanges(id, {
                 type: "addLine",
@@ -233,33 +263,14 @@ export default function MarkdownScreen() {
             // Reset current element if it's a closing tag
         }
     }
-
-    function handleBackspaceAction(id, event) {
-        const element = allTextElements[id]
-        if (!element) return
-
-        // Determine the impact of the backspace - e.g., remove a character or more
-        const isRemovingSingleCharacter = event.changes[0].rangeLength === 1
-        const newText = isRemovingSingleCharacter
-            ? element.text.slice(0, -1) // Remove last character
-            : "" // Implement logic for more complex removals as needed
-
-        // Update the element's text
-        element.text = newText
-
-        // If the element is now empty, consider removing it or handling as needed
-        if (newText === "") {
-            // Implement logic for handling empty elements, e.g., remove element
-            // Remember to also update parent's children list and ranges if an element is removed
-        } else {
-            // Update the element's range to reflect the removed text
-            // This is a simplified example; you'd need to adjust based on how text was removed
-            element.range.endColumn -= 1
-            setAllTextElements((prev) => ({ ...prev, [id]: element }))
-        }
-
-        // Recursively update parent ranges to reflect this change
-        updateParentRanges(id, { type: "removeText", linesRemoved: 0, columnsRemoved: 1 }) // Adjust as needed
+    function isEditInRange(editRange, partRange) {
+        // Simplified check; extend logic to accurately determine if the edit is within the part's range
+        return (
+            editRange.startLineNumber >= partRange.startLineNumber &&
+            editRange.startLineNumber <= partRange.endLineNumber &&
+            editRange.startColumn >= partRange.startColumn &&
+            editRange.endColumn <= partRange.endColumn
+        )
     }
 
     function appendClosingTag(id, closingTag, event) {
@@ -283,17 +294,32 @@ export default function MarkdownScreen() {
     }
     function updateParentRanges(childId, changeDetails) {
         const childElement = allTextElements[childId]
-        if (!childElement || !childElement.parentId) return // Stop if no parent
+        if (!childElement || !childElement.parentId) return // Ensure child has a parent
 
         const parentElement = allTextElements[childElement.parentId]
-        if (!parentElement) return // Safety check
+        if (!parentElement) return // Ensure parent exists
 
-        // Determine if the change affects the parent's range; adjust logic as needed
+        // Directly adjust the parent's overall range if needed
         if (changeDetails.type === "addLine") {
             parentElement.range.endLineNumber += changeDetails.linesAdded
             parentElement.range.endColumn += changeDetails.columnsAdded
-        } // Add other types of changes as needed
-        // Update the parent element in state; this assumes a React useState setter or similar
+        }
+        // Assume additional change types could be handled here
+        if (!parentElement || parentElement.parts.length < 4) throw new Error("wtf man turi but 4")
+
+        // Directly update the third part's (second to last) end range
+        let thirdPart = parentElement.parts[2]
+        thirdPart.range.endColumn += changeDetails.columnsAdded
+        thirdPart.range.endLineNumber += changeDetails.linesAdded
+
+        // For the fourth part (last), update both start and end ranges
+        let fourthPart = parentElement.parts[3]
+        fourthPart.range.startColumn += changeDetails.columnsAdded
+        fourthPart.range.endColumn += changeDetails.columnsAdded
+        fourthPart.range.startLineNumber += changeDetails.linesAdded
+        fourthPart.range.endLineNumber += changeDetails.linesAdded
+
+        // Update the parent element in state
         setAllTextElements((prev) => ({
             ...prev,
             [parentElement.id]: parentElement,
