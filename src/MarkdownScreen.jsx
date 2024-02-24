@@ -158,7 +158,7 @@ export default function MarkdownScreen() {
                 range: event.changes[0].range,
                 tag: false,
                 parts: [
-                    { type: "startTag", range: event.changes[0].range, content: "" },
+                    { type: "startTag", range: event.changes[0].range, content: "<" },
                     { type: "atributes", range: event.changes[0].range, content: "" },
                     { type: "text", range: event.changes[0].range, content: "" },
                     { type: "endTag", range: event.changes[0].range, content: "" },
@@ -189,22 +189,29 @@ export default function MarkdownScreen() {
         if (id && event.changes[0].text !== "<") {
             console.log("text", allTextElements)
             console.log("id", id)
-
-            let updatedText = allTextElements[id].text
-            let startTagText = allTextElements[id].startTag
-            if (allTextElements[id].startTageNameDone) {
-                updatedText += event.changes[0].text
-            } else {
-                startTagText += event.changes[0].text
-            }
-            let tagName = allTextElements[id].startTag
-            let endTag = false
-            let itemLength = 1
+            let partUpdated = null
             let currentPart = allTextElements[id].currentPart
-            // Handle closing of tag ">"
-            if (event.changed[0].text === " " && currentPart === "startTag") {
+            if (event.changes[0].text === " " && currentPart === "startTag") {
                 currentPart = "atributes"
             }
+            if (allTextElements[id].startTageNameDone || currentPart === "text") {
+                partUpdated = "text"
+            } else {
+                if (currentPart === "atributes") {
+                    partUpdated = "atributes"
+                } else {
+                    partUpdated = "startTag"
+                }
+            }
+            let tagName = allTextElements[id].parts[0].content
+            let endTag = false
+            let itemLength = event.changes[0].text
+            const linesAdded = (event.changes[0].text.match("\n") || []).length
+            if (linesAdded > 0) {
+                console.log("linesAdded", linesAdded, event.changes[0].text)
+                itemLength = 0
+            }
+            // Handle closing of tag ">"
             if (event.changes[0].text === ">") {
                 if (!allTextElements[id].tag) {
                     // Extract tag name and append closing tag if it's the end of an opening tag
@@ -216,31 +223,47 @@ export default function MarkdownScreen() {
                 }
             }
 
-            const linesAdded = (event.changes[0].text.match(/\r\n/g) || []).length
             setAllTextElements((prev) => {
                 const element = prev[id]
 
                 // Assuming each part of the element is represented in a list for iteration
                 // Each part has { type: "startTag" | "attributes" | "text" | "endTag", range: {}, content: "" }
-                const parts = element.parts
+                const parts = [...element.parts.map(i => ({...i}))]
 
                 let updateFollowingRanges = false
-
-                parts.forEach((part) => {
-                    if (isEditInRange(event.changes[0].range, part.range)) {
-                        // Update this part's content and range
-                        part.content += event.changes[0].text // Simplify for illustration
-                        part.range.endColumn += itemLength // Adjust based on actual logic needed
-                        part.range.endLineNumber += linesAdded
-                        updateFollowingRanges = true
-                    } else if (updateFollowingRanges) {
-                        // Update the range for all subsequent parts
-                        part.range.startColumn += itemLength
-                        part.range.endColumn += itemLength
-                        part.range.startLineNumber += linesAdded
-                        part.range.endLineNumber += linesAdded
-                    }
-                })
+                if (element.endTag) {
+                    parts.forEach((part) => {
+                        if (isEditInRange(event.changes[0].range, part.range)) {
+                            // Update this part's content and range
+                            part.content += event.changes[0].text // Simplify for illustration
+                            part.range.endColumn += itemLength // Adjust based on actual logic needed
+                            part.range.endLineNumber += linesAdded
+                            updateFollowingRanges = true
+                        } else if (updateFollowingRanges) {
+                            // Update the range for all subsequent parts
+                            part.range.startColumn += itemLength
+                            part.range.endColumn += itemLength
+                            part.range.startLineNumber += linesAdded
+                            part.range.endLineNumber += linesAdded
+                        }
+                    })
+                } else {
+                    parts.forEach((part) => {
+                        if (part.type === partUpdated) {
+                            // Update this part's content and range
+                            part.content += event.changes[0].text
+                            part.range.endColumn += itemLength // Adjust based on actual logic needed
+                            part.range.endLineNumber += linesAdded
+                            updateFollowingRanges = true
+                        } else if (updateFollowingRanges) {
+                            // Update the range for all subsequent parts
+                            part.range.startColumn += itemLength
+                            part.range.endColumn += itemLength
+                            part.range.startLineNumber += linesAdded
+                            part.range.endLineNumber += linesAdded
+                        }
+                    })
+                }
 
                 return {
                     ...prev,
@@ -252,18 +275,16 @@ export default function MarkdownScreen() {
                             endLineNumber: prev[id].range.endLineNumber + linesAdded,
                         },
                         parts: parts,
-                        startTag: startTagText,
                         startTageNameDone: event.changes[0].text === " " || endTag ? true : prev[id].startTageNameDone,
-                        text: updatedText,
                         tag: endTag ? true : prev[id].tag,
-                        endTag: endTag ? `</${tagName.slice(1)}>` : prev[id].endTag,
+                        currentPart: currentPart,
                     },
                 }
             })
             console.log("event.changes[0].text", JSON.stringify(event.changes[0].text))
             updateParentRanges(id, {
                 type: "addLine",
-                columnsAdded: 1,
+                columnsAdded: itemLength,
                 linesAdded: linesAdded,
             })
             // Reset current element if it's a closing tag
@@ -298,41 +319,55 @@ export default function MarkdownScreen() {
         editorRef.current.setPosition(newPosition)
         // Adjust cursor position if necessary
     }
-    function updateParentRanges(childId, changeDetails) {
-        const childElement = allTextElements[childId]
-        if (!childElement || !childElement.parentId) return // Ensure child has a parent
+    function updateParentRanges(childId, changeDetails, prevAllTextElements = null) {
+        setAllTextElements((prev) => {
+            const allTextElements = prevAllTextElements || prev // Use passed state for recursion, initial state otherwise
 
-        const parentElement = allTextElements[childElement.parentId]
-        if (!parentElement) return // Ensure parent exists
+            const childElement = allTextElements[childId]
+            if (!childElement || !childElement.parentId) return allTextElements // Exit if no parent
 
-        // Directly adjust the parent's overall range if needed
-        if (changeDetails.type === "addLine") {
-            parentElement.range.endLineNumber += changeDetails.linesAdded
-            parentElement.range.endColumn += changeDetails.columnsAdded
-        }
-        // Assume additional change types could be handled here
-        if (!parentElement || parentElement.parts.length < 4) throw new Error("wtf man turi but 4")
+            const parentElement = allTextElements[childElement.parentId]
+            if (!parentElement) return allTextElements // Exit if parent does not exist
 
-        // Directly update the third part's (second to last) end range
-        let thirdPart = parentElement.parts[2]
-        thirdPart.range.endColumn += changeDetails.columnsAdded
-        thirdPart.range.endLineNumber += changeDetails.linesAdded
+            // Immutable update for parentElement's range
+            const updatedParentElement = {
+                ...parentElement,
+                range: {
+                    ...parentElement.range,
+                    endLineNumber: parentElement.range.endLineNumber + changeDetails.linesAdded,
+                    endColumn: parentElement.range.endColumn + changeDetails.columnsAdded,
+                },
+                parts: parentElement.parts.map((part, index) => {
+                    if (index === 2 || index === 3) {
+                        // Assuming updates to third and fourth parts
+                        return {
+                            ...part,
+                            range: {
+                                ...part.range,
+                                startColumn: index === 3 ? part.range.startColumn + changeDetails.columnsAdded : part.range.startColumn,
+                                endColumn: part.range.endColumn + changeDetails.columnsAdded,
+                                startLineNumber: index === 3 ? part.range.startLineNumber + changeDetails.linesAdded : part.range.startLineNumber,
+                                endLineNumber: part.range.endLineNumber + changeDetails.linesAdded,
+                            },
+                        }
+                    }
+                    return part
+                }),
+            }
 
-        // For the fourth part (last), update both start and end ranges
-        let fourthPart = parentElement.parts[3]
-        fourthPart.range.startColumn += changeDetails.columnsAdded
-        fourthPart.range.endColumn += changeDetails.columnsAdded
-        fourthPart.range.startLineNumber += changeDetails.linesAdded
-        fourthPart.range.endLineNumber += changeDetails.linesAdded
+            // Update state with the modified parent element
+            const updatedAllTextElements = {
+                ...allTextElements,
+                [parentElement.id]: updatedParentElement,
+            }
 
-        // Update the parent element in state
-        setAllTextElements((prev) => ({
-            ...prev,
-            [parentElement.id]: parentElement,
-        }))
+            // Recursively update the range for the parent's parent, if any
+            if (parentElement.parentId) {
+                return updateParentRanges(parentElement.id, changeDetails, updatedAllTextElements) // Recursive call with updated state
+            }
 
-        // Recursively update the range for the parent's parent, if any
-        updateParentRanges(parentElement.id, changeDetails)
+            return updatedAllTextElements // Return updated state
+        })
     }
 
     useEffect(() => {
