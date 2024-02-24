@@ -129,13 +129,13 @@ export default function MarkdownScreen() {
                 id: "main-element",
                 range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 }, // Default range, adjust as needed
                 tag: false,
-                currentlyEditing: "startTag",
                 parts: [
                     { type: "startTag", range: event.changes[0].range, content: "" },
                     { type: "atributes", range: event.changes[0].range, content: "" },
                     { type: "text", range: event.changes[0].range, content: "" },
                     { type: "endTag", range: event.changes[0].range, content: "" },
                 ],
+                currentPart: "text",
                 parentId: null,
                 startTageNameDone: false,
                 children: [],
@@ -164,6 +164,7 @@ export default function MarkdownScreen() {
                     { type: "endTag", range: event.changes[0].range, content: "" },
                 ],
                 parentId: id,
+                currentPart: "startTag",
                 children: [],
                 startTageNameDone: false,
             }
@@ -199,7 +200,11 @@ export default function MarkdownScreen() {
             let tagName = allTextElements[id].startTag
             let endTag = false
             let itemLength = 1
+            let currentPart = allTextElements[id].currentPart
             // Handle closing of tag ">"
+            if (event.changed[0].text === " " && currentPart === "startTag") {
+                currentPart = "atributes"
+            }
             if (event.changes[0].text === ">") {
                 if (!allTextElements[id].tag) {
                     // Extract tag name and append closing tag if it's the end of an opening tag
@@ -207,6 +212,7 @@ export default function MarkdownScreen() {
                     appendClosingTag(id, closingTag, event)
                     itemLength += closingTag.length
                     endTag = true
+                    currentPart = "text"
                 }
             }
 
