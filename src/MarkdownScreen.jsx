@@ -326,6 +326,9 @@ export default function MarkdownScreen() {
         fourthPart.range.startLineNumber += changeDetails.linesAdded
         fourthPart.range.endLineNumber += changeDetails.linesAdded
 
+        let good = "0793659d28f79764369b03a702c46ab1a93e90b8 good"
+        let bad = "14f45f27ce82753ca26295eeeec7bd8b7052075a bad"
+
         // Update the parent element in state
         setAllTextElements((prev) => ({
             ...prev,
