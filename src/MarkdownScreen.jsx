@@ -199,16 +199,17 @@ export default function MarkdownScreen() {
             }
             let tagName = allTextElements[id].startTag
             let endTag = false
-            let itemLength = 1
+            let itemLength = event.changes[0].text.length
             let currentPart = allTextElements[id].currentPart
             // Handle closing of tag ">"
-            if (event.changed[0].text === " " && currentPart === "startTag") {
+            if (event.changes[0].text === " " && currentPart === "startTag") {
                 currentPart = "atributes"
             }
             if (event.changes[0].text === ">") {
                 if (!allTextElements[id].tag) {
                     // Extract tag name and append closing tag if it's the end of an opening tag
                     const closingTag = `</${tagName.slice(1)}>`
+                    console
                     appendClosingTag(id, closingTag, event)
                     itemLength += closingTag.length
                     endTag = true
@@ -260,13 +261,13 @@ export default function MarkdownScreen() {
                     },
                 }
             })
+            // Reset current element if it's a closing tag
             console.log("event.changes[0].text", JSON.stringify(event.changes[0].text))
             updateParentRanges(id, {
                 type: "addLine",
                 columnsAdded: 1,
                 linesAdded: linesAdded,
             })
-            // Reset current element if it's a closing tag
         }
     }
     function isEditInRange(editRange, partRange) {
@@ -337,6 +338,8 @@ export default function MarkdownScreen() {
 
     useEffect(() => {
         console.log("allTextElements", allTextElements)
+        console.log("textSending", text)
+        console.log("textSending", editorRef.current)
     }, [allTextElements])
 
     return (
