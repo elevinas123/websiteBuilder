@@ -164,6 +164,7 @@ export default function MarkdownScreen() {
                     text: part.text + text,
                 }
                 partUpdated = true
+                
             } else {
                 if (!partUpdated) continue
                 let newPart = {
