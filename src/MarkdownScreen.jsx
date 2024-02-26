@@ -1,7 +1,7 @@
 import { useAtom } from "jotai"
 import { useEffect, useState, useCallback, useRef } from "react"
 import { allElementsAtom, gridPixelSizeAtom } from "./atoms"
-import { debounce } from "lodash" // Assuming you are using lodash for debouncing
+import { debounce, transform } from "lodash" // Assuming you are using lodash for debouncing
 import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react"
 import codeToDesign from "./functions/codeToDesign"
 import { parse } from "parse5"
@@ -69,235 +69,145 @@ export default function MarkdownScreen() {
         return () => writeCode.cancel()
     }, [allElements, writeCode])
 
-    const [allTextElements, setAllTextElements] = useState({})
+    const [textElements, setTextElements] = useState({
+        "main-webGrid": {
+            id: "main-webGrid",
+            tagName: "div",
+            range: {
+                startColumn: 1,
+                startLineNumber: 1,
+                endColumn: 1, // Adjust based on actual content length
+                endLineNumber: 1,
+            },
+            parts: [
+                {
+                    // Combining start tag, attributes, and closing bracket into one part
+                    type: "startTag",
+                    range: {
+                        startColumn: 1,
+                        startLineNumber: 1,
+                        endColumn: 1, // Adjust based on actual content length
+                        endLineNumber: 1,
+                    },
+                    text: "",
+                },
+                {
+                    type: "content",
+                    range: {
+                        startColumn: 1,
+                        startLineNumber: 1,
+                        endColumn: 1, // Adjust if content is longer
+                        endLineNumber: 1,
+                    },
+                    text: "",
+                },
+                {
+                    type: "endTag",
+                    range: {
+                        startColumn: 1,
+                        startLineNumber: 1,
+                        endColumn: 1,
+                        endLineNumber: 1,
+                    },
+                    text: "",
+                },
+            ],
+            startTagDone: false,
+            tagCompleted: false,
+            currentTag: "content",
+            children: [],
+            parent: null,
+        },
+    })
 
-    function findElementByChangeRange(changeRange, elements) {
-        let lastOpenElement = null // Keep track of the last open (unclosed) element
+    function calculateLeadingWhitespace(text) {
+        // Split the text into lines
+        const lines = text.split(/\r?\n/)
 
-        const childElements = elements.map((childId) => allTextElements[childId])
-        console.log("childelements", childElements)
-        for (const element of childElements) {
-            const elRange = element.range
+        // Map each line to its leading whitespace count
+        const whitespaceCounts = lines.map((line) => {
+            // Match leading spaces or tabs and return their length
+            const match = line.match(/^[\s\t]*/)
+            return match ? match[0].length : 0
+        })
 
-            if (!element.tag) {
-                lastOpenElement = element
-            }
-            console.log("element", element)
-            console.log("changeRange", changeRange)
-            console.log("elRange", elRange)
-            // Check if the change is within the element's range
-            if (changeRange.startLineNumber >= elRange.startLineNumber && changeRange.endLineNumber <= elRange.endLineNumber) {
-                // Further refine for single-line changes and column ranges
-                // If this element is not closed, mark it as the last open element encountered
-                console.log("cias", element)
-                if (
-                    changeRange.startLineNumber === changeRange.endLineNumber &&
-                    (changeRange.startColumn < elRange.startColumn || changeRange.endColumn > elRange.endColumn)
-                ) {
-                    console.log("continued", element, changeRange, elRange)
-                    continue // Skip this element, as the change is outside its column range
-                }
-
-                // If this element has children, search within them
-                if (element.children && element.children.length > 0) {
-                    const foundInChild = findElementByChangeRange(changeRange, element.children)
-                    console.log("foundInChild", foundInChild)
-                    if (foundInChild) {
-                        return foundInChild // Element found in children
-                    }
-                }
-
-                // Prefer returning an open element if no children are in range
-                if (lastOpenElement) {
-                    return lastOpenElement
-                }
-
-                // No deeper match found or no children to search, return the current element
-                return element
-            }
-        }
-
-        // If no matching element is found in the provided range, return the last open element if it exists
-        return lastOpenElement
+        return whitespaceCounts
     }
-
-    const handleChange = async (value, event) => {
-        // Initialize "main-element" if it doesn't exist
-        let id
-        if (!allTextElements["main-element"]) {
-            allTextElements["main-element"] = {
-                id: "main-element",
-                range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 }, // Default range, adjust as needed
-                tag: false,
-                parts: [
-                    { type: "startTag", range: event.changes[0].range, content: "" },
-                    { type: "atributes", range: event.changes[0].range, content: "" },
-                    { type: "text", range: event.changes[0].range, content: "" },
-                    { type: "endTag", range: event.changes[0].range, content: "" },
-                ],
-                currentPart: "text",
-                parentId: null,
-                startTageNameDone: false,
-                children: [],
+    const findElementEdited = (range, children, elementId, textElements) => {
+        for (let i = children.length - 1; i >= 0; i--) {
+            let item = textElements[children[i]]
+            let isElementOpen = item.tagCompleted
+            if (isEditInRange(range, item.range, isElementOpen)) {
+                if (item.children && item.children.length > 0) {
+                    return findElementEdited(range, item.children, item.id, textElements)
+                }
+                return item.id // Return this ID if no deeper match is found
             }
-            id = "main-element"
+        }
+        return elementId // Return the initial or last matched elementId if no deeper element matches
+    }
+    const updatePart = (tag, id, editRange, newText) => {
+        let elements = { ...textElements }
+        const whiteSpace = calculateLeadingWhitespace(newText)
+        let elementsToUpdate = elements[id].parts
+
+        // Determine initial endColumn and endLineNumber based on the first part
+        let { endColumn, endLineNumber } = elementsToUpdate[0].range
+
+        // Calculate adjustments based on the newText
+        const newLines = newText.match(/\n/g) || []
+        const adjustmentForNewLines = newLines.length
+        endLineNumber += adjustmentForNewLines
+
+        // If adding new text includes new lines, we need to adjust endColumn for the last line of newText
+        if (adjustmentForNewLines > 0) {
+            endColumn = newText.length - newText.lastIndexOf("\n") - 1
         } else {
-            let ell = findElementByChangeRange(event.changes[0].range, allTextElements["main-element"].children)
-            console.log("ell", ell)
-            if (ell === null) id = "main-element"
-            else {
-                id = ell.id
-                console.log("id", id)
-            }
+            endColumn += newText.length
         }
 
-        // Logic for handling opening tag "<"
-        if (event.changes[0].text === "<") {
-            const newElement = {
-                id: uuidv4(), // Always generate a new ID for new elements
-                range: event.changes[0].range,
-                tag: false,
-                parts: [
-                    { type: "startTag", range: event.changes[0].range, content: "<" },
-                    { type: "atributes", range: event.changes[0].range, content: "" },
-                    { type: "text", range: event.changes[0].range, content: "" },
-                    { type: "endTag", range: event.changes[0].range, content: "" },
-                ],
-                parentId: id,
-                currentPart: "startTag",
-                children: [],
-                startTageNameDone: false,
-            }
+        let partUpdated = false
 
-            allTextElements[id].children.push(newElement.id) // Link to "main-element" as a child
-
-            setAllTextElements((prev) => ({ ...prev, [newElement.id]: newElement }))
-            updateParentRanges(id, { type: "addLine", linesAdded: 0, columnsAdded: 1 })
-            return
-        }
-
-        if (!allTextElements[id]) return
-
-        // Example conceptual check for a backspace action
-        if (event.changes[0].text === "" && event.changes[0].rangeLength > 0) {
-            // Backspace action detected
-
-            return
-        }
-
-        // Append text for existing elements
-        if (id && event.changes[0].text !== "<") {
-            console.log("text", allTextElements)
-            console.log("id", id)
-            let partUpdated = null
-            let currentPart = allTextElements[id].currentPart
-            if (event.changes[0].text === " " && currentPart === "startTag") {
-                currentPart = "atributes"
-            }
-            if (allTextElements[id].startTageNameDone || currentPart === "text") {
-                partUpdated = "text"
-            } else {
-                if (currentPart === "atributes") {
-                    partUpdated = "atributes"
-                } else {
-                    partUpdated = "startTag"
-                }
-            }
-            let tagName = allTextElements[id].parts[0].content
-            let endTag = false
-            let itemLength = event.changes[0].text.length
-            let currentPart = allTextElements[id].currentPart
-            // Handle closing of tag ">"
-            if (event.changes[0].text === " " && currentPart === "startTag") {
-                currentPart = "atributes"
-            }
-            if (event.changes[0].text === ">") {
-                if (!allTextElements[id].tag) {
-                    // Extract tag name and append closing tag if it's the end of an opening tag
-                    const closingTag = `</${tagName.slice(1)}>`
-                    console
-                    appendClosingTag(id, closingTag, event)
-                    itemLength += closingTag.length
-                    endTag = true
-                    currentPart = "text"
-                }
-            }
-
-            setAllTextElements((prev) => {
-                const element = prev[id]
-
-                // Assuming each part of the element is represented in a list for iteration
-                // Each part has { type: "startTag" | "attributes" | "text" | "endTag", range: {}, content: "" }
-                const parts = [...element.parts.map(i => ({...i}))]
-
-                let updateFollowingRanges = false
-                if (element.endTag) {
-                    parts.forEach((part) => {
-                        if (isEditInRange(event.changes[0].range, part.range)) {
-                            // Update this part's content and range
-                            part.content += event.changes[0].text // Simplify for illustration
-                            part.range.endColumn += itemLength // Adjust based on actual logic needed
-                            part.range.endLineNumber += linesAdded
-                            updateFollowingRanges = true
-                        } else if (updateFollowingRanges) {
-                            // Update the range for all subsequent parts
-                            part.range.startColumn += itemLength
-                            part.range.endColumn += itemLength
-                            part.range.startLineNumber += linesAdded
-                            part.range.endLineNumber += linesAdded
-                        }
-                    })
-                } else {
-                    parts.forEach((part) => {
-                        if (part.type === partUpdated) {
-                            // Update this part's content and range
-                            part.content += event.changes[0].text
-                            part.range.endColumn += itemLength // Adjust based on actual logic needed
-                            part.range.endLineNumber += linesAdded
-                            updateFollowingRanges = true
-                        } else if (updateFollowingRanges) {
-                            // Update the range for all subsequent parts
-                            part.range.startColumn += itemLength
-                            part.range.endColumn += itemLength
-                            part.range.startLineNumber += linesAdded
-                            part.range.endLineNumber += linesAdded
-                        }
-                    })
-                }
-
+        elements[id].parts = elementsToUpdate.map((part, index) => {
+            if (tag === part.type && !partUpdated) {
+                partUpdated = true
                 return {
-                    ...prev,
-                    [id]: {
-                        ...prev[id],
-                        range: {
-                            ...prev[id].range,
-                            endColumn: prev[id].range.endColumn + itemLength,
-                            endLineNumber: prev[id].range.endLineNumber + linesAdded,
-                        },
-                        parts: parts,
-                        startTageNameDone: event.changes[0].text === " " || endTag ? true : prev[id].startTageNameDone,
-                        tag: endTag ? true : prev[id].tag,
-                        currentPart: currentPart,
+                    ...part,
+                    range: {
+                        ...part.range,
+                        endColumn: adjustmentForNewLines > 0 ? endColumn : part.range.endColumn + newText.length,
+                        endLineNumber: part.range.endLineNumber + adjustmentForNewLines,
+                    },
+                    text: part.text + newText,
+                }
+            } else if (partUpdated) {
+                // Adjust subsequent parts' range
+                const startLineNumberAdjustment = part.range.startLineNumber + adjustmentForNewLines
+                return {
+                    ...part,
+                    range: {
+                        startColumn: adjustmentForNewLines > 0 && part.range.startLineNumber === endLineNumber ? endColumn : part.range.startColumn,
+                        startLineNumber: startLineNumberAdjustment,
+                        endLineNumber: part.range.endLineNumber + adjustmentForNewLines,
+                        endColumn: part.range.endColumn,
                     },
                 }
-            })
-            // Reset current element if it's a closing tag
-            console.log("event.changes[0].text", JSON.stringify(event.changes[0].text))
-            updateParentRanges(id, {
-                type: "addLine",
-                columnsAdded: itemLength,
-                linesAdded: linesAdded,
-            })
-        }
+            }
+            return part
+        })
+
+        console.log("Updated elements", elements)
+        setTextElements(elements)
     }
-    function isEditInRange(editRange, partRange) {
-        // Simplified check; extend logic to accurately determine if the edit is within the part's range
-        return (
-            editRange.startLineNumber >= partRange.startLineNumber &&
-            editRange.startLineNumber <= partRange.endLineNumber &&
-            editRange.startColumn >= partRange.startColumn &&
-            editRange.endColumn <= partRange.endColumn
-        )
+
+
+
+    const handleChange = (value, event) => {
+        const editedId = findElementEdited(event.changes[0].range, textElements["main-webGrid"].children, "main-webGrid", textElements)
+        const textWritten = event.changes[0].text
+        let elements = { ...textElements }
+        let element = elements[editedId]
+        updatePart(element.currentTag, editedId, event.changes[0].range, textWritten)
     }
 
     function appendClosingTag(id, closingTag, event) {
@@ -319,59 +229,12 @@ export default function MarkdownScreen() {
         editorRef.current.setPosition(newPosition)
         // Adjust cursor position if necessary
     }
-    function updateParentRanges(childId, changeDetails, prevAllTextElements = null) {
-        setAllTextElements((prev) => {
-            const allTextElements = prevAllTextElements || prev // Use passed state for recursion, initial state otherwise
-
-            const childElement = allTextElements[childId]
-            if (!childElement || !childElement.parentId) return allTextElements // Exit if no parent
-
-        const parentElement = allTextElements[childElement.parentId]
-        if (!parentElement) return // Ensure parent exists
-
-        // Directly adjust the parent's overall range if needed
-        if (changeDetails.type === "addLine") {
-            parentElement.range.endLineNumber += changeDetails.linesAdded
-            parentElement.range.endColumn += changeDetails.columnsAdded
-        }
-        // Assume additional change types could be handled here
-        if (!parentElement || parentElement.parts.length < 4) throw new Error("wtf man turi but 4")
-
-        // Directly update the third part's (second to last) end range
-        let thirdPart = parentElement.parts[2]
-        thirdPart.range.endColumn += changeDetails.columnsAdded
-        thirdPart.range.endLineNumber += changeDetails.linesAdded
-
-        // For the fourth part (last), update both start and end ranges
-        let fourthPart = parentElement.parts[3]
-        fourthPart.range.startColumn += changeDetails.columnsAdded
-        fourthPart.range.endColumn += changeDetails.columnsAdded
-        fourthPart.range.startLineNumber += changeDetails.linesAdded
-        fourthPart.range.endLineNumber += changeDetails.linesAdded
-
-        let good = "0793659d28f79764369b03a702c46ab1a93e90b8 good"
-        let bad = "14f45f27ce82753ca26295eeeec7bd8b7052075a bad"
-
-        // Update the parent element in state
-        setAllTextElements((prev) => ({
-            ...prev,
-            [parentElement.id]: parentElement,
-        }))
-
-            // Recursively update the range for the parent's parent, if any
-            if (parentElement.parentId) {
-                return updateParentRanges(parentElement.id, changeDetails, updatedAllTextElements) // Recursive call with updated state
-            }
-
-            return updatedAllTextElements // Return updated state
-        })
-    }
 
     useEffect(() => {
-        console.log("allTextElements", allTextElements)
+        console.log("allTextElements", textElements)
         console.log("textSending", text)
         console.log("textSending", editorRef.current)
-    }, [allTextElements])
+    }, [textElements])
 
     return (
         <div className="w-full">
