@@ -1,7 +1,7 @@
 import { useAtom } from "jotai"
 import { useEffect, useState, useCallback, useRef } from "react"
 import { allElementsAtom, gridPixelSizeAtom } from "./atoms"
-import { debounce, transform } from "lodash" // Assuming you are using lodash for debouncing
+import { debounce, every, transform } from "lodash" // Assuming you are using lodash for debouncing
 import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react"
 import codeToDesign from "./functions/codeToDesign"
 import { parse } from "parse5"
@@ -58,7 +58,7 @@ export default function MarkdownScreen() {
         debounce((elements) => {
             // Assuming mainId is defined and points to the root of your elements structure
             let code = elementToHTML(mainId, elements)
-            setText(code) // Update the state with the generated code
+            //setText(code) // Update the state with the generated code
         }, 200),
         [] // Dependencies array is empty, meaning the debounced function will be created once per component mount
     )
@@ -72,13 +72,6 @@ export default function MarkdownScreen() {
     const [textElements, setTextElements] = useState({
         "main-webGrid": {
             id: "main-webGrid",
-            tagName: "div",
-            range: {
-                startColumn: 1,
-                startLineNumber: 1,
-                endColumn: 1, // Adjust based on actual content length
-                endLineNumber: 1,
-            },
             parts: [
                 {
                     // Combining start tag, attributes, and closing bracket into one part
@@ -114,30 +107,15 @@ export default function MarkdownScreen() {
             ],
             startTagDone: false,
             tagCompleted: false,
-            currentTag: "content",
             children: [],
             parent: null,
         },
     })
-
-    function calculateLeadingWhitespace(text) {
-        // Split the text into lines
-        const lines = text.split(/\r?\n/)
-
-        // Map each line to its leading whitespace count
-        const whitespaceCounts = lines.map((line) => {
-            // Match leading spaces or tabs and return their length
-            const match = line.match(/^[\s\t]*/)
-            return match ? match[0].length : 0
-        })
-
-        return whitespaceCounts
-    }
     const findElementEdited = (range, children, elementId, textElements) => {
         for (let i = children.length - 1; i >= 0; i--) {
             let item = textElements[children[i]]
             let isElementOpen = item.tagCompleted
-            if (isEditInRange(range, item.range, isElementOpen)) {
+            if (isEditInRange(range, item.parts[2].range, isElementOpen)) {
                 if (item.children && item.children.length > 0) {
                     return findElementEdited(range, item.children, item.id, textElements)
                 }
@@ -148,17 +126,14 @@ export default function MarkdownScreen() {
     }
     const updatePart = (tag, id, editRange, newText) => {
         let elements = { ...textElements }
-        const whiteSpace = calculateLeadingWhitespace(newText)
         let elementsToUpdate = elements[id].parts
 
         // Determine initial endColumn and endLineNumber based on the first part
-        let { endColumn, endLineNumber } = elementsToUpdate[0].range
+        let { endColumn } = elementsToUpdate[0].range
 
         // Calculate adjustments based on the newText
         const newLines = newText.match(/\n/g) || []
         const adjustmentForNewLines = newLines.length
-        endLineNumber += adjustmentForNewLines
-
         // If adding new text includes new lines, we need to adjust endColumn for the last line of newText
         if (adjustmentForNewLines > 0) {
             endColumn = newText.length - newText.lastIndexOf("\n") - 1
@@ -168,9 +143,80 @@ export default function MarkdownScreen() {
 
         let partUpdated = false
 
-        elements[id].parts = elementsToUpdate.map((part, index) => {
+        elements[id].parts = elementsToUpdate.map((part) => {
             if (tag === part.type && !partUpdated) {
                 partUpdated = true
+                console.log("item", part.text[part.text.length - 1])
+                if (part.text[part.text.length - 1] === "<") {
+                    console.log("cia atejo")
+                    if (newText === "/") {
+                        newText = "</"
+                        tag = "endTag"
+                        endColumn--
+                        return {
+                            ...part,
+                            text: part.text.slice(0, -1),
+                            range: {
+                                ...part.range,
+                                endColumn: part.endColumn - 1
+                            },
+                        }
+                    } else if (newText !== " "  || newText !=="/r/n") {
+                        endColumn--
+                        let newId = uuidv4()
+                        setTextElements((i) => ({
+                            ...i,
+                            [newId]: {
+                                id: newId,
+                                parts: [
+                                    {
+                                        // Combining start tag, attributes, and closing bracket into one part
+                                        type: "startTag",
+                                        range: {
+                                            startColumn: endColumn,
+                                            startLineNumber: editRange.startLineNumber,
+                                            endColumn: endColumn + 2, // Adjust based on actual content length
+                                            endLineNumber: editRange.endLineNumber,
+                                        },
+                                        text: `<${newText}`,
+                                    },
+                                    {
+                                        type: "content",
+                                        range: {
+                                            startColumn: endColumn + 2,
+                                            startLineNumber: editRange.startLineNumber,
+                                            endColumn: endColumn + 2, // Adjust based on actual content length
+                                            endLineNumber: editRange.endLineNumber,
+                                        },
+                                        text: "",
+                                    },
+                                    {
+                                        type: "endTag",
+                                        range: {
+                                            startColumn: endColumn + 2,
+                                            startLineNumber: editRange.startLineNumber,
+                                            endColumn: endColumn + 2, // Adjust based on actual content length
+                                            endLineNumber: editRange.endLineNumber,
+                                        },
+                                        text: "",
+                                    },
+                                ],
+                                startTagDone: false,
+                                tagCompleted: false,
+                                children: [],
+                                parent: id,
+                            },
+                        }))
+                        return {
+                            ...part,
+                            text: part.text.slice(0, -1),
+                            range: {
+                                ...part.range,
+                                endColumn: part.endColumn - 1,
+                            },
+                        }
+                    }
+                }
                 return {
                     ...part,
                     range: {
@@ -186,10 +232,10 @@ export default function MarkdownScreen() {
                 return {
                     ...part,
                     range: {
-                        startColumn: adjustmentForNewLines > 0 && part.range.startLineNumber === endLineNumber ? endColumn : part.range.startColumn,
+                        startColumn: adjustmentForNewLines > 0 ? endColumn : part.range.startColumn + newText.length,
                         startLineNumber: startLineNumberAdjustment,
                         endLineNumber: part.range.endLineNumber + adjustmentForNewLines,
-                        endColumn: part.range.endColumn,
+                        endColumn: adjustmentForNewLines > 0 ? endColumn : part.range.endColumn + newText.length,
                     },
                 }
             }
@@ -199,14 +245,33 @@ export default function MarkdownScreen() {
         console.log("Updated elements", elements)
         setTextElements(elements)
     }
+    function isEditInRange(editRange, partRange, isElementOpen = false) {
+        // The existing checks
+        const editStartsAfterPartStart =
+            editRange.startLineNumber > partRange.startLineNumber ||
+            (editRange.startLineNumber === partRange.startLineNumber && editRange.startColumn >= partRange.startColumn)
 
+        const editEndsBeforePartEnd =
+            editRange.endLineNumber < partRange.endLineNumber ||
+            (editRange.endLineNumber === partRange.endLineNumber && editRange.endColumn <= partRange.endColumn)
 
+        const editOverlapsPart = editRange.startLineNumber < partRange.endLineNumber && editRange.endLineNumber > partRange.startLineNumber
+
+        // Adjust for unclosed elements: consider the edit in range if it's right at the end of an open element
+        const editAtOpenElementEnd =
+            isElementOpen &&
+            ((editRange.startLineNumber === partRange.endLineNumber && editRange.startColumn  === 1+ partRange.endColumn))
+        console.log((editStartsAfterPartStart && editEndsBeforePartEnd), editOverlapsPart, editAtOpenElementEnd)
+        return (editStartsAfterPartStart && editEndsBeforePartEnd) || editOverlapsPart || editAtOpenElementEnd
+    }
 
     const handleChange = (value, event) => {
         const editedId = findElementEdited(event.changes[0].range, textElements["main-webGrid"].children, "main-webGrid", textElements)
         const textWritten = event.changes[0].text
         let elements = { ...textElements }
         let element = elements[editedId]
+        let currPart = element.parts.map((i, index) => [index, isEditInRange(event.changes[0].range, i.range, !element.tagCompleted), i.range, event.changes[0].range])
+        console.log(currPart)
         updatePart(element.currentTag, editedId, event.changes[0].range, textWritten)
     }
 
@@ -246,7 +311,7 @@ export default function MarkdownScreen() {
                     value={text}
                     defaultLanguage="html"
                     theme="vs-dark"
-                    defaultValue="// some comment"
+                    defaultValue=""
                 />
             </div>
         </div>
