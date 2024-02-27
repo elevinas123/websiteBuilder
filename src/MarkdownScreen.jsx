@@ -77,9 +77,9 @@ export default function MarkdownScreen() {
                     // Combining start tag, attributes, and closing bracket into one part
                     type: "startTag",
                     range: {
-                        startColumn: 1,
+                        startColumn: 0,
                         startLineNumber: 1,
-                        endColumn: 1, // Adjust based on actual content length
+                        endColumn: 0, // Adjust based on actual content length
                         endLineNumber: 1,
                     },
                     text: "",
@@ -87,9 +87,9 @@ export default function MarkdownScreen() {
                 {
                     type: "content",
                     range: {
-                        startColumn: 1,
+                        startColumn: 0,
                         startLineNumber: 1,
-                        endColumn: 1, // Adjust if content is longer
+                        endColumn: 0, // Adjust if content is longer
                         endLineNumber: 1,
                     },
                     text: "",
@@ -97,25 +97,34 @@ export default function MarkdownScreen() {
                 {
                     type: "endTag",
                     range: {
-                        startColumn: 1,
+                        startColumn: 0,
                         startLineNumber: 1,
-                        endColumn: 1,
+                        endColumn: 0,
                         endLineNumber: 1,
                     },
                     text: "",
                 },
             ],
-            startTagDone: false,
+            startTagCompleted: false,
             tagCompleted: false,
             children: [],
             parent: null,
         },
     })
     const findElementEdited = (range, children, elementId, textElements) => {
+        console.log("children", children)
         for (let i = children.length - 1; i >= 0; i--) {
             let item = textElements[children[i]]
-            let isElementOpen = item.tagCompleted
-            if (isEditInRange(range, item.parts[2].range, isElementOpen)) {
+            let isElementOpen = !item.tagCompleted
+            let rangeItem = {
+                startColumn: item.parts[0].range.startColumn,
+                endColumn: item.parts[2].range.endColumn,
+                startLineNumber: item.parts[0].range.startLineNumber,
+                endLineNumber: item.parts[2].range.endLineNumber,
+            }
+            console.log("rangeItem", rangeItem, range, item)
+            if (isEditInRange(range, rangeItem, isElementOpen)) {
+                console.log("elementIdssdfs", elementId)
                 if (item.children && item.children.length > 0) {
                     return findElementEdited(range, item.children, item.id, textElements)
                 }
@@ -127,6 +136,8 @@ export default function MarkdownScreen() {
     const updatePart = (tag, id, editRange, newText) => {
         let elements = { ...textElements }
         let elementsToUpdate = elements[id].parts
+        let tagCompleted = elements[id].tagCompleted
+        let startTagCompleted = elements[id].startTagCompleted
 
         // Determine initial endColumn and endLineNumber based on the first part
         let { endColumn } = elementsToUpdate[0].range
@@ -134,11 +145,15 @@ export default function MarkdownScreen() {
         // Calculate adjustments based on the newText
         const newLines = newText.match(/\n/g) || []
         const adjustmentForNewLines = newLines.length
+        let children = [...elements[id].children]
         // If adding new text includes new lines, we need to adjust endColumn for the last line of newText
         if (adjustmentForNewLines > 0) {
             endColumn = newText.length - newText.lastIndexOf("\n") - 1
         } else {
             endColumn += newText.length
+        }
+        if (newText === ">" && startTagCompleted) {
+            tagCompleted = true
         }
 
         let partUpdated = false
@@ -147,23 +162,32 @@ export default function MarkdownScreen() {
             if (tag === part.type && !partUpdated) {
                 partUpdated = true
                 console.log("item", part.text[part.text.length - 1])
+                if (part.text[part.text.length - 1] === ">" && tag !== "content") {
+                    console.log("cia atejo grazuolis")
+                    tag = "content"
+                    partUpdated = false
+                    return { ...part }
+                }
                 if (part.text[part.text.length - 1] === "<") {
                     console.log("cia atejo")
                     if (newText === "/") {
                         newText = "</"
                         tag = "endTag"
                         endColumn--
+                        partUpdated = false
+
                         return {
                             ...part,
                             text: part.text.slice(0, -1),
                             range: {
                                 ...part.range,
-                                endColumn: part.endColumn - 1
+                                endColumn: part.range.endColumn - 1,
                             },
                         }
-                    } else if (newText !== " "  || newText !=="/r/n") {
+                    } else if (newText !== " " || newText !== "/r/n") {
                         endColumn--
                         let newId = uuidv4()
+                        children.push(newId)
                         setTextElements((i) => ({
                             ...i,
                             [newId]: {
@@ -201,18 +225,19 @@ export default function MarkdownScreen() {
                                         text: "",
                                     },
                                 ],
-                                startTagDone: false,
+                                startTagCompleted: false,
                                 tagCompleted: false,
                                 children: [],
                                 parent: id,
                             },
                         }))
+
                         return {
                             ...part,
                             text: part.text.slice(0, -1),
                             range: {
                                 ...part.range,
-                                endColumn: part.endColumn - 1,
+                                endColumn: part.range.endColumn - 1,
                             },
                         }
                     }
@@ -224,7 +249,7 @@ export default function MarkdownScreen() {
                         endColumn: adjustmentForNewLines > 0 ? endColumn : part.range.endColumn + newText.length,
                         endLineNumber: part.range.endLineNumber + adjustmentForNewLines,
                     },
-                    text: part.text + newText,
+                    text: calculateInsertion(part.text, newText, part.range, editRange),
                 }
             } else if (partUpdated) {
                 // Adjust subsequent parts' range
@@ -241,38 +266,97 @@ export default function MarkdownScreen() {
             }
             return part
         })
+        elements[id].children = children
+        elements[id].startTagCompleted = startTagCompleted
+        elements[id].tagCompleted = tagCompleted
 
         console.log("Updated elements", elements)
-        setTextElements(elements)
+        setTextElements((i) => ({ ...i, ...elements }))
     }
+
+    const calculateInsertion = (partText, newText, partRange, editRange) => {
+        // Split lines using \r\n for Windows-style line endings
+        let lines = partText.split("\r\n")
+        const lineOffset = editRange.startLineNumber - partRange.startLineNumber
+        let columnOffset = editRange.startColumn
+
+        // If the insertion is not at the first line of the part, adjust the column offset
+        if (lineOffset > 0) {
+            // Considering \r\n for each line break in the offset calculation
+            columnOffset += lines.slice(0, lineOffset).join("\r\n").length + lineOffset * 2 // *2 for each \r\n
+        }
+
+        // Calculate the insertion point in the entire text as a single string
+        let beforeInsert = partText.substring(0, columnOffset)
+        let afterInsert = partText.substring(columnOffset)
+
+        // Insert the newText
+        let updatedText = beforeInsert + newText + afterInsert
+
+        // Update the partRange to reflect the new end line and column
+        const newLinesCount = (newText.match(/\r\n/g) || []).length
+        let endLineNumberUpdate = partRange.endLineNumber + newLinesCount
+        let endColumnUpdate
+
+        if (newLinesCount > 0) {
+            // If newText includes new lines, adjust the end column based on the length after the last newline
+            endColumnUpdate = newText.length - newText.lastIndexOf("\r\n") - 2 // -2 to adjust for \r\n length
+        } else {
+            // If no new lines are added, adjust the end column directly based on the newText length
+            endColumnUpdate = editRange.startLineNumber === partRange.endLineNumber ? partRange.endColumn + newText.length : partRange.endColumn
+        }
+
+        // Correctly adjust the end column if the edit is on the last line of the part
+        if (editRange.startLineNumber === partRange.endLineNumber && newLinesCount === 0) {
+            endColumnUpdate = editRange.startColumn + newText.length
+        }
+
+        // Return the updated text and the new part range
+        console.log("updatedtext", updatedText)
+        console.log("partText", partText)
+        console.log("newText", newText)
+        return updatedText
+    }
+
     function isEditInRange(editRange, partRange, isElementOpen = false) {
-        // The existing checks
+        // Check if the edit starts after the start of the part
         const editStartsAfterPartStart =
             editRange.startLineNumber > partRange.startLineNumber ||
             (editRange.startLineNumber === partRange.startLineNumber && editRange.startColumn >= partRange.startColumn)
 
+        // Check if the edit ends before the end of the part
         const editEndsBeforePartEnd =
             editRange.endLineNumber < partRange.endLineNumber ||
             (editRange.endLineNumber === partRange.endLineNumber && editRange.endColumn <= partRange.endColumn)
 
-        const editOverlapsPart = editRange.startLineNumber < partRange.endLineNumber && editRange.endLineNumber > partRange.startLineNumber
+        // Check if the edit overlaps the part at all
+        const editOverlapsPart = editRange.startLineNumber <= partRange.endLineNumber && editRange.endLineNumber >= partRange.startLineNumber
 
-        // Adjust for unclosed elements: consider the edit in range if it's right at the end of an open element
-        const editAtOpenElementEnd =
-            isElementOpen &&
-            ((editRange.startLineNumber === partRange.endLineNumber && editRange.startColumn  === 1+ partRange.endColumn))
-        console.log((editStartsAfterPartStart && editEndsBeforePartEnd), editOverlapsPart, editAtOpenElementEnd)
+        // Special case for unclosed elements:
+        // Consider the edit in range if it starts exactly at the end of an open element
+        // Note: You might need to adjust this logic based on how you define "end" of an open element
+        // For example, if an open element can be edited at its end, you might consider edits starting from partRange.endColumn (not 1 + partRange.endColumn)
+        const editAtOpenElementEnd = isElementOpen && editRange.startLineNumber === partRange.endLineNumber && editRange.startColumn >= partRange.endColumn
+
+        // Combine the checks to determine if the edit is in range
         return (editStartsAfterPartStart && editEndsBeforePartEnd) || editOverlapsPart || editAtOpenElementEnd
     }
+
 
     const handleChange = (value, event) => {
         const editedId = findElementEdited(event.changes[0].range, textElements["main-webGrid"].children, "main-webGrid", textElements)
         const textWritten = event.changes[0].text
         let elements = { ...textElements }
         let element = elements[editedId]
-        let currPart = element.parts.map((i, index) => [index, isEditInRange(event.changes[0].range, i.range, !element.tagCompleted), i.range, event.changes[0].range])
-        console.log(currPart)
-        updatePart(element.currentTag, editedId, event.changes[0].range, textWritten)
+        let allParts = element.parts.map((i) => [i, isEditInRange(event.changes[0].range, i.range, !element.tagCompleted), i.range, event.changes[0].range])
+        let currentPart = allParts.filter((i) => i[1])
+        let currentTag = currentPart[0][0].type
+        if (editedId === "main-webGrid") {
+            currentTag = "content"
+        }
+        console.log(allParts)
+        console.log("editedId", editedId)
+        updatePart(currentTag, editedId, event.changes[0].range, textWritten)
     }
 
     function appendClosingTag(id, closingTag, event) {
@@ -296,7 +380,7 @@ export default function MarkdownScreen() {
     }
 
     useEffect(() => {
-        console.log("allTextElements", textElements)
+        console.log("allTextElements", JSON.stringify(textElements))
         console.log("textSending", text)
         console.log("textSending", editorRef.current)
     }, [textElements])
@@ -304,15 +388,7 @@ export default function MarkdownScreen() {
     return (
         <div className="w-full">
             <div className=" ml-10 mt-10 w-auto">
-                <Editor
-                    height="90vh"
-                    onChange={handleChange}
-                    onMount={handleEditorMount}
-                    value={text}
-                    defaultLanguage="html"
-                    theme="vs-dark"
-                    defaultValue=""
-                />
+                <Editor height="90vh" onChange={handleChange} onMount={handleEditorMount} value={text} defaultLanguage="html" theme="vs-dark" defaultValue="" />
             </div>
         </div>
     )
