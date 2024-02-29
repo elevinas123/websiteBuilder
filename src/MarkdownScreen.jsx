@@ -3,9 +3,8 @@ import { useEffect, useState, useCallback, useRef } from "react"
 import { allElementsAtom, gridPixelSizeAtom } from "./atoms"
 import { debounce, every, transform } from "lodash" // Assuming you are using lodash for debouncing
 import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react"
-import codeToDesign from "./functions/codeToDesign"
-import { parse } from "parse5"
-import { v4 as uuidv4 } from "uuid"
+import { parseFragment } from "parse5"
+import { diff } from "jsondiffpatch"
 
 export default function MarkdownScreen() {
     const [text, setText] = useState("")
@@ -69,321 +68,101 @@ export default function MarkdownScreen() {
         return () => writeCode.cancel()
     }, [allElements, writeCode])
 
-    const [textElements, setTextElements] = useState({
-        "main-webGrid": {
-            id: "main-webGrid",
-            parts: [
-                {
-                    // Combining start tag, attributes, and closing bracket into one part
-                    type: "startTag",
-                    range: {
-                        startColumn: 0,
-                        startLineNumber: 1,
-                        endColumn: 0, // Adjust based on actual content length
-                        endLineNumber: 1,
-                    },
-                    text: "",
-                },
-                {
-                    type: "content",
-                    range: {
-                        startColumn: 0,
-                        startLineNumber: 1,
-                        endColumn: 0, // Adjust if content is longer
-                        endLineNumber: 1,
-                    },
-                    text: "",
-                },
-                {
-                    type: "endTag",
-                    range: {
-                        startColumn: 0,
-                        startLineNumber: 1,
-                        endColumn: 0,
-                        endLineNumber: 1,
-                    },
-                    text: "",
-                },
-            ],
-            startTagCompleted: false,
-            tagCompleted: false,
-            children: [],
-            parent: null,
-        },
-    })
-    const findElementEdited = (range, children, elementId, textElements) => {
-        console.log("children", children)
-        for (let i = children.length - 1; i >= 0; i--) {
-            let item = textElements[children[i]]
-            let isElementOpen = !item.tagCompleted
-            let rangeItem = {
-                startColumn: item.parts[0].range.startColumn,
-                endColumn: item.parts[2].range.endColumn,
-                startLineNumber: item.parts[0].range.startLineNumber,
-                endLineNumber: item.parts[2].range.endLineNumber,
-            }
-            console.log("rangeItem", rangeItem, range, item)
-            if (isEditInRange(range, rangeItem, isElementOpen)) {
-                console.log("elementIdssdfs", elementId)
-                if (item.children && item.children.length > 0) {
-                    return findElementEdited(range, item.children, item.id, textElements)
-                }
-                return item.id // Return this ID if no deeper match is found
-            }
-        }
-        return elementId // Return the initial or last matched elementId if no deeper element matches
-    }
-    const updatePart = (tag, id, editRange, newText) => {
-        let elements = { ...textElements }
-        let elementsToUpdate = elements[id].parts
-        let tagCompleted = elements[id].tagCompleted
-        let startTagCompleted = elements[id].startTagCompleted
-
-        // Determine initial endColumn and endLineNumber based on the first part
-        let { endColumn } = elementsToUpdate[0].range
-
-        // Calculate adjustments based on the newText
-        const newLines = newText.match(/\n/g) || []
-        const adjustmentForNewLines = newLines.length
-        let children = [...elements[id].children]
-        // If adding new text includes new lines, we need to adjust endColumn for the last line of newText
-        if (adjustmentForNewLines > 0) {
-            endColumn = newText.length - newText.lastIndexOf("\n") - 1
-        } else {
-            endColumn += newText.length
-        }
-        if (newText === ">" && startTagCompleted) {
-            tagCompleted = true
-        }
-
-        let partUpdated = false
-
-        elements[id].parts = elementsToUpdate.map((part) => {
-            if (tag === part.type && !partUpdated) {
-                partUpdated = true
-                console.log("item", part.text[part.text.length - 1])
-                if (part.text[part.text.length - 1] === ">" && tag !== "content") {
-                    console.log("cia atejo grazuolis")
-                    tag = "content"
-                    partUpdated = false
-                    return { ...part }
-                }
-                if (part.text[part.text.length - 1] === "<") {
-                    console.log("cia atejo")
-                    if (newText === "/") {
-                        newText = "</"
-                        tag = "endTag"
-                        endColumn--
-                        partUpdated = false
-
-                        return {
-                            ...part,
-                            text: part.text.slice(0, -1),
-                            range: {
-                                ...part.range,
-                                endColumn: part.range.endColumn - 1,
-                            },
-                        }
-                    } else if (newText !== " " || newText !== "/r/n") {
-                        endColumn--
-                        let newId = uuidv4()
-                        children.push(newId)
-                        setTextElements((i) => ({
-                            ...i,
-                            [newId]: {
-                                id: newId,
-                                parts: [
-                                    {
-                                        // Combining start tag, attributes, and closing bracket into one part
-                                        type: "startTag",
-                                        range: {
-                                            startColumn: endColumn,
-                                            startLineNumber: editRange.startLineNumber,
-                                            endColumn: endColumn + 2, // Adjust based on actual content length
-                                            endLineNumber: editRange.endLineNumber,
-                                        },
-                                        text: `<${newText}`,
-                                    },
-                                    {
-                                        type: "content",
-                                        range: {
-                                            startColumn: endColumn + 2,
-                                            startLineNumber: editRange.startLineNumber,
-                                            endColumn: endColumn + 2, // Adjust based on actual content length
-                                            endLineNumber: editRange.endLineNumber,
-                                        },
-                                        text: "",
-                                    },
-                                    {
-                                        type: "endTag",
-                                        range: {
-                                            startColumn: endColumn + 2,
-                                            startLineNumber: editRange.startLineNumber,
-                                            endColumn: endColumn + 2, // Adjust based on actual content length
-                                            endLineNumber: editRange.endLineNumber,
-                                        },
-                                        text: "",
-                                    },
-                                ],
-                                startTagCompleted: false,
-                                tagCompleted: false,
-                                children: [],
-                                parent: id,
-                            },
-                        }))
-
-                        return {
-                            ...part,
-                            text: part.text.slice(0, -1),
-                            range: {
-                                ...part.range,
-                                endColumn: part.range.endColumn - 1,
-                            },
-                        }
-                    }
-                }
-                return {
-                    ...part,
-                    range: {
-                        ...part.range,
-                        endColumn: adjustmentForNewLines > 0 ? endColumn : part.range.endColumn + newText.length,
-                        endLineNumber: part.range.endLineNumber + adjustmentForNewLines,
-                    },
-                    text: calculateInsertion(part.text, newText, part.range, editRange),
-                }
-            } else if (partUpdated) {
-                // Adjust subsequent parts' range
-                const startLineNumberAdjustment = part.range.startLineNumber + adjustmentForNewLines
-                return {
-                    ...part,
-                    range: {
-                        startColumn: adjustmentForNewLines > 0 ? endColumn : part.range.startColumn + newText.length,
-                        startLineNumber: startLineNumberAdjustment,
-                        endLineNumber: part.range.endLineNumber + adjustmentForNewLines,
-                        endColumn: adjustmentForNewLines > 0 ? endColumn : part.range.endColumn + newText.length,
-                    },
-                }
-            }
-            return part
-        })
-        elements[id].children = children
-        elements[id].startTagCompleted = startTagCompleted
-        elements[id].tagCompleted = tagCompleted
-
-        console.log("Updated elements", elements)
-        setTextElements((i) => ({ ...i, ...elements }))
-    }
-
-    const calculateInsertion = (partText, newText, partRange, editRange) => {
-        // Split lines using \r\n for Windows-style line endings
-        let lines = partText.split("\r\n")
-        const lineOffset = editRange.startLineNumber - partRange.startLineNumber
-        let columnOffset = editRange.startColumn
-
-        // If the insertion is not at the first line of the part, adjust the column offset
-        if (lineOffset > 0) {
-            // Considering \r\n for each line break in the offset calculation
-            columnOffset += lines.slice(0, lineOffset).join("\r\n").length + lineOffset * 2 // *2 for each \r\n
-        }
-
-        // Calculate the insertion point in the entire text as a single string
-        let beforeInsert = partText.substring(0, columnOffset)
-        let afterInsert = partText.substring(columnOffset)
-
-        // Insert the newText
-        let updatedText = beforeInsert + newText + afterInsert
-
-        // Update the partRange to reflect the new end line and column
-        const newLinesCount = (newText.match(/\r\n/g) || []).length
-        let endLineNumberUpdate = partRange.endLineNumber + newLinesCount
-        let endColumnUpdate
-
-        if (newLinesCount > 0) {
-            // If newText includes new lines, adjust the end column based on the length after the last newline
-            endColumnUpdate = newText.length - newText.lastIndexOf("\r\n") - 2 // -2 to adjust for \r\n length
-        } else {
-            // If no new lines are added, adjust the end column directly based on the newText length
-            endColumnUpdate = editRange.startLineNumber === partRange.endLineNumber ? partRange.endColumn + newText.length : partRange.endColumn
-        }
-
-        // Correctly adjust the end column if the edit is on the last line of the part
-        if (editRange.startLineNumber === partRange.endLineNumber && newLinesCount === 0) {
-            endColumnUpdate = editRange.startColumn + newText.length
-        }
-
-        // Return the updated text and the new part range
-        console.log("updatedtext", updatedText)
-        console.log("partText", partText)
-        console.log("newText", newText)
-        return updatedText
-    }
-
-    function isEditInRange(editRange, partRange, isElementOpen = false) {
-        // Check if the edit starts after the start of the part
-        const editStartsAfterPartStart =
-            editRange.startLineNumber > partRange.startLineNumber ||
-            (editRange.startLineNumber === partRange.startLineNumber && editRange.startColumn >= partRange.startColumn)
-
-        // Check if the edit ends before the end of the part
-        const editEndsBeforePartEnd =
-            editRange.endLineNumber < partRange.endLineNumber ||
-            (editRange.endLineNumber === partRange.endLineNumber && editRange.endColumn <= partRange.endColumn)
-
-        // Check if the edit overlaps the part at all
-        const editOverlapsPart = editRange.startLineNumber <= partRange.endLineNumber && editRange.endLineNumber >= partRange.startLineNumber
-
-        // Special case for unclosed elements:
-        // Consider the edit in range if it starts exactly at the end of an open element
-        // Note: You might need to adjust this logic based on how you define "end" of an open element
-        // For example, if an open element can be edited at its end, you might consider edits starting from partRange.endColumn (not 1 + partRange.endColumn)
-        const editAtOpenElementEnd = isElementOpen && editRange.startLineNumber === partRange.endLineNumber && editRange.startColumn >= partRange.endColumn
-
-        // Combine the checks to determine if the edit is in range
-        return (editStartsAfterPartStart && editEndsBeforePartEnd) || editOverlapsPart || editAtOpenElementEnd
-    }
-
-
     const handleChange = (value, event) => {
-        const editedId = findElementEdited(event.changes[0].range, textElements["main-webGrid"].children, "main-webGrid", textElements)
-        const textWritten = event.changes[0].text
-        let elements = { ...textElements }
-        let element = elements[editedId]
-        let allParts = element.parts.map((i) => [i, isEditInRange(event.changes[0].range, i.range, !element.tagCompleted), i.range, event.changes[0].range])
-        let currentPart = allParts.filter((i) => i[1])
-        let currentTag = currentPart[0][0].type
-        if (editedId === "main-webGrid") {
-            currentTag = "content"
-        }
-        console.log(allParts)
-        console.log("editedId", editedId)
-        updatePart(currentTag, editedId, event.changes[0].range, textWritten)
-    }
+        const oldHtml = "<div><div className='bg-red-500'>Labas</div></div>"
+        const newHtml1 = "<article><div className='bg-red-500'>Labas</div></article>"
+        const newHtml2 = "<div><div className='w-10'><div className='bg-red-500'>Labas</div></div><div><div className='bg-red-500'>Labas123</div></div></div>"
+        const newHtml3 =
+            "<div><div className='w-10'><div className='bg-red-500'>Labas</div></div><div><div className='bg-red-500'>Labas123</div></div><div className='w-10'><div className='bg-red-500'>Testas</div></div></div>"
 
-    function appendClosingTag(id, closingTag, event) {
-        editorRef.current.executeEdits("", [
-            {
-                range: {
-                    startLineNumber: event.changes[0].range.endLineNumber,
-                    startColumn: event.changes[0].range.endColumn + 1,
-                    endLineNumber: event.changes[0].range.endLineNumber,
-                    endColumn: event.changes[0].range.endColumn + 1,
-                },
-                text: closingTag,
-            },
-        ])
-        const newPosition = {
-            lineNumber: event.changes[0].range.endLineNumber,
-            column: event.changes[0].range.endColumn + 1, // Adjust as needed
-        }
-        editorRef.current.setPosition(newPosition)
-        // Adjust cursor position if necessary
-    }
+        const oldAst = parseFragment(oldHtml)
+        const newAst1 = parseFragment(newHtml1)
+        const newAst2 = parseFragment(newHtml2)
+        const newAst3 = parseFragment(newHtml3)
+        const preparedOldAst = prepareAstForDiffing(oldAst)
+        const preparedNewAst1 = prepareAstForDiffing(newAst1)
+        const preparedNewAst2 = prepareAstForDiffing(newAst2)
+        const preparedNewAst3 = prepareAstForDiffing(newAst3)
 
-    useEffect(() => {
-        console.log("allTextElements", JSON.stringify(textElements))
-        console.log("textSending", text)
-        console.log("textSending", editorRef.current)
-    }, [textElements])
+        const diffedAst1 = preprocesDiffs(diff(preparedOldAst, preparedNewAst1))
+        const diffedAst2 = preprocesDiffs(diff(preparedNewAst1, preparedNewAst2))
+        const diffedAst3 = preprocesDiffs(diff(preparedNewAst2, preparedNewAst3))
+
+        console.log("diff", diffedAst1)
+        console.log("diff", diffedAst2)
+        console.log("diff", diffedAst3)
+        console.log("allElements", allElements)
+        apllyChangesFromDiff(diffedAst1, allElements)
+    }
+    const preprocesDiffs = (diff) => {
+        return { ...diff.childNodes[0] }
+    }
+    function prepareAstForDiffing(node) {
+        // Clone node to avoid mutating the original AST, omitting non-serializable properties if needed
+        let cleanNode = {
+            nodeName: node.nodeName,
+            tagName: node.tagName,
+            attrs: node.attrs,
+            // You might want to include or exclude additional properties depending on your needs
+        }
+
+        // Recursively process child nodes
+        if (node.childNodes && node.childNodes.length) {
+            cleanNode.childNodes = node.childNodes.map((child) => prepareAstForDiffing(child))
+        }
+
+        // Include any additional properties or transformations here
+        // For example, adding text content for text nodes
+        if (node.nodeName === "#text") {
+            cleanNode.value = node.value
+        }
+
+        return cleanNode
+    }
+    function apllyChangesFromDiff(diff, allElements, parentId = null) {
+        Object.entries(diff).forEach(([key, change]) => {
+            if (key === "_t") return // Skip array change markers
+
+            // Directly use key for top-level elements or find the child key for nested elements
+            const visualId = parentId !== null ? allElements[parentId].children[key] : "main-webGrid"
+            console.log(visualId)
+            console.log(parentId)
+            const visual = allElements[visualId]
+
+            if (!visual && parentId) {
+                console.error(`Visual with key ${key} not found within parent ${parentId}`)
+                return
+            }
+
+            if (Array.isArray(change)) {
+                // Handling direct modifications, additions, and deletions
+                if (change.length === 1) {
+                    // Addition logic here
+                    addVisual(key, change[0], parentId, allElements)
+                } else if (change.length === 2) {
+                    // Modification logic here
+                    modifyVisual(visualId, change[1], allElements)
+                } else if (change.length === 3 && change[2] === 0) {
+                    // Deletion logic here
+                    deleteVisual(visualId, parentId, allElements)
+                }
+            } else if (typeof change === "object" && !change["_t"]) {
+                modifyVisual(visualId, change, allElements)
+            } else {
+                apllyChangesFromDiff(change, allElements, visualId)
+
+            }
+        })
+    }
+    const addVisual = (id, change, allElements) => {
+        console.log("addVisuals", id, change)
+    }
+    const modifyVisual = (id, change, allElements) => {
+        console.log("modifyVisual", id, change)
+    }
+    const deleteVisual = (id, change, allElements) => {
+        console.log("deleteVisual", id, change)
+    }
 
     return (
         <div className="w-full">
