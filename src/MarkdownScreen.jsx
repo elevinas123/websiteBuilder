@@ -92,7 +92,8 @@ export default function MarkdownScreen() {
         console.log("diff", diffedAst2)
         console.log("diff", diffedAst3)
         console.log("allElements", allElements)
-        apllyChangesFromDiff(diffedAst1, allElements)
+        let updateThings = apllyChangesFromDiff(diffedAst3, allElements)
+        console.log("updateThings", updateThings)
     }
     const preprocesDiffs = (diff) => {
         return { ...diff.childNodes[0] }
@@ -119,12 +120,20 @@ export default function MarkdownScreen() {
 
         return cleanNode
     }
-    function apllyChangesFromDiff(diff, allElements, parentId = null) {
+    function apllyChangesFromDiff(diff, allElements, allElementsChanges = [], parentId = null) {
         Object.entries(diff).forEach(([key, change]) => {
             if (key === "_t") return // Skip array change markers
+            if (key === "nodeName") return
+            if (key === "tagName") {
+                const elementId = parentId === null ? "main-webGrid" : parentId
+                let visuals = modifyVisual(elementId, change, allElements)
+                const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
 
-            // Directly use key for top-level elements or find the child key for nested elements
+                console.log("visuals", visuals)
+                allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
+            }
             const visualId = parentId !== null ? allElements[parentId].children[key] : "main-webGrid"
+            // Directly use key for top-level elements or find the child key for nested elements
             console.log(visualId)
             console.log(parentId)
             const visual = allElements[visualId]
@@ -138,30 +147,61 @@ export default function MarkdownScreen() {
                 // Handling direct modifications, additions, and deletions
                 if (change.length === 1) {
                     // Addition logic here
-                    addVisual(key, change[0], parentId, allElements)
+                    let visuals = addVisual(visualId, change, allElements)
+                    const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
+                    allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
                 } else if (change.length === 2) {
                     // Modification logic here
-                    modifyVisual(visualId, change[1], allElements)
+                    let visuals = modifyVisual(visualId, change, allElements)
+                    const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
+                    allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
                 } else if (change.length === 3 && change[2] === 0) {
                     // Deletion logic here
-                    deleteVisual(visualId, parentId, allElements)
+                    let visuals = deleteVisual(visualId, change, allElements)
+                    const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
+                    allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
                 }
             } else if (typeof change === "object" && !change["_t"]) {
-                modifyVisual(visualId, change, allElements)
+                let visuals = modifyVisual(visualId, change, allElements)
+                const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
+                allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
             } else {
-                apllyChangesFromDiff(change, allElements, visualId)
-
+                let visuals = apllyChangesFromDiff(change, allElements, allElementsChanges, visualId)
+                const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
+                allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
             }
         })
+        return allElementsChanges
     }
     const addVisual = (id, change, allElements) => {
         console.log("addVisuals", id, change)
+        return {
+            ["labas"]: {
+                id: id,
+                change: change,
+                parent: "parent",
+            },
+        }
     }
     const modifyVisual = (id, change, allElements) => {
         console.log("modifyVisual", id, change)
+        return {
+            ["modifyVisual"]: {
+                id: id,
+                change: change,
+                parent: "parent",
+            },
+        }
     }
     const deleteVisual = (id, change, allElements) => {
         console.log("deleteVisual", id, change)
+        return {
+            ["deleteVisual"]: {
+                id: id,
+                change: change,
+                parent: "parent",
+            },
+        }
     }
 
     return (
