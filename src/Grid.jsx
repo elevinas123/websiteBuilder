@@ -42,6 +42,9 @@ export default function Grid(props) {
         resizingT: "cursor-s-resize",
         creating: "cursor-default",
     }
+    useEffect(() => {
+        console.log("children changed")
+    }, [allElements[props.id].children])
 
     useEffect(() => {
         // Check if the props.id matches the ID of this item

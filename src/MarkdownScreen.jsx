@@ -5,6 +5,8 @@ import { debounce, every, transform } from "lodash" // Assuming you are using lo
 import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react"
 import { parseFragment } from "parse5"
 import { diff } from "jsondiffpatch"
+import { v4 as uuidv4 } from "uuid"
+import { createNewGrid } from "./functions/gridCRUD"
 
 export default function MarkdownScreen() {
     const [text, setText] = useState("")
@@ -13,6 +15,11 @@ export default function MarkdownScreen() {
     const [previousHtml, setPreviousHtml] = useState("")
     const mainId = "main-webGrid"
     const editorRef = useRef(null)
+
+    useEffect(() => {
+        console.log("allElements", allElements)
+    }, [allElements])
+
     const handleEditorMount = (editor, monaco) => {
         editorRef.current = editor
     }
@@ -69,7 +76,7 @@ export default function MarkdownScreen() {
     }, [allElements, writeCode])
 
     const handleChange = (value, event) => {
-        const oldHtml = "<div><div className='bg-red-500'>Labas</div></div>"
+        const oldHtml = "<div></div>"
         const newHtml1 = "<article><div className='bg-red-500'>Labas</div></article>"
         const newHtml2 = "<div><div className='w-10'><div className='bg-red-500'>Labas</div></div><div><div className='bg-red-500'>Labas123</div></div></div>"
         const newHtml3 =
@@ -85,15 +92,16 @@ export default function MarkdownScreen() {
         const preparedNewAst3 = prepareAstForDiffing(newAst3)
 
         const diffedAst1 = preprocesDiffs(diff(preparedOldAst, preparedNewAst1))
-        const diffedAst2 = preprocesDiffs(diff(preparedNewAst1, preparedNewAst2))
-        const diffedAst3 = preprocesDiffs(diff(preparedNewAst2, preparedNewAst3))
+        const diffedAst2 = preprocesDiffs(diff(preparedOldAst, preparedNewAst2))
+        const diffedAst3 = preprocesDiffs(diff(preparedOldAst, preparedNewAst3))
 
         console.log("diff", diffedAst1)
         console.log("diff", diffedAst2)
         console.log("diff", diffedAst3)
         console.log("allElements", allElements)
-        let updateThings = apllyChangesFromDiff(diffedAst3, allElements)
+        let updateThings = applyChangesFromDiff(diffedAst2, allElements)
         console.log("updateThings", updateThings)
+        updateAllElements(updateThings, allElements, setAllElements)
     }
     const preprocesDiffs = (diff) => {
         return { ...diff.childNodes[0] }
@@ -120,59 +128,104 @@ export default function MarkdownScreen() {
 
         return cleanNode
     }
-    function apllyChangesFromDiff(diff, allElements, allElementsChanges = [], parentId = null) {
+    function applyChangesFromDiff(diff, allElements, allElementsChanges = [], parentId = null) {
         Object.entries(diff).forEach(([key, change]) => {
-            if (key === "_t") return // Skip array change markers
-            if (key === "nodeName") return
-            if (key === "tagName") {
-                const elementId = parentId === null ? "main-webGrid" : parentId
-                let visuals = modifyVisual(elementId, change, allElements)
-                const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
-
-                console.log("visuals", visuals)
-                allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
-            }
+            console.log("parentId", parentId, diff, key)
+            if (key === "_t" || key === "nodeName") return // Skip array change markers and nodeName changes
             const visualId = parentId !== null ? allElements[parentId].children[key] : "main-webGrid"
-            // Directly use key for top-level elements or find the child key for nested elements
-            console.log(visualId)
-            console.log(parentId)
-            const visual = allElements[visualId]
-
-            if (!visual && parentId) {
-                console.error(`Visual with key ${key} not found within parent ${parentId}`)
-                return
-            }
 
             if (Array.isArray(change)) {
-                // Handling direct modifications, additions, and deletions
-                if (change.length === 1) {
-                    // Addition logic here
-                    let visuals = addVisual(visualId, change, allElements)
-                    const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
-                    allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
-                } else if (change.length === 2) {
-                    // Modification logic here
-                    let visuals = modifyVisual(visualId, change, allElements)
-                    const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
-                    allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
-                } else if (change.length === 3 && change[2] === 0) {
-                    // Deletion logic here
-                    let visuals = deleteVisual(visualId, change, allElements)
-                    const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
-                    allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
-                }
-            } else if (typeof change === "object" && !change["_t"]) {
-                let visuals = modifyVisual(visualId, change, allElements)
-                const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
-                allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
-            } else {
-                let visuals = apllyChangesFromDiff(change, allElements, allElementsChanges, visualId)
-                const arrayOfObjects = Object.entries(visuals).map(([key, value]) => ({ [key]: value }))
-                allElementsChanges = [...allElementsChanges, ...arrayOfObjects]
+                // Addition, Modification, Deletion
+                allElementsChanges.push({ action: determineAction(change), visualId, change, parentId })
+            } else if (typeof change === "object") {
+                // Nested changes
+                const nestedChanges = applyChangesFromDiff(change, allElements, allElementsChanges, visualId)
+                allElementsChanges.push(...nestedChanges)
             }
         })
         return allElementsChanges
     }
+    function addElementRecursively(change, parentId, elements = {}) {
+        console.log("change", change)
+        console.log("parentId", parentId)
+        const newElementId = uuidv4() // Generate a unique ID for the new element
+
+        // Prepare the new element object. Adjust properties as needed.
+
+        // Directly modify allElements to add the new element
+        let childrenIds = []
+        let text = ""
+        // Check for and handle any nested changes (additions)
+        if (change.childNodes && change.childNodes.length > 0) {
+            change.childNodes.forEach((childChange) => {
+                console.log("cia")
+                if (childChange.nodeName === "#text") {
+                    return
+                }
+                let childrenInfo = addElementRecursively(childChange, newElementId, elements)
+                childrenIds.push(childrenInfo[1])
+                // Recursively add each nested child
+                elements = { ...elements, ...childrenInfo[0] }
+            })
+        }
+        const newElement = createNewGrid(
+            newElementId,
+            parentId,
+            1,
+            1,
+            10,
+            10,
+            { left: 0, top: 0, right: 0, bottom: 0 },
+            gridPixelsize,
+            childrenIds,
+            text,
+            "black"
+        )
+        return [{ ...elements, [newElementId]: newElement }, newElementId]
+    }
+
+    function updateAllElements(changes, allElements, setAllElements) {
+        // Utilize the existing allElements object directly for updates
+        let updatedElements = { ...allElements }
+        // Process each change
+        let elementsIds = []
+        changes.forEach((change) => {
+            if (change.action === "add") {
+                change.change.forEach((secondChange) => {
+                    Object.entries(secondChange).forEach(([key, nodes]) => {
+                        console.log("secondChange", secondChange)
+                        if (!isInt(key)) return
+                        const updatesGotten = addElementRecursively(nodes, change.visualId, updatedElements)
+                        updatedElements = { ...updatedElements, ...updatesGotten[0] }
+                        elementsIds.push(updatesGotten[1])
+                    })
+                })
+            }
+            // Handle other actions (modify, delete) as needed
+        })
+        updatedElements["main-webGrid"] = {
+            ...updatedElements["main-webGrid"],
+            children: [
+                ...updatedElements["main-webGrid"].children,
+                ...elementsIds
+            ]
+        }
+        console.log("updatedElements", updatedElements)
+        // Set the updated elements object back to state
+        setAllElements(updatedElements)
+    }
+
+    function isInt(value) {
+        return !isNaN(value) && parseInt(Number(value)) == value && !isNaN(parseInt(value, 10))
+    }
+
+    function determineAction(change) {
+        if (change.length === 1) return "add"
+        if (change.length === 2) return "modify"
+        if (change.length === 3 && change[2] === 0) return "delete"
+        return "unknown"
+    }
+
     const addVisual = (id, change, allElements) => {
         console.log("addVisuals", id, change)
         return {
