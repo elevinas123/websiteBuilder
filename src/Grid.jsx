@@ -43,7 +43,7 @@ export default function Grid(props) {
         creating: "cursor-default",
     }
     useEffect(() => {
-        console.log("children changed")
+        console.log("children changed", props.id)
     }, [allElements[props.id].children])
 
     useEffect(() => {

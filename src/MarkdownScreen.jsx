@@ -7,6 +7,7 @@ import { parseFragment } from "parse5"
 import { diff } from "jsondiffpatch"
 import { v4 as uuidv4 } from "uuid"
 import { createNewGrid } from "./functions/gridCRUD"
+import calculateNewStyle from "./functions/calculateNewStyle"
 
 export default function MarkdownScreen() {
     const [text, setText] = useState("")
@@ -76,8 +77,8 @@ export default function MarkdownScreen() {
     }, [allElements, writeCode])
 
     const handleChange = (value, event) => {
-        const oldHtml = "<div class='red' className='w-10'></div>"
-        const newHtml1 = "<article class='red' className='w-10 bg-blue-500'><div className='bg-red-500'>Labas</div></article>"
+        const oldHtml = "<div></div>"
+        const newHtml1 = "<div><div></div></div>"
         const newHtml2 = "<div><div className='w-10'><div className='bg-red-500'>Labas</div></div><div><div className='bg-red-500'>Labas123</div></div></div>"
         const newHtml3 =
             "<div><div className='w-10'><div className='bg-red-500'>Labas</div></div><div><div className='bg-red-500'>Labas123</div></div><div className='w-10'><div className='bg-red-500'>Testas</div></div></div>"
@@ -100,8 +101,9 @@ export default function MarkdownScreen() {
         console.log("diff", diffedAst2)
         console.log("diff", diffedAst3)
         console.log("allElements", allElements)
-        let updateThings = applyChangesFromDiff(diffedAst2, allElements)
+        let updateThings = applyChangesFromDiff(diffedAst1, allElements)
         console.log("updateThings", updateThings)
+        console.log("allELements pradzioj", allElements)
         updateAllElements(updateThings, allElements, setAllElements)
     }
     const preprocesDiffs = (diff) => {
@@ -159,13 +161,13 @@ export default function MarkdownScreen() {
 
         return allElementsChanges
     }
-    function addElementRecursively(change, parentId, elements = {}, gridPixelSize = 10, offsetLeft = 0, offsetTop = 0) {
+    function addElementRecursively(change, parentId, elements = {}, offsetLeft = 0, offsetTop = 0) {
         const newElementId = uuidv4() // Generate a unique ID for the new element
 
         let text = ""
         let childrenIds = []
-        const elementWidth = 10
-        const elementHeight = 10
+        const elementWidth = 100
+        const elementHeight = 100
         let styles = change.attrs.reduce((acc, attr) => {
             // Example: Handle class name or other styles based on attributes
             if (attr.name === "classname") {
@@ -176,7 +178,7 @@ export default function MarkdownScreen() {
 
         // Initialize totalHeight with offsetTop for relative positioning
         let totalHeight = 0
-
+        let totalWidth = 0
         if (change.childNodes && change.childNodes.length > 0) {
             change.childNodes.forEach((childChange) => {
                 if (childChange.nodeName === "#text") {
@@ -184,19 +186,25 @@ export default function MarkdownScreen() {
                     return
                 }
                 // Recursively add each nested child
-                let [updatedElements, childId, w, h] = addElementRecursively(childChange, newElementId, elements, gridPixelSize, offsetLeft, totalHeight)
+                let [updatedElements, childId, w, h] = addElementRecursively(childChange, newElementId, elements, totalWidth, totalHeight)
                 totalHeight += h // Update for the next sibling
                 console.log(offsetLeft)
                 console.log(childChange)
-                elements = {...elements, ...updatedElements}
+                elements = { ...elements, ...updatedElements }
                 childrenIds.push(childId)
 
                 // Assuming each child has a standard height for now
             })
         }
 
+        console.log("clacualting offset", offsetLeft)
         // Use createNewGrid to create the element with calculated positioning and accumulated styles
-        const newElement = createNewGrid(
+        
+
+        // Add the new element to the elements collection
+        elements = {
+            ...elements,
+            [newElementId]: {...createNewGrid(
             newElementId,
             parentId,
             offsetLeft,
@@ -204,14 +212,14 @@ export default function MarkdownScreen() {
             elementWidth,
             elementHeight,
             { left: 0, top: 0, right: 0, bottom: 0 },
-            gridPixelSize,
+            gridPixelsize,
             childrenIds,
-            text,
+            "l",
             "red" // Consider dynamic background color if necessary
-        )
+            ), style: calculateNewStyle(offsetLeft, offsetTop, elementWidth, elementHeight, gridPixelsize)
+    }
+        }
 
-        // Add the new element to the elements collection
-        elements[newElementId] = newElement
 
         return [elements, newElementId, elementWidth, elementHeight]
     }
@@ -221,43 +229,23 @@ export default function MarkdownScreen() {
         let updatedElements = { ...allElements }
         let elementsIds = []
         changes.forEach((change) => {
-            const { action, visualId, change: changeDetails } = change
-            let totalHeight = 0
-            let totalWidth= 0
+            const { action, visualId, change: changeDetails, newIndex } = change
+            console.log("changeTotal", change)
+            let totalHeight = calculateStartingHeight(visualId, newIndex, allElements)
+            let totalWidth = 0
 
             switch (action) {
                 case "add":
                     // Your existing logic for adding elements
                     // Assuming addElementRecursively correctly handles nested additions
                     changeDetails.forEach((nodes) => {
-                            let [newElements, childId, w, h] = addElementRecursively(nodes, visualId, updatedElements, {}, totalWidth, totalHeight)
-                            updatedElements = { ...updatedElements, ...newElements }
-                            elementsIds.push(childId)
-                            totalHeight += h
+                        let [newElements, childId, w, h] = addElementRecursively(nodes, visualId, updatedElements, totalWidth, totalHeight)
+                        updatedElements = { ...updatedElements, ...newElements }
+                        elementsIds.push(childId)
+                        totalHeight += h
                     })
                     break
-                case "modify":
-                    // Here, you'll update the properties of the existing element based on changeDetails
-                    // Ensure visualId exists in updatedElements before attempting to modify
-                    console.log("changeDetails", changeDetails)
-                    if (updatedElements[visualId]) {
-                        updatedElements[visualId] = {
-                            ...updatedElements[visualId],
-                            ...extractPropertiesForModification(changeDetails, updatedElements[visualId]),
-                        }
-                    }
-                    break
-                case "delete":
-                    // Remove the element from updatedElements
-                    // Also, ensure to remove this element's ID from its parent's children array
-                    if (updatedElements[visualId]) {
-                        const parentId = updatedElements[visualId].parent
-                        if (parentId && updatedElements[parentId]) {
-                            updatedElements[parentId].children = updatedElements[parentId].children.filter((id) => id !== visualId)
-                        }
-                        delete updatedElements[visualId]
-                    }
-                    break
+
                 default:
                     console.warn("Unknown action type encountered:", action)
             }
@@ -269,6 +257,14 @@ export default function MarkdownScreen() {
         console.log("updatedElements", updatedElements)
         // Set the updated elements object back to state
         setAllElements(updatedElements)
+    }
+
+    const calculateStartingHeight = (parentId, itemIndex, allELements) => {
+        let minHeight = 0
+        for (let i = 0; i < itemIndex; i++) {
+            minHeight += allElements[allELements[parentId].children[i]].height
+        }
+        return minHeight
     }
 
     function extractPropertiesForModification(changeDetails) {

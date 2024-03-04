@@ -115,8 +115,8 @@ export default function WebsiteScreen() {
                     gridTemplateColumns: `repeat(${10000}, ${gridPixelSize}px)`, // 10 columns, each 4px wide
                     gridTemplateRows: `repeat(${10000}, ${gridPixelSize}px)`,
                     backgroundColor: "gray",
-                    width: 10000,
-                    height: 10000,
+                    width: 10000 * gridPixelSize,
+                    height: 10000 * gridPixelSize,
                 },
                 css: {
                     width: "w-10000",
@@ -171,7 +171,6 @@ export default function WebsiteScreen() {
         if (!mainRef.current) return
         const mainGridBoundingBox = roundBoundingBox(getBoundingBox(mainRef))
         setStartingElementBoundingBox(mainGridBoundingBox)
-        
     }
     useEffect(() => {
         handleWindowResize()
