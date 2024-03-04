@@ -161,7 +161,7 @@ export default function MarkdownScreen() {
 
         return allElementsChanges
     }
-    function addElementRecursively(change, parentId, elements = {}, offsetLeft = 0, offsetTop = 0) {
+    function addElementRecursively(change, parentId, elements = {}, offsetLeft = 1, offsetTop = 1) {
         const newElementId = uuidv4() // Generate a unique ID for the new element
 
         let text = ""
@@ -177,8 +177,8 @@ export default function MarkdownScreen() {
         }, {})
 
         // Initialize totalHeight with offsetTop for relative positioning
-        let totalHeight = 0
-        let totalWidth = 0
+        let totalHeight = 1
+        let totalWidth = 1
         if (change.childNodes && change.childNodes.length > 0) {
             change.childNodes.forEach((childChange) => {
                 if (childChange.nodeName === "#text") {
@@ -220,7 +220,6 @@ export default function MarkdownScreen() {
     }
         }
 
-
         return [elements, newElementId, elementWidth, elementHeight]
     }
 
@@ -231,8 +230,8 @@ export default function MarkdownScreen() {
         changes.forEach((change) => {
             const { action, visualId, change: changeDetails, newIndex } = change
             console.log("changeTotal", change)
-            let totalHeight = calculateStartingHeight(visualId, newIndex, allElements)
-            let totalWidth = 0
+            let totalHeight = calculateStartingHeight(visualId, newIndex, allElements) + 1
+            let totalWidth = 1
 
             switch (action) {
                 case "add":
