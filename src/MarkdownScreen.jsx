@@ -76,8 +76,8 @@ export default function MarkdownScreen() {
     }, [allElements, writeCode])
 
     const handleChange = (value, event) => {
-        const oldHtml = "<div></div>"
-        const newHtml1 = "<article><div className='bg-red-500'>Labas</div></article>"
+        const oldHtml = "<div class='red' className='w-10'></div>"
+        const newHtml1 = "<article class='red' className='w-10 bg-blue-500'><div className='bg-red-500'>Labas</div></article>"
         const newHtml2 = "<div><div className='w-10'><div className='bg-red-500'>Labas</div></div><div><div className='bg-red-500'>Labas123</div></div></div>"
         const newHtml3 =
             "<div><div className='w-10'><div className='bg-red-500'>Labas</div></div><div><div className='bg-red-500'>Labas123</div></div><div className='w-10'><div className='bg-red-500'>Testas</div></div></div>"
@@ -90,7 +90,8 @@ export default function MarkdownScreen() {
         const preparedNewAst1 = prepareAstForDiffing(newAst1)
         const preparedNewAst2 = prepareAstForDiffing(newAst2)
         const preparedNewAst3 = prepareAstForDiffing(newAst3)
-
+        console.log("oldAst", preparedOldAst)
+        console.log("newAst1", preparedNewAst1)
         const diffedAst1 = preprocesDiffs(diff(preparedOldAst, preparedNewAst1))
         const diffedAst2 = preprocesDiffs(diff(preparedOldAst, preparedNewAst2))
         const diffedAst3 = preprocesDiffs(diff(preparedOldAst, preparedNewAst3))
@@ -128,91 +129,157 @@ export default function MarkdownScreen() {
 
         return cleanNode
     }
-    function applyChangesFromDiff(diff, allElements, allElementsChanges = [], parentId = null) {
+    function applyChangesFromDiff(diff, allElements, allElementsChanges = [], parentId = null, index = 0, place = "tagName") {
         Object.entries(diff).forEach(([key, change]) => {
-            console.log("parentId", parentId, diff, key)
-            if (key === "_t" || key === "nodeName") return // Skip array change markers and nodeName changes
+            let newIndex = index
+            let newPlace = place
+            if (key === "_t" || key === "nodeName") {
+                // Skip array change markers and nodeName changes
+                return
+            }
+            if (isInt(key)) newIndex = parseInt(key)
+            if (key === "attrs") newPlace = "attrs"
+            if (key === "tagName") newPlace = "tagName"
+
+            // Determine whether the key represents an integer index for array changes
             const visualId = parentId !== null ? allElements[parentId].children[key] : "main-webGrid"
 
             if (Array.isArray(change)) {
-                // Addition, Modification, Deletion
-                allElementsChanges.push({ action: determineAction(change), visualId, change, parentId })
+                // Determine action based on the change array structure
+                const action = determineAction(change)
+                // Push the change to allElementsChanges with the correct context
+                allElementsChanges.push({ action, visualId, change: change[0], parentId, newIndex, newPlace })
             } else if (typeof change === "object") {
-                // Nested changes
-                const nestedChanges = applyChangesFromDiff(change, allElements, allElementsChanges, visualId)
-                allElementsChanges.push(...nestedChanges)
+                // For nested changes, call applyChangesFromDiff recursively
+                // If the key is an index, it's a nested change within an array child
+                const childId = visualId
+                applyChangesFromDiff(change, allElements, allElementsChanges, childId, newIndex, newPlace)
             }
         })
+
         return allElementsChanges
     }
-    function addElementRecursively(change, parentId, elements = {}) {
-        console.log("change", change)
-        console.log("parentId", parentId)
+    function addElementRecursively(change, parentId, elements = {}, gridPixelSize = 10, offsetLeft = 0, offsetTop = 0) {
         const newElementId = uuidv4() // Generate a unique ID for the new element
 
-        // Prepare the new element object. Adjust properties as needed.
-
-        // Directly modify allElements to add the new element
-        let childrenIds = []
         let text = ""
-        // Check for and handle any nested changes (additions)
+        let childrenIds = []
+        const elementWidth = 10
+        const elementHeight = 10
+        let styles = change.attrs.reduce((acc, attr) => {
+            // Example: Handle class name or other styles based on attributes
+            if (attr.name === "classname") {
+                acc.className = attr.value // Adjust based on how you want to use attributes
+            }
+            return acc
+        }, {})
+
+        // Initialize totalHeight with offsetTop for relative positioning
+        let totalHeight = 0
+
         if (change.childNodes && change.childNodes.length > 0) {
             change.childNodes.forEach((childChange) => {
-                console.log("cia")
                 if (childChange.nodeName === "#text") {
+                    text += childChange.value // Concatenate text from all text nodes
                     return
                 }
-                let childrenInfo = addElementRecursively(childChange, newElementId, elements)
-                childrenIds.push(childrenInfo[1])
                 // Recursively add each nested child
-                elements = { ...elements, ...childrenInfo[0] }
+                let [updatedElements, childId, w, h] = addElementRecursively(childChange, newElementId, elements, gridPixelSize, offsetLeft, totalHeight)
+                totalHeight += h // Update for the next sibling
+                console.log(offsetLeft)
+                console.log(childChange)
+                elements = {...elements, ...updatedElements}
+                childrenIds.push(childId)
+
+                // Assuming each child has a standard height for now
             })
         }
+
+        // Use createNewGrid to create the element with calculated positioning and accumulated styles
         const newElement = createNewGrid(
             newElementId,
             parentId,
-            1,
-            1,
-            10,
-            10,
+            offsetLeft,
+            offsetTop, // Use initial offsetTop for this element
+            elementWidth,
+            elementHeight,
             { left: 0, top: 0, right: 0, bottom: 0 },
-            gridPixelsize,
+            gridPixelSize,
             childrenIds,
             text,
-            "black"
+            "red" // Consider dynamic background color if necessary
         )
-        return [{ ...elements, [newElementId]: newElement }, newElementId]
+
+        // Add the new element to the elements collection
+        elements[newElementId] = newElement
+
+        return [elements, newElementId, elementWidth, elementHeight]
     }
 
     function updateAllElements(changes, allElements, setAllElements) {
         // Utilize the existing allElements object directly for updates
         let updatedElements = { ...allElements }
-        // Process each change
         let elementsIds = []
         changes.forEach((change) => {
-            if (change.action === "add") {
-                change.change.forEach((secondChange) => {
-                    Object.entries(secondChange).forEach(([key, nodes]) => {
-                        console.log("secondChange", secondChange)
-                        if (!isInt(key)) return
-                        const updatesGotten = addElementRecursively(nodes, change.visualId, updatedElements)
-                        updatedElements = { ...updatedElements, ...updatesGotten[0] }
-                        elementsIds.push(updatesGotten[1])
+            const { action, visualId, change: changeDetails } = change
+            let totalHeight = 0
+            let totalWidth= 0
+
+            switch (action) {
+                case "add":
+                    // Your existing logic for adding elements
+                    // Assuming addElementRecursively correctly handles nested additions
+                    changeDetails.forEach((nodes) => {
+                            let [newElements, childId, w, h] = addElementRecursively(nodes, visualId, updatedElements, {}, totalWidth, totalHeight)
+                            updatedElements = { ...updatedElements, ...newElements }
+                            elementsIds.push(childId)
+                            totalHeight += h
                     })
-                })
+                    break
+                case "modify":
+                    // Here, you'll update the properties of the existing element based on changeDetails
+                    // Ensure visualId exists in updatedElements before attempting to modify
+                    console.log("changeDetails", changeDetails)
+                    if (updatedElements[visualId]) {
+                        updatedElements[visualId] = {
+                            ...updatedElements[visualId],
+                            ...extractPropertiesForModification(changeDetails, updatedElements[visualId]),
+                        }
+                    }
+                    break
+                case "delete":
+                    // Remove the element from updatedElements
+                    // Also, ensure to remove this element's ID from its parent's children array
+                    if (updatedElements[visualId]) {
+                        const parentId = updatedElements[visualId].parent
+                        if (parentId && updatedElements[parentId]) {
+                            updatedElements[parentId].children = updatedElements[parentId].children.filter((id) => id !== visualId)
+                        }
+                        delete updatedElements[visualId]
+                    }
+                    break
+                default:
+                    console.warn("Unknown action type encountered:", action)
             }
-            // Handle other actions (modify, delete) as needed
         })
         updatedElements["main-webGrid"] = {
             ...updatedElements["main-webGrid"],
-            children: [
-                ...updatedElements["main-webGrid"].children,
-                ...elementsIds
-            ]
+            children: [...updatedElements["main-webGrid"].children, ...elementsIds],
         }
         console.log("updatedElements", updatedElements)
         // Set the updated elements object back to state
         setAllElements(updatedElements)
+    }
+
+    function extractPropertiesForModification(changeDetails) {
+        // Assuming changeDetails contains the updated properties for the element
+        // This function should extract these properties and return an object that can be
+        // used to update the element. Adjust according to the structure of your changeDetails.
+        return changeDetails.reduce((acc, curr) => {
+            const [propName, propValue] = curr
+            acc[propName] = propValue
+            return acc
+        }, {})
     }
 
     function isInt(value) {
