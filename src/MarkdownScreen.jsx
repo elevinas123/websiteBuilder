@@ -3,17 +3,19 @@ import { useEffect, useState, useCallback, useRef } from "react"
 import { allElementsAtom, gridPixelSizeAtom } from "./atoms"
 import { debounce, every, transform } from "lodash" // Assuming you are using lodash for debouncing
 import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react"
-import { parseFragment } from "parse5"
+// eslint-disable-next-line no-undef
 import { diff } from "jsondiffpatch"
 import { v4 as uuidv4 } from "uuid"
 import { createNewGrid } from "./functions/gridCRUD"
 import calculateNewStyle from "./functions/calculateNewStyle"
+import { parseHTML } from "./parseHTML"
 
 export default function MarkdownScreen() {
     const [text, setText] = useState("")
     const [allElements, setAllElements] = useAtom(allElementsAtom)
     const [gridPixelsize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
-    const [previousAst, setPreviousAst] = useState(prepareAstForDiffing(parseFragment("<div></div>")))
+
+    const [previousAst, setPreviousAst] = useState(parseHTML("<div></div>"))
     const mainId = "main-webGrid"
     const editorRef = useRef(null)
 
@@ -75,77 +77,59 @@ export default function MarkdownScreen() {
         // Cleanup function to cancel the debounce on component unmount or before re-running the effect
         return () => writeCode.cancel()
     }, [allElements, writeCode])
-   
 
     const handleChange = (value, event) => {
         console.log("value", value)
         value = `<div>${value}</div>`
-        const newAst = parseFragment(value)
-        const preparedNewAst = prepareAstForDiffing(newAst)
-
+        const newAst = parseHTML(value)
         console.log("oldAst", previousAst)
-        console.log("newAst1", preparedNewAst)
-        const diffedAst = preprocesDiffs(diff(previousAst, preparedNewAst))
+        console.log("newAst1", newAst)
 
+        const diffedAst = diff(previousAst, newAst)
+        if (!diffedAst) return
         console.log("diff", diffedAst)
         console.log("allElements", allElements)
         let updateThings = applyChangesFromDiff(diffedAst, allElements)
         console.log("updateThings", updateThings)
         console.log("allELements pradzioj", allElements)
         updateAllElements(updateThings, allElements, setAllElements)
-        setPreviousAst(preparedNewAst)
+        setPreviousAst(newAst)
     }
-    const preprocesDiffs = (diff) => {
-        return { ...diff.childNodes[0] }
-    }
-    function prepareAstForDiffing(node) {
-        // Clone node to avoid mutating the original AST, omitting non-serializable properties if needed
-        let cleanNode = {
-            nodeName: node.nodeName,
-            tagName: node.tagName,
-            attrs: node.attrs,
-            // You might want to include or exclude additional properties depending on your needs
-        }
 
-        // Recursively process child nodes
-        if (node.childNodes && node.childNodes.length) {
-            cleanNode.childNodes = node.childNodes.map((child) => prepareAstForDiffing(child))
-        }
-
-        // Include any additional properties or transformations here
-        // For example, adding text content for text nodes
-        if (node.nodeName === "#text") {
-            cleanNode.value = node.value
-        }
-
-        return cleanNode
-    }
     function applyChangesFromDiff(diff, allElements, allElementsChanges = [], parentId = null, index = 0, place = "tagName") {
         Object.entries(diff).forEach(([key, change]) => {
-            let newIndex = index
-            let newPlace = place
-            if (change === undefined) return
-            if (key === "_t" || key === "nodeName") {
-                // Skip array change markers and nodeName changes
+            if (change === undefined || key === "_t") {
+                // Skip undefined changes and array change markers
                 return
             }
             console.log("change", change)
-            if (change.nodeName === "#text") return
-            if (isInt(key)) newIndex = parseInt(key)
-            if (key === "attrs") newPlace = "attrs"
-            if (key === "tagName") newPlace = "tagName"
-            if (change.nodeName === "#text") return
-            // Determine whether the key represents an integer index for array changes
-            const visualId = parentId !== null ? allElements[parentId].children[key] : "main-webGrid"
 
+            let newIndex = index
+            let newPlace = place
+            if (isInt(key)) newIndex = parseInt(key)
+
+            // Adjust the handling based on your structure. Assuming 'attribs' for attributes
+            if (key === "attribs") newPlace = "attribs"
+            if (key === "tagName") newPlace = "tagName"
+
+            const visualId =
+                parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : undefined) : "main-webGrid"
+            console.log("parentId", parentId)
+            console.log("visualId", visualId)
+            console.log("visualId", newIndex)
+            console.log("visualId", allElements[parentId])
             if (Array.isArray(change)) {
-                // Determine action based on the change array structure
+                // Handle modifications, deletions, or additions based on change array structure
                 const action = determineAction(change)
-                // Push the change to allElementsChanges with the correct context
-                allElementsChanges.push({ action, visualId, change: change[0], parentId, newIndex, newPlace })
+                if (action === "add") {
+                    allElementsChanges.push({ action, visualId: null, change: change[0], parentId: visualId, newIndex, newPlace })
+                } else if (action === "modify") {
+                    allElementsChanges.push({ action, visualId, change: { place: key, changed: change }, parentId, newIndex, newPlace })
+                } else if (action === "delete") {
+                    allElementsChanges.push({ action, visualId, change: change[0], parentId, newIndex, newPlace })
+                }
             } else if (typeof change === "object") {
-                // For nested changes, call applyChangesFromDiff recursively
-                // If the key is an index, it's a nested change within an array child
+                // Nested changes within properties like childNodes or attribs
                 const childId = visualId
                 applyChangesFromDiff(change, allElements, allElementsChanges, childId, newIndex, newPlace)
             }
@@ -153,105 +137,114 @@ export default function MarkdownScreen() {
 
         return allElementsChanges
     }
-    function addElementRecursively(change, parentId, elements = {}, offsetLeft = 1, offsetTop = 1) {
-        const newElementId = uuidv4() // Generate a unique ID for the new element
-
-        let text = ""
-        let childrenIds = []
-        const elementWidth = 100
-        const elementHeight = 100
-        let styles = change.attrs.reduce((acc, attr) => {
-            // Example: Handle class name or other styles based on attributes
-            if (attr.name === "classname") {
-                acc.className = attr.value // Adjust based on how you want to use attributes
+    function processStyles(attribs) {
+        return Object.entries(attribs || {}).reduce((acc, [attrName, attrValue]) => {
+            if (attrName === "class") {
+                acc.className = attrValue // Handle class attribute
             }
             return acc
         }, {})
+    }
 
-        // Initialize totalHeight with offsetTop for relative positioning
-        let totalHeight = 1
-        let totalWidth = 1
-        if (change.childNodes && change.childNodes.length > 0) {
-            change.childNodes.forEach((childChange) => {
-                if (childChange.nodeName === "#text") {
-                    text += childChange.value // Concatenate text from all text nodes
-                    return
-                }
-                // Recursively add each nested child
-                let [updatedElements, childId, w, h] = addElementRecursively(childChange, newElementId, elements, totalWidth, totalHeight)
-                totalHeight += h // Update for the next sibling
-                console.log(offsetLeft)
-                console.log(childChange)
-                elements = { ...elements, ...updatedElements }
-                childrenIds.push(childId)
+    function processChildNodes(childNodes, parentId, elements, offset) {
+        let text = ""
+        let childrenIds = []
+        let totalHeight = offset
 
-                // Assuming each child has a standard height for now
-            })
-        }
+        childNodes.forEach((child) => {
+            if (child.nodeType === 3) {
+                // Text node
+                text += child.textContent
+                return
+            }
+            const [updatedElements, childId, , h] = addElementRecursively(child, parentId, elements, 1, totalHeight)
+            totalHeight += h
+            Object.assign(elements, updatedElements)
+            childrenIds.push(childId)
+        })
 
-        console.log("clacualting offset", offsetLeft)
-        // Use createNewGrid to create the element with calculated positioning and accumulated styles
+        return { text, childrenIds, totalHeight }
+    }
 
-        // Add the new element to the elements collection
-        elements = {
-            ...elements,
-            [newElementId]: {
-                ...createNewGrid(
-                    newElementId,
-                    parentId,
-                    offsetLeft,
-                    offsetTop, // Use initial offsetTop for this element
-                    elementWidth,
-                    elementHeight,
-                    { left: 0, top: 0, right: 0, bottom: 0 },
-                    gridPixelsize,
-                    childrenIds,
-                    "l",
-                    "red" // Consider dynamic background color if necessary
-                ),
-                style: calculateNewStyle(offsetLeft, offsetTop, elementWidth, elementHeight, gridPixelsize),
-            },
-        }
+    function addElementRecursively(change, parentId, elements = {}, offsetLeft = 1, offsetTop = 1) {
+        const newElementId = uuidv4()
+        const styles = processStyles(change.attribs)
+        const { text, childrenIds, totalHeight } = processChildNodes(change.childNodes || [], newElementId, elements, offsetTop)
+        const elementWidth = 100,
+            elementHeight = 100
+
+        elements[newElementId] = createNewGrid(
+            newElementId,
+            parentId,
+            offsetLeft,
+            totalHeight,
+            elementWidth,
+            elementHeight,
+            { top: 0, left: 0, bottom: 0, right: 0 },
+            gridPixelsize,
+            childrenIds
+        )
 
         return [elements, newElementId, elementWidth, elementHeight]
     }
 
-    function updateAllElements(changes, allElements, setAllElements) {
-        // Utilize the existing allElements object directly for updates
-        let updatedElements = { ...allElements }
+    function handleElementAddition(changeDetails, parentId, allElements, updatedElements) {
         let elementsIds = []
-        changes.forEach((change) => {
-            const { action, visualId, change: changeDetails, newIndex } = change
-            if (changeDetails[0].nodeName === "#text") {
-                return
-            }
-            console.log("changeTotal", changeDetails[0].nodeName)
-            let totalHeight = calculateStartingHeight(visualId, newIndex, allElements) + 1
-            let totalWidth = 1
+        let totalHeight = calculateStartingHeight(parentId, 0, allElements) + 1 // +1 to start from the next possible height
+        let totalWidth = 1 // Assuming a starting width
 
-            switch (action) {
-                case "add":
-                    // Your existing logic for adding elements
-                    // Assuming addElementRecursively correctly handles nested additions
-                    changeDetails.forEach((nodes) => {
-                        let [newElements, childId, w, h] = addElementRecursively(nodes, visualId, updatedElements, totalWidth, totalHeight)
-                        updatedElements = { ...updatedElements, ...newElements }
-                        elementsIds.push(childId)
-                        totalHeight += h
-                    })
-                    break
+        const [newElements, childId, , h] = addElementRecursively(changeDetails, parentId, updatedElements, totalWidth, totalHeight)
+        Object.assign(updatedElements, newElements)
+        elementsIds.push(childId)
+        totalHeight += h
 
-                default:
-                    console.warn("Unknown action type encountered:", action)
+        return { updatedElements, elementsIds, totalHeight }
+    }
+
+    function updateAllElements(changes, allElements, setAllElements) {
+        let updatedElements = { ...allElements }
+
+        changes.forEach(({ action, visualId, change: changeDetails, parentId }) => {
+            if (action === "add" && changeDetails.nodeType !== 3) {
+                // Skip text nodes for "add" actions
+                if (!parentId) parentId = "main-webGrid"
+                const { updatedElements: newUpdatedElements, elementsIds: newElementsIds } = handleElementAddition(
+                    changeDetails,
+                    parentId,
+                    allElements,
+                    updatedElements
+                )
+                newUpdatedElements[parentId].children = [...newUpdatedElements[parentId].children, ...newElementsIds]
+                updatedElements = newUpdatedElements
+            } else if (action === "modify") {
+                updatedElements = handleElementModify(changeDetails, visualId, updatedElements)
+            } else {
+                console.warn("Unknown action type or unsupported change detected:", action)
             }
         })
-        updatedElements["main-webGrid"] = {
-            ...updatedElements["main-webGrid"],
-            children: [...updatedElements["main-webGrid"].children, ...elementsIds],
-        }
         console.log("updatedElements", updatedElements)
-        // Set the updated elements object back to state
+
         setAllElements(updatedElements)
+    }
+    const handleElementModify = (changeDetails, id, updatedElements) => {
+        if (!id) return updatedElements
+        if (changeDetails.place === "classname") {
+            //I will add classname functionality later
+            return updatedElements
+        } else if (changeDetails.place === "text") {
+            return {
+                ...updatedElements,
+                [id]: {
+                    ...updatedElements[id],
+                    text: changeDetails.changed[1],
+                },
+            }
+        } else if (changeDetails.place === "tagName") {
+            //I will add tag functionality later
+            return updatedElements
+        }
+
+        return updatedElements
     }
 
     const calculateStartingHeight = (parentId, itemIndex, allELements) => {
