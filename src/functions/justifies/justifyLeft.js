@@ -16,7 +16,8 @@ export default function justifyLeft(parentId, allElements, setAllElements, gridP
             updatedElements[childId].top,
             updatedElements[childId].width,
             updatedElements[childId].height,
-            gridPixelSize
+            gridPixelSize,
+            updatedElements[childId].style.backgroundColor
         )
         updatedElements[childId] = {
             ...updatedElements[childId],

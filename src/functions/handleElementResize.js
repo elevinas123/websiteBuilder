@@ -16,6 +16,8 @@ export default function handleElementResize(
     let { top, left, width, height } = allElements[gridMoving.id]
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
+    const backgroundColor = allElements[gridMoving.id].style.backgroundColor
+
     // Handle creating and resizing-1
     if (gridMoving.type === "creating") {
         width += deltaX
@@ -55,7 +57,7 @@ export default function handleElementResize(
     height = Math.round(height * 100) / 100
     top = Math.round(top * 100) / 100
     left = Math.round(left * 100) / 100
-    let newStyle = calculateNewStyle(left, top, width, height, gridPixelSize)
+    let newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, backgroundColor)
 
     if (gridMoving.moved === true) {
         if (height < 0) {
@@ -67,7 +69,7 @@ export default function handleElementResize(
             width *= -1
         }
 
-        newStyle = calculateNewStyle(left, top, width, height, gridPixelSize)
+        newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, backgroundColor)
         setAllElements((currentState) =>
             produce(currentState, (draft) => {
                 const element = draft[gridMoving.id]

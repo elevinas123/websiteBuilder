@@ -2,7 +2,7 @@ import Grid from "../Grid"
 import calculateNewStyle from "./calculateNewStyle"
 
 export const createNewGrid = (id, parentId, left, top, width, height, padding, gridPixelSize, children = [], text = "", bgColor = "red") => {
-    const newStyle = calculateNewStyle(left, top, width, height, gridPixelSize)
+    const newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, bgColor)
     return {
         item: <Grid key={id} className="bg-red-500" id={id} childStyle={newStyle}></Grid>,
         id: id,
@@ -14,7 +14,7 @@ export const createNewGrid = (id, parentId, left, top, width, height, padding, g
             width: `w-${width}`,
             height: `h-${height}`,
         },
-        style: { ...newStyle, backgroundColor: bgColor },
+        style: { ...newStyle },
         text: text,
         padding,
         parent: parentId,

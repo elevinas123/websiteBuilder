@@ -121,6 +121,7 @@ export default function MarkdownScreen() {
             if (Array.isArray(change)) {
                 // Handle modifications, deletions, or additions based on change array structure
                 const action = determineAction(change)
+                console.log("this change", change)
                 if (action === "add") {
                     allElementsChanges.push({ action, visualId: null, change: change[0], parentId: visualId, newIndex, newPlace })
                 } else if (action === "modify") {
@@ -229,8 +230,24 @@ export default function MarkdownScreen() {
     const handleElementModify = (changeDetails, id, updatedElements) => {
         if (!id) return updatedElements
         if (changeDetails.place === "classname") {
-            //I will add classname functionality later
-            return updatedElements
+            const cssClasses = tailwindClassToCSS(changeDetails.changed[1])
+            let width = cssClasses.width?cssClasses.width: updatedElements[id].width
+            let height = cssClasses.height?cssClasses.height: updatedElements[id].height
+            let top =  updatedElements[id].top
+            let left = updatedElements[id].left
+            let bg = cssClasses.bg ? cssClasses.bg : updatedElements[id].backgroundColor
+            const newStyles = calculateNewStyle(left, top, width, height, gridPixelSizeAtom, bg)
+            return {
+                ...updatedElements,
+                [id]: {
+                    ...updatedElements[id],
+                    ...cssClasses,
+                    style: {
+                        ...updatedElements[id].style,
+                        ...newStyles,
+                    },
+                },
+            }
         } else if (changeDetails.place === "text") {
             return {
                 ...updatedElements,
@@ -246,6 +263,58 @@ export default function MarkdownScreen() {
 
         return updatedElements
     }
+    function tailwindClassToCSS(classNames) {
+        // Basic scale to pixel conversion for demonstration
+        const unitToPx = (unit) => unit * 4
+
+        // Handle special color mappings
+        const colorMappings = {
+            "red-500": "#f56565", // Example color mapping
+            // Define additional color mappings as needed
+        }
+
+        // Expanded regex to capture classes like 'bg-red-500'
+        const regex = /^([a-z]+(?:-[a-z]+)*?)-(\d+|[a-z]+\-\d+)$/
+
+        // Initial CSS styles object
+        let styles = {}
+
+        classNames.split(" ").forEach((className) => {
+            const match = className.match(regex)
+            if (!match) return
+
+            const [, type, value] = match
+
+            // Custom handling for colors
+            if (type.startsWith("bg") && colorMappings[value]) {
+                styles["bg"] = colorMappings[value]
+                return
+            }
+
+            // Handling for numeric values
+            if (!isNaN(value)) {
+                const cssValue = unitToPx(parseInt(value))
+                // Direct mapping for simplified demonstration
+                const mappings = {
+                    w: "width",
+                    h: "height",
+                   
+                    // Add more mappings as needed
+                }
+
+                Object.entries(mappings).forEach(([key, cssProperty]) => {
+                    if (type.startsWith(key)) {
+                        styles[cssProperty] = cssValue
+                    }
+                })
+            }
+        })
+
+        return styles
+    }
+
+
+
 
     const calculateStartingHeight = (parentId, itemIndex, allELements) => {
         let minHeight = 0

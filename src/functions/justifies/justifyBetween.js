@@ -25,7 +25,7 @@ export default function justifyBetween(parentId, allElements, setAllElements) {
         const child = updatedElements[childId]
 
         // For each child, set the new left position based on the accumulatedWidth
-        const newStyle = calculateNewStyle(accumulatedWidth, child.top, child.width, child.height)
+        const newStyle = calculateNewStyle(accumulatedWidth, child.top, child.width, child.height, child.style.backgroundColor)
 
         updatedElements[childId] = {
             ...child,

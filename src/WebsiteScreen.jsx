@@ -146,8 +146,7 @@ export default function WebsiteScreen() {
                 top: 50,
                 left: 50,
                 style: {
-                    ...calculateNewStyle(50, 50, 1920, 1080, gridPixelSize),
-                    backgroundColor: "red",
+                    ...calculateNewStyle(50, 50, 1920, 1080, gridPixelSize, "red"),
                     paddingLeft: 50 * gridPixelSize,
                     paddingRight: 50 * gridPixelSize,
                     paddingTop: 50 * gridPixelSize,

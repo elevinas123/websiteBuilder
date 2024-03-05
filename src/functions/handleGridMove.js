@@ -18,6 +18,7 @@ export default function handleGridMove(
     let left = allElements[gridMoving.id].left
     const width = allElements[gridMoving.id].width
     const height = allElements[gridMoving.id].height
+    const backgroundColor = allElements[gridMoving.id].style.backgroundColor
 
     // Calculate new positions and round them to the nearest whole number
     let newLeft = Math.round((left + (gridMoving.x2 - gridMoving.x1) / gridPixelSize) * 100) / 100
@@ -50,7 +51,7 @@ export default function handleGridMove(
         offsetLeft: gridMoving.offsetLeft,
         offsetTop: gridMoving.offsetTop,
     }
-    let newStyle = calculateNewStyle(newLeft, newTop, width, height, gridPixelSize)
+    let newStyle = calculateNewStyle(newLeft, newTop, width, height, gridPixelSize, backgroundColor)
     console.log("gridMoving", gridMoving)
 
     let applyLeftAdjustment = false
@@ -74,7 +75,7 @@ export default function handleGridMove(
         const adjustedTop = applyTopAdjustment ? newTop - gridMoving.offsetTop : newTop
 
         // Apply adjustments to calculate new style
-        newStyle = calculateNewStyle(adjustedLeft, adjustedTop, width, height, gridPixelSize)
+        newStyle = calculateNewStyle(adjustedLeft, adjustedTop, width, height, gridPixelSize, backgroundColor)
 
         // Update the offset configuration for minor adjustments
         if (applyLeftAdjustment) {

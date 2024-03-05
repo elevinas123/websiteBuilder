@@ -1,5 +1,5 @@
 import { produce } from "immer"
-import calculateMovement from "./calculateNewStyle"
+import calculateMovement from "./calculateMovement"
 
 export default function handleGridoutOfBounds(gridMoving, parentId, allRefs, allElements, setAllElements) {
     const grandFatherId = allElements[parentId].parent

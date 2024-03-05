@@ -20,7 +20,7 @@ export default function justifyRight(parentId, allElements, setAllElements) {
         const child = updatedElements[childId]
 
         // Update left position for each child based on the accumulatedWidth
-        const newStyle = calculateNewStyle(accumulatedWidth, child.top, child.width, child.height)
+        const newStyle = calculateNewStyle(accumulatedWidth, child.top, child.width, child.height, child.style.backgroundColor)
 
         updatedElements[childId] = {
             ...child,
