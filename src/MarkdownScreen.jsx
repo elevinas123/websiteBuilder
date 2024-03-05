@@ -13,7 +13,7 @@ export default function MarkdownScreen() {
     const [text, setText] = useState("")
     const [allElements, setAllElements] = useAtom(allElementsAtom)
     const [gridPixelsize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
-    const [previousHtml, setPreviousHtml] = useState("")
+    const [previousAst, setPreviousAst] = useState(prepareAstForDiffing(parseFragment("<div></div>")))
     const mainId = "main-webGrid"
     const editorRef = useRef(null)
 
@@ -75,36 +75,25 @@ export default function MarkdownScreen() {
         // Cleanup function to cancel the debounce on component unmount or before re-running the effect
         return () => writeCode.cancel()
     }, [allElements, writeCode])
+   
 
     const handleChange = (value, event) => {
-        const oldHtml = "<div></div>"
-        const newHtml1 = "<div><div></div></div>"
-        const newHtml2 = "<div><div className='w-10'><div className='bg-red-500'>Labas</div></div><div><div className='bg-red-500'>Labas123</div></div></div>"
-        const newHtml3 =
-            "<div><div className='w-10'><div className='bg-red-500'>Labas</div></div><div><div className='bg-red-500'>Labas123</div></div><div className='w-10'><div className='bg-red-500'>Testas</div></div></div>"
+        console.log("value", value)
+        value = `<div>${value}</div>`
+        const newAst = parseFragment(value)
+        const preparedNewAst = prepareAstForDiffing(newAst)
 
-        const oldAst = parseFragment(oldHtml)
-        const newAst1 = parseFragment(newHtml1)
-        const newAst2 = parseFragment(newHtml2)
-        const newAst3 = parseFragment(newHtml3)
-        const preparedOldAst = prepareAstForDiffing(oldAst)
-        const preparedNewAst1 = prepareAstForDiffing(newAst1)
-        const preparedNewAst2 = prepareAstForDiffing(newAst2)
-        const preparedNewAst3 = prepareAstForDiffing(newAst3)
-        console.log("oldAst", preparedOldAst)
-        console.log("newAst1", preparedNewAst1)
-        const diffedAst1 = preprocesDiffs(diff(preparedOldAst, preparedNewAst1))
-        const diffedAst2 = preprocesDiffs(diff(preparedOldAst, preparedNewAst2))
-        const diffedAst3 = preprocesDiffs(diff(preparedOldAst, preparedNewAst3))
+        console.log("oldAst", previousAst)
+        console.log("newAst1", preparedNewAst)
+        const diffedAst = preprocesDiffs(diff(previousAst, preparedNewAst))
 
-        console.log("diff", diffedAst1)
-        console.log("diff", diffedAst2)
-        console.log("diff", diffedAst3)
+        console.log("diff", diffedAst)
         console.log("allElements", allElements)
-        let updateThings = applyChangesFromDiff(diffedAst1, allElements)
+        let updateThings = applyChangesFromDiff(diffedAst, allElements)
         console.log("updateThings", updateThings)
         console.log("allELements pradzioj", allElements)
         updateAllElements(updateThings, allElements, setAllElements)
+        setPreviousAst(preparedNewAst)
     }
     const preprocesDiffs = (diff) => {
         return { ...diff.childNodes[0] }
@@ -135,14 +124,17 @@ export default function MarkdownScreen() {
         Object.entries(diff).forEach(([key, change]) => {
             let newIndex = index
             let newPlace = place
+            if (change === undefined) return
             if (key === "_t" || key === "nodeName") {
                 // Skip array change markers and nodeName changes
                 return
             }
+            console.log("change", change)
+            if (change.nodeName === "#text") return
             if (isInt(key)) newIndex = parseInt(key)
             if (key === "attrs") newPlace = "attrs"
             if (key === "tagName") newPlace = "tagName"
-
+            if (change.nodeName === "#text") return
             // Determine whether the key represents an integer index for array changes
             const visualId = parentId !== null ? allElements[parentId].children[key] : "main-webGrid"
 
@@ -199,25 +191,26 @@ export default function MarkdownScreen() {
 
         console.log("clacualting offset", offsetLeft)
         // Use createNewGrid to create the element with calculated positioning and accumulated styles
-        
 
         // Add the new element to the elements collection
         elements = {
             ...elements,
-            [newElementId]: {...createNewGrid(
-            newElementId,
-            parentId,
-            offsetLeft,
-            offsetTop, // Use initial offsetTop for this element
-            elementWidth,
-            elementHeight,
-            { left: 0, top: 0, right: 0, bottom: 0 },
-            gridPixelsize,
-            childrenIds,
-            "l",
-            "red" // Consider dynamic background color if necessary
-            ), style: calculateNewStyle(offsetLeft, offsetTop, elementWidth, elementHeight, gridPixelsize)
-    }
+            [newElementId]: {
+                ...createNewGrid(
+                    newElementId,
+                    parentId,
+                    offsetLeft,
+                    offsetTop, // Use initial offsetTop for this element
+                    elementWidth,
+                    elementHeight,
+                    { left: 0, top: 0, right: 0, bottom: 0 },
+                    gridPixelsize,
+                    childrenIds,
+                    "l",
+                    "red" // Consider dynamic background color if necessary
+                ),
+                style: calculateNewStyle(offsetLeft, offsetTop, elementWidth, elementHeight, gridPixelsize),
+            },
         }
 
         return [elements, newElementId, elementWidth, elementHeight]
@@ -229,7 +222,10 @@ export default function MarkdownScreen() {
         let elementsIds = []
         changes.forEach((change) => {
             const { action, visualId, change: changeDetails, newIndex } = change
-            console.log("changeTotal", change)
+            if (changeDetails[0].nodeName === "#text") {
+                return
+            }
+            console.log("changeTotal", changeDetails[0].nodeName)
             let totalHeight = calculateStartingHeight(visualId, newIndex, allElements) + 1
             let totalWidth = 1
 
