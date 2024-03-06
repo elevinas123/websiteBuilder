@@ -96,43 +96,88 @@ export default function MarkdownScreen() {
         setPreviousAst(newAst)
     }
 
-    function applyChangesFromDiff(diff, allElements, allElementsChanges = [], parentId = null, index = 0, place = "tagName") {
+    function applyChangesFromDiff(
+        diff,
+        allElements,
+        allElementsChanges = [],
+        parentId = "main-webGrid",
+        visualId = "main-webGrid",
+        index = 0,
+        place = "tagName"
+    ) {
         Object.entries(diff).forEach(([key, change]) => {
             if (change === undefined || key === "_t") {
                 // Skip undefined changes and array change markers
                 return
             }
             console.log("change", change)
-
+            console.log("key", key)
             let newIndex = index
             let newPlace = place
-            if (isInt(key)) newIndex = parseInt(key)
+            if (isInt(key)) {
+                newIndex = parseInt(key)
+            }
+            if (key === "childNodes") {
+                parentId = visualId
+                visualId =
+                    parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : undefined) : "main-webGrid"
+            }
 
             // Adjust the handling based on your structure. Assuming 'attribs' for attributes
             if (key === "attribs") newPlace = "attribs"
             if (key === "tagName") newPlace = "tagName"
-
-            const visualId =
-                parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : undefined) : "main-webGrid"
             console.log("parentId", parentId)
             console.log("visualId", visualId)
-            console.log("visualId", newIndex)
+            console.log("visualId")
             console.log("visualId", allElements[parentId])
             if (Array.isArray(change)) {
                 // Handle modifications, deletions, or additions based on change array structure
                 const action = determineAction(change)
                 console.log("this change", change)
                 if (action === "add") {
-                    allElementsChanges.push({ action, visualId: null, change: change[0], parentId: visualId, newIndex, newPlace })
+                    allElementsChanges.push({ action, visualId: null, change: change[0], parentId: parentId, newIndex, newPlace })
                 } else if (action === "modify") {
                     allElementsChanges.push({ action, visualId, change: { place: key, changed: change }, parentId, newIndex, newPlace })
                 } else if (action === "delete") {
                     allElementsChanges.push({ action, visualId, change: change[0], parentId, newIndex, newPlace })
                 }
-            } else if (typeof change === "object") {
-                // Nested changes within properties like childNodes or attribs
-                const childId = visualId
-                applyChangesFromDiff(change, allElements, allElementsChanges, childId, newIndex, newPlace)
+            } else if (typeof change === "object" && key === "attribs") {
+                console.log("attribs", change)
+                if (Object.keys(change).length < 2) {
+                    let name = Object.keys(change)[0]
+                    let newText = change[name]
+                    console.log("name, ne", name, newText)
+                    let newChange = []
+                    if (newText.length === 1) newChange = ["", newText[0]]
+                    if (newText.length === 2) newChange = newText
+                    if (newText.length === 3) newChange = ["", newText[0]]
+                    allElementsChanges.push({
+                        action: "modify",
+                        visualId,
+                        change: { place: name, changed: newChange },
+                        parentId,
+                        newIndex,
+                        newPlace: "attribs",
+                    })
+                } else {
+                    let place = "attributeName"
+                    let newChange = []
+                    Object.entries(change).forEach(([name, newText]) => {
+                        if (newText.length === 3 && newText[2] === 0) {
+                            newChange[0] = name
+                        } else {
+                            newChange[1] = name
+                        }
+                    })
+                    console.log("attribs", change)
+                    console.log("attribs", place, newChange)
+
+                    allElementsChanges.push({ action: "modify", visualId, change: { place, changed: newChange }, parentId, newIndex, newPlace: "attribs" })
+                }
+            } else {
+                // Nested changes within properties like childNodes or attribsif  ()
+
+                applyChangesFromDiff(change, allElements, allElementsChanges, parentId, visualId, newIndex, newPlace)
             }
         })
 
@@ -171,8 +216,8 @@ export default function MarkdownScreen() {
         const newElementId = uuidv4()
         const styles = processStyles(change.attribs)
         const { text, childrenIds, totalHeight } = processChildNodes(change.childNodes || [], newElementId, elements, offsetTop)
-        const elementWidth = 100,
-            elementHeight = 100
+        const elementWidth = 10,
+            elementHeight = 10
 
         elements[newElementId] = createNewGrid(
             newElementId,
@@ -205,11 +250,11 @@ export default function MarkdownScreen() {
     function updateAllElements(changes, allElements, setAllElements) {
         let updatedElements = { ...allElements }
 
-        changes.forEach(({ action, visualId, change: changeDetails, parentId }) => {
+        changes.forEach(({ action, visualId, change: changeDetails, parentId, newPlace }) => {
             if (action === "add" && changeDetails.nodeType !== 3) {
                 // Skip text nodes for "add" actions
                 if (!parentId) parentId = "main-webGrid"
-                const { updatedElements: newUpdatedElements, elementsIds: newElementsIds } = handleElementAddition(
+                let { updatedElements: newUpdatedElements, elementsIds: newElementsIds } = handleElementAddition(
                     changeDetails,
                     parentId,
                     allElements,
@@ -219,6 +264,8 @@ export default function MarkdownScreen() {
                 updatedElements = newUpdatedElements
             } else if (action === "modify") {
                 updatedElements = handleElementModify(changeDetails, visualId, updatedElements)
+            } else if (action === "delete" && newPlace === "tagName") {
+                updatedElements[parentId].children = updatedElements[parentId].children.filter(id => id!==visualId)
             } else {
                 console.warn("Unknown action type or unsupported change detected:", action)
             }
@@ -231,9 +278,9 @@ export default function MarkdownScreen() {
         if (!id) return updatedElements
         if (changeDetails.place === "classname") {
             const cssClasses = tailwindClassToCSS(changeDetails.changed[1])
-            let width = cssClasses.width?cssClasses.width: updatedElements[id].width
-            let height = cssClasses.height?cssClasses.height: updatedElements[id].height
-            let top =  updatedElements[id].top
+            let width = cssClasses.width ? cssClasses.width : updatedElements[id].width
+            let height = cssClasses.height ? cssClasses.height : updatedElements[id].height
+            let top = updatedElements[id].top
             let left = updatedElements[id].left
             let bg = cssClasses.bg ? cssClasses.bg : updatedElements[id].backgroundColor
             const newStyles = calculateNewStyle(left, top, width, height, gridPixelSizeAtom, bg)
@@ -298,7 +345,7 @@ export default function MarkdownScreen() {
                 const mappings = {
                     w: "width",
                     h: "height",
-                   
+
                     // Add more mappings as needed
                 }
 
@@ -312,9 +359,6 @@ export default function MarkdownScreen() {
 
         return styles
     }
-
-
-
 
     const calculateStartingHeight = (parentId, itemIndex, allELements) => {
         let minHeight = 0
