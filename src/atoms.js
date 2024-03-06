@@ -15,3 +15,4 @@ export const mainGridOffsetAtom = atom({ top: 0, left: 0, width: 10000, height: 
 export const mainGridIdAtom = atom("")
 export const HistoryClassAtom = atom(null)
 export const intersectionLinesAtom = atom([])
+export const visualsUpdatedAtom = atom({count: 0, id: ""})

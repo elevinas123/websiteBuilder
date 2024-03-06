@@ -12,6 +12,7 @@
     "dependencies": {
         "5": "^0.0.1",
         "@monaco-editor/react": "^4.6.0",
+        "dom-serializer": "^2.0.0",
         "gulp": "^4.0.2",
         "html-react-parser": "^5.1.7",
         "html-validator": "^6.0.1",

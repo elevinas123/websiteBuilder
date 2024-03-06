@@ -1,6 +1,6 @@
 import { useAtom } from "jotai"
 import { useEffect, useState, useCallback, useRef } from "react"
-import { allElementsAtom, gridPixelSizeAtom } from "./atoms"
+import { allElementsAtom, gridPixelSizeAtom, visualsUpdatedAtom } from "./atoms"
 import { debounce, every, transform } from "lodash" // Assuming you are using lodash for debouncing
 import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react"
 // eslint-disable-next-line no-undef
@@ -8,75 +8,66 @@ import { diff } from "jsondiffpatch"
 import { v4 as uuidv4 } from "uuid"
 import { createNewGrid } from "./functions/gridCRUD"
 import calculateNewStyle from "./functions/calculateNewStyle"
-import { parseHTML } from "./parseHTML"
-
+import { parseHTML, serializeASTtoHTML } from "./parseHTML"
+import _ from "lodash"
+import produce from "immer"
 export default function MarkdownScreen() {
     const [text, setText] = useState("")
     const [allElements, setAllElements] = useAtom(allElementsAtom)
     const [gridPixelsize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
-
+    const [visualsUpdate, setVisualsUpdated] = useAtom(visualsUpdatedAtom)
     const [previousAst, setPreviousAst] = useState(parseHTML("<div></div>"))
     const mainId = "main-webGrid"
     const editorRef = useRef(null)
 
     useEffect(() => {
-        console.log("allElements", allElements)
-    }, [allElements])
+        console.log("visualsUpdate", visualsUpdate.id)
+        if (!visualsUpdate.id) return
+        const pathToElement = createPathToElement(visualsUpdate.id, allElements)
+        let updatingAst = JSON.parse(JSON.stringify(previousAst))
+        const updatedAst = updateAst(pathToElement, updatingAst, allElements[allElements[visualsUpdate.id].parent].children.length)
 
+        console.log("pathToElement", pathToElement)
+        console.log("allElements", allElements)
+        console.log("previousAst", previousAst)
+        console.log("updatedAst", updatedAst)
+        let html = serializeASTtoHTML(updatedAst[0].childNodes)
+        console.log("allElements", html)
+        console.log("html", html)
+        setPreviousAst(updatedAst)
+        setText(html)
+    }, [visualsUpdate])
+    const updateAst = (path, ast, amountOfElements) => {
+        let node = ast[0]
+        for (let i = 0; i < path.length - 1; i++) {
+            node = node.childNodes[path[i]]
+        }
+        if (node.childNodes.length >= amountOfElements) {
+            console.log("equeal")
+            return ast
+        } else {
+            console.log(JSON.stringify(amountOfElements, null, 2))
+            console.log(JSON.stringify(node, null, 2))
+            node.childNodes.splice(path[path.length - 1], 0, { attribs: {}, childNodes: [], tagName: "div", textContent: "" })
+            console.log(JSON.stringify(node, null, 2))
+        }
+        console.log("node", node)
+        return ast
+    }
+    const createPathToElement = (id, allElements) => {
+        let currId = id
+        let path = []
+        while (currId !== "main-webGrid") {
+            let parentId = allElements[currId].parent
+            if (!parent) console.error("wtf negalima tokio", currId, parentId)
+            path.unshift(allElements[parentId].children.indexOf(currId))
+            currId = parentId
+        }
+        return path
+    }
     const handleEditorMount = (editor, monaco) => {
         editorRef.current = editor
     }
-
-    function elementToHTML(elementId, allElements, indentLevel = 0) {
-        // Base case: if the element does not exist in allElements
-        if (!allElements[elementId]) {
-            return ""
-        }
-
-        const element = allElements[elementId]
-        const style = element.style ? styleObjectToCSS(element.css) : "" // Fixed to element.style from element.css
-        const indent = " ".repeat(indentLevel * 4) // Generate indentation
-
-        // Start the div tag with id, class, and style, with proper indentation
-        let html = `${indent}<div  class="${element.className || ""}" style="${style}">\n`
-
-        // Recursively add children elements with increased indentation
-        if (element.children && element.children.length > 0) {
-            element.children.forEach((childId) => {
-                html += elementToHTML(childId, allElements, indentLevel + 1)
-            })
-        }
-
-        // Close the div tag with proper indentation
-        html += `${indent}</div>\n`
-
-        return html
-    }
-
-    // Helper function to convert style object to CSS string
-    function styleObjectToCSS(style) {
-        return Object.entries(style)
-            .map(([key, value]) => {
-                return `${value}`
-            })
-            .join(" ")
-    }
-
-    // Debounce the writeCode function
-    const writeCode = useCallback(
-        debounce((elements) => {
-            // Assuming mainId is defined and points to the root of your elements structure
-            let code = elementToHTML(mainId, elements)
-            //setText(code) // Update the state with the generated code
-        }, 200),
-        [] // Dependencies array is empty, meaning the debounced function will be created once per component mount
-    )
-
-    useEffect(() => {
-        writeCode(allElements)
-        // Cleanup function to cancel the debounce on component unmount or before re-running the effect
-        return () => writeCode.cancel()
-    }, [allElements, writeCode])
 
     const handleChange = (value, event) => {
         console.log("value", value)
@@ -122,7 +113,6 @@ export default function MarkdownScreen() {
                 visualId =
                     parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : undefined) : "main-webGrid"
             }
-
             // Adjust the handling based on your structure. Assuming 'attribs' for attributes
             if (key === "attribs") newPlace = "attribs"
             if (key === "tagName") newPlace = "tagName"
@@ -246,6 +236,14 @@ export default function MarkdownScreen() {
 
         return { updatedElements, elementsIds, totalHeight }
     }
+    const deepCopyElement = (elements) => {
+        let newElements = {}
+        Object.entries(elements).forEach(([key, value]) => {
+            // Since children are just strings, this does effectively deep copy them
+            newElements[key] = { ...value, children: [...value.children] }
+        })
+        return newElements // Make sure to return the newElements object
+    }
 
     function updateAllElements(changes, allElements, setAllElements) {
         let updatedElements = { ...allElements }
@@ -265,7 +263,8 @@ export default function MarkdownScreen() {
             } else if (action === "modify") {
                 updatedElements = handleElementModify(changeDetails, visualId, updatedElements)
             } else if (action === "delete" && newPlace === "tagName") {
-                updatedElements[parentId].children = updatedElements[parentId].children.filter(id => id!==visualId)
+                console.log("updatedElements[parentId]", updatedElements[parentId], visualId)
+                updatedElements[parentId].children = updatedElements[parentId].children.filter((id) => id !== visualId)
             } else {
                 console.warn("Unknown action type or unsupported change detected:", action)
             }

@@ -45,7 +45,8 @@ export default function handleGridMove(
     if (newLeft < 0) {
         newLeft = 0
     }
-    const intersections = calculateIntersectLines(gridMoving.id, newLeft, newTop, width, height, allElements, allPositions, setAllPositions)
+    //const intersections = calculateIntersectLines(gridMoving.id, newLeft, newTop, width, height, allElements, allPositions, setAllPositions)
+    const intersections = []
     let offsetConfig = {
         offset: gridMoving.offset,
         offsetLeft: gridMoving.offsetLeft,

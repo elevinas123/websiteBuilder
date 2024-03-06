@@ -12,6 +12,7 @@ import {
     mainGridIdAtom,
     mainGridOffsetAtom,
     startElementBoundingBoxAtom,
+    visualsUpdatedAtom,
 } from "./atoms"
 import getBoundingBox from "./functions/getBoundingBox"
 import ItemInfoScreen from "./ItemInfoScreen"
@@ -26,10 +27,11 @@ export default function WebsiteScreen() {
     const [gridPixelSize, setGridPixelSize] = useAtom(gridPixelSizeAtom)
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
-    const latestValuesRef = useRef({ scrollLeft: 0, scrollTop: 0 })
     const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
+    const latestValuesRef = useRef({ scrollLeft: 0, scrollTop: 0 })
     const MIN_GRID_PIXEL_SIZE = 0.25 // Example minimum zoom level
     const MAX_GRID_PIXEL_SIZE = 10 // Example maximum zoom level
+
     const [prevSize, setPrevSize] = useState(2)
     function roundBoundingBox(boundingBox) {
         if (!boundingBox) return

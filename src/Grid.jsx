@@ -13,6 +13,7 @@ import {
     mainGridOffsetAtom,
     mainGridRefAtom,
     startElementBoundingBoxAtom,
+    visualsUpdatedAtom,
 } from "./atoms"
 import startCreatingElement from "./functions/startCreatingElement"
 import handleGridMove from "./functions/handleGridMove"
@@ -34,6 +35,8 @@ export default function Grid(props) {
     const [allPositions, setAllPositions] = useAtom(allPositionsAtom)
     const [intersectionLines, setIntersectionLines] = useAtom(intersectionLinesAtom)
     const [lines, setLines] = useState([])
+    const [visualsUpdate, setVisualsUpdated] = useAtom(visualsUpdatedAtom)
+
     const selecteCursorType = {
         moving: "cursor-default",
         "grid-moving": "cursor-grabbing",
@@ -55,6 +58,7 @@ export default function Grid(props) {
         }
     }, [gridChecked, props.id])
     useEffect(() => {}, [allElements[props.id].style])
+    /*
     useEffect(() => {
         if (props.id !== mainGridId) return
         console.log("intersectionLines", intersectionLines)
@@ -90,6 +94,7 @@ export default function Grid(props) {
         console.log("lines", absLines)
         setLines(absLines)
     }, [intersectionLines])
+    */
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
@@ -104,6 +109,7 @@ export default function Grid(props) {
                     setAllPositions,
                     setIntersectionLines
                 )
+                setVisualsUpdated((i) => ({ count: i.count + 1, id: gridMoving.id }))
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
 
@@ -115,6 +121,7 @@ export default function Grid(props) {
                 if (gridMoving.moved) {
                     setGridMoving({ moving: false })
                     HistoryClass.performAction(allElements)
+
                     console.log(HistoryClass.currentNode)
                 } else setGridMoving((i) => ({ ...i, setBox: true }))
             } else {
@@ -133,6 +140,7 @@ export default function Grid(props) {
                     setCursorType,
                     setAllPositions
                 )
+                setVisualsUpdated((i) => ({ count: i.count + 1, id: gridMoving.id }))
             }
         }
     }, [gridMoving])
