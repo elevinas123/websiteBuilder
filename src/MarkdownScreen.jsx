@@ -10,7 +10,7 @@ import { createNewGrid } from "./functions/gridCRUD"
 import calculateNewStyle from "./functions/calculateNewStyle"
 import { parseHTML, serializeASTtoHTML } from "./parseHTML"
 import _ from "lodash"
-import produce from "immer"
+import {produce} from "immer"
 export default function MarkdownScreen() {
     const [text, setText] = useState("")
     const [allElements, setAllElements] = useAtom(allElementsAtom)
@@ -20,23 +20,28 @@ export default function MarkdownScreen() {
     const mainId = "main-webGrid"
     const editorRef = useRef(null)
 
-    useEffect(() => {
-        console.log("visualsUpdate", visualsUpdate.id)
-        if (!visualsUpdate.id) return
-        const pathToElement = createPathToElement(visualsUpdate.id, allElements)
-        let updatingAst = JSON.parse(JSON.stringify(previousAst))
-        const updatedAst = updateAst(pathToElement, updatingAst, allElements[allElements[visualsUpdate.id].parent].children.length)
+    const debouncedUpdateTheEditor = useCallback(
+        debounce((visualsUpdate, previousAst, allElements, setPreviousAst, setText) => {
+            if (!visualsUpdate.id) return
+            console.log("debounced")
+            const pathToElement = createPathToElement(visualsUpdate.id, allElements)
+            let updatingAst = JSON.parse(JSON.stringify(previousAst))
+            const updatedAst = updateAst(pathToElement, updatingAst, allElements[allElements[visualsUpdate.id].parent].children.length)
+            let html = serializeASTtoHTML(updatedAst[0].childNodes)
+            console.log("allElements", html)
+            console.log("html", html)
+            setPreviousAst(updatedAst)
+            setText(html)
+        }, 3000),
+        []
+    ) // 300ms debounce time, adjust as needed
 
-        console.log("pathToElement", pathToElement)
-        console.log("allElements", allElements)
-        console.log("previousAst", previousAst)
-        console.log("updatedAst", updatedAst)
-        let html = serializeASTtoHTML(updatedAst[0].childNodes)
-        console.log("allElements", html)
-        console.log("html", html)
-        setPreviousAst(updatedAst)
-        setText(html)
+    useEffect(() => {
+        // Call the debounced function within useEffect
+        console.log("tryuing to debounce")
+        debouncedUpdateTheEditor(visualsUpdate, previousAst, allElements, setPreviousAst, setText)
     }, [visualsUpdate])
+
     const updateAst = (path, ast, amountOfElements) => {
         let node = ast[0]
         for (let i = 0; i < path.length - 1; i++) {
@@ -202,39 +207,38 @@ export default function MarkdownScreen() {
         return { text, childrenIds, totalHeight }
     }
 
-    function addElementRecursively(change, parentId, elements = {}, offsetLeft = 1, offsetTop = 1) {
+    function addElementRecursively(change, parentId, draft, offsetLeft = 1, offsetTop = 1) {
         const newElementId = uuidv4()
         const styles = processStyles(change.attribs)
-        const { text, childrenIds, totalHeight } = processChildNodes(change.childNodes || [], newElementId, elements, offsetTop)
-        const elementWidth = 10,
-            elementHeight = 10
+        const { text, childrenIds, totalHeight } = processChildNodes(change.childNodes || [], newElementId, draft, offsetTop)
 
-        elements[newElementId] = createNewGrid(
+        draft[newElementId] = createNewGrid(
             newElementId,
             parentId,
             offsetLeft,
             totalHeight,
-            elementWidth,
-            elementHeight,
+            10, // elementWidth,
+            10, // elementHeight,
             { top: 0, left: 0, bottom: 0, right: 0 },
             gridPixelsize,
             childrenIds
         )
 
-        return [elements, newElementId, elementWidth, elementHeight]
+        return [draft, newElementId, 10 /* elementWidth */, 10 /* elementHeight */]
     }
 
-    function handleElementAddition(changeDetails, parentId, allElements, updatedElements) {
+
+    function handleElementAddition(changeDetails, parentId, allElements, draft) {
         let elementsIds = []
         let totalHeight = calculateStartingHeight(parentId, 0, allElements) + 1 // +1 to start from the next possible height
-        let totalWidth = 1 // Assuming a starting width
 
-        const [newElements, childId, , h] = addElementRecursively(changeDetails, parentId, updatedElements, totalWidth, totalHeight)
-        Object.assign(updatedElements, newElements)
+        // Directly use `addElementRecursively` to modify the draft
+        const [, childId, , h] = addElementRecursively(changeDetails, parentId, draft, 1, totalHeight)
         elementsIds.push(childId)
         totalHeight += h
+        draft[parentId].children.push(childId)
 
-        return { updatedElements, elementsIds, totalHeight }
+        return { draft, elementsIds, totalHeight } // Return draft for clarity, even though it's modified in place
     }
     const deepCopyElement = (elements) => {
         let newElements = {}
@@ -246,83 +250,60 @@ export default function MarkdownScreen() {
     }
 
     function updateAllElements(changes, allElements, setAllElements) {
-        let updatedElements = { ...allElements }
-
-        changes.forEach(({ action, visualId, change: changeDetails, parentId, newPlace }) => {
-            if (action === "add" && changeDetails.nodeType !== 3) {
-                // Skip text nodes for "add" actions
-                if (!parentId) parentId = "main-webGrid"
-                let { updatedElements: newUpdatedElements, elementsIds: newElementsIds } = handleElementAddition(
-                    changeDetails,
-                    parentId,
-                    allElements,
-                    updatedElements
-                )
-                newUpdatedElements[parentId].children = [...newUpdatedElements[parentId].children, ...newElementsIds]
-                updatedElements = newUpdatedElements
-            } else if (action === "modify") {
-                updatedElements = handleElementModify(changeDetails, visualId, updatedElements)
-            } else if (action === "delete" && newPlace === "tagName") {
-                console.log("updatedElements[parentId]", updatedElements[parentId], visualId)
-                updatedElements[parentId].children = updatedElements[parentId].children.filter((id) => id !== visualId)
-            } else {
-                console.warn("Unknown action type or unsupported change detected:", action)
-            }
-        })
-        console.log("updatedElements", updatedElements)
-
-        setAllElements(updatedElements)
+        setAllElements(produce(allElements, draft => {
+            changes.forEach(({ action, visualId, change: changeDetails, parentId, newPlace }) => {
+                if (action === "add" && changeDetails.nodeType !== 3) {
+                    // Adjusted to use draft directly
+                    handleElementAddition(changeDetails, parentId, draft, draft);
+                } else if (action === "modify") {
+                    handleElementModify(changeDetails, visualId, draft)
+                } else if (action === "delete" && newPlace === "tagName") {
+                    const parentElement = draft[parentId]
+                    if (parentElement && parentElement.children) {
+                        const index = parentElement.children.findIndex((childId) => childId === visualId)
+                        if (index !== -1) {
+                            // Directly mutate the draft's children array to remove the element
+                            parentElement.children.splice(index, 1)
+                        }
+                    }
+                } else {
+                    console.warn("Unknown action type or unsupported change detected:", action)
+                }
+            })
+        
+        }))
     }
-    const handleElementModify = (changeDetails, id, updatedElements) => {
-        if (!id) return updatedElements
+    const handleElementModify = (changeDetails, id, draft) => {
+        const element = draft[id]
+        if (!element) return // Early return if the element doesn't exist
+
         if (changeDetails.place === "classname") {
             const cssClasses = tailwindClassToCSS(changeDetails.changed[1])
-            let width = cssClasses.width ? cssClasses.width : updatedElements[id].width
-            let height = cssClasses.height ? cssClasses.height : updatedElements[id].height
-            let top = updatedElements[id].top
-            let left = updatedElements[id].left
-            let bg = cssClasses.bg ? cssClasses.bg : updatedElements[id].backgroundColor
-            const newStyles = calculateNewStyle(left, top, width, height, gridPixelSizeAtom, bg)
-            return {
-                ...updatedElements,
-                [id]: {
-                    ...updatedElements[id],
-                    ...cssClasses,
-                    style: {
-                        ...updatedElements[id].style,
-                        ...newStyles,
-                    },
-                },
-            }
+            element.width = cssClasses.width || element.width
+            element.height = cssClasses.height || element.height
+            element.backgroundColor = cssClasses.bg || element.backgroundColor
+
+            // Apply new styles calculated based on potential changes
+            const newStyles = calculateNewStyle(element.left, element.top, element.width, element.height, gridPixelSizeAtom, element.backgroundColor)
+            element.style = { ...element.style, ...newStyles }
         } else if (changeDetails.place === "text") {
-            return {
-                ...updatedElements,
-                [id]: {
-                    ...updatedElements[id],
-                    text: changeDetails.changed[1],
-                },
-            }
+            element.text = changeDetails.changed[1]
         } else if (changeDetails.place === "tagName") {
             //I will add tag functionality later
-            return updatedElements
+            return 
         }
 
-        return updatedElements
+        return 
     }
     function tailwindClassToCSS(classNames) {
-        // Basic scale to pixel conversion for demonstration
-        const unitToPx = (unit) => unit * 4
+        const unitToPx = (unit) => `${unit * 4}px` // Ensure the unit is a string with px for CSS
 
-        // Handle special color mappings
         const colorMappings = {
             "red-500": "#f56565", // Example color mapping
-            // Define additional color mappings as needed
+            // Additional color mappings as needed
         }
 
-        // Expanded regex to capture classes like 'bg-red-500'
         const regex = /^([a-z]+(?:-[a-z]+)*?)-(\d+|[a-z]+\-\d+)$/
-
-        // Initial CSS styles object
         let styles = {}
 
         classNames.split(" ").forEach((className) => {
@@ -331,20 +312,17 @@ export default function MarkdownScreen() {
 
             const [, type, value] = match
 
-            // Custom handling for colors
             if (type.startsWith("bg") && colorMappings[value]) {
-                styles["bg"] = colorMappings[value]
+                styles["backgroundColor"] = colorMappings[value]
                 return
             }
 
-            // Handling for numeric values
+            // Numeric values handling
             if (!isNaN(value)) {
                 const cssValue = unitToPx(parseInt(value))
-                // Direct mapping for simplified demonstration
                 const mappings = {
                     w: "width",
                     h: "height",
-
                     // Add more mappings as needed
                 }
 
