@@ -20,7 +20,22 @@ import handleGridMove from "./functions/handleGridMove"
 import handleElementResize from "./functions/handleElementResize"
 import startElementInteraction from "./functions/startElementInteraction"
 import handlePaddingResize from "./functions/handlePaddingresize"
-export default function Grid(props) {
+import { Style } from "./Types"
+
+
+interface VisualsUpdated {
+    count: number
+    id: string | undefined
+}
+
+interface GridProps {
+    key: string
+    id: string
+    childStyle: Style
+
+}
+
+const Grid: React.FC<GridProps> = (props: GridProps) => {
     const gridRef = useRef(null)
     const [gridSelect, setGridSelect] = useState(false)
     const [gridChecked, setGridChecked] = useAtom(gridCheckedAtom)
@@ -73,7 +88,7 @@ export default function Grid(props) {
                     setAllPositions,
                     setIntersectionLines
                 )
-                setVisualsUpdated((i) => ({ count: i.count + 1, id: gridMoving.id }))
+                setVisualsUpdated((i: VisualsUpdated) => ({ count: i.count + 1, id: gridMoving.id }))
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
 
@@ -254,3 +269,6 @@ export default function Grid(props) {
         </div>
     )
 }
+
+
+export default Grid

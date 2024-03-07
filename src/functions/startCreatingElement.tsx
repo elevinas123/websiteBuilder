@@ -3,8 +3,26 @@ import { v4 as uuidv4 } from "uuid"
 import startElementInteraction from "./startElementInteraction"
 import calculateNewStyle from "./calculateNewStyle"
 import { createNewGrid } from "./gridCRUD"
+import { AllElements, GridElement } from "../Types"
+import { SetGridMoving } from "../atoms"
 
-export default function startCreatingElement(x, y, parentId, allElements, mainGridOffset, gridPixelSize, setGridMoving, setAllElements, setGridChecked) {
+interface MainGridOffset {
+    left: number,
+    top: number
+}
+
+
+export default function startCreatingElement(
+    x: number,
+    y: number,
+    parentId: string,
+    allElements: AllElements,
+    mainGridOffset: MainGridOffset,
+    gridPixelSize: number,
+    setGridMoving: SetGridMoving,
+    setAllElements,
+    setGridChecked
+) {
     const uuid = uuidv4()
     let offSetLeft = mainGridOffset.left
     let offSetTop = mainGridOffset.top
@@ -20,7 +38,7 @@ export default function startCreatingElement(x, y, parentId, allElements, mainGr
     setAllElements((elements) => ({
         ...elements,
         [parentId]: { ...elements[parentId], children: [...elements[parentId].children, uuid] },
-        [uuid]: createNewGrid(uuid, parentId, left, top, 1, 1, {top: 0, left: 0, right: 0, bottom: 0}, gridPixelSize)
+        [uuid]: createNewGrid(uuid, parentId, left, top, 1, 1, { top: 0, left: 0, right: 0, bottom: 0 }, gridPixelSize),
     }))
     setGridChecked(uuid)
     startElementInteraction(uuid, x, y, "creating", setGridMoving)

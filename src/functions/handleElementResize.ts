@@ -1,17 +1,16 @@
 import { produce } from "immer"
 import calculateNewStyle from "./calculateNewStyle"
+import { GridMoving } from "../atoms"
+import { AllElements } from "../Types"
 
 export default function handleElementResize(
-    gridMoving,
-    allElements,
-    gridPixelSize,
+    gridMoving: GridMoving,
+    allElements: AllElements,
+    gridPixelSize: number,
     HistoryClass,
-    allPositions,
-    setGridMoving,
+    setGridMoving: ,
     setAllElements,
     setCursorType,
-    setAllPositions,
-    setIntersectionLines
 ) {
     let { top, left, width, height, backgroundColor } = allElements[gridMoving.id].info
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize

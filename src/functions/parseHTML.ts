@@ -1,7 +1,17 @@
 import * as htmlparser2 from "htmlparser2"
 
-export const parseHTML = (html) => {
-    let root = { tagName: "root", childNodes: [] }
+export interface Attribs {
+    
+}
+export interface Ast {
+    tagName: string
+    childNodes: Ast[]
+    textContent?: string
+    attribs?: {[s: string]: string}
+}
+
+export const parseHTML = (html: string) => {
+    let root: Ast = { tagName: "root", childNodes: [] }
     let currentParent = root
     const stack = [root] // Use to track open elements
     let errors = [] // Accumulate errors found during parsing

@@ -1,6 +1,7 @@
+import { AllElements, SetAllElements } from "../../Types"
 import calculateNewStyle from "../calculateNewStyle"
 
-export default function justifyLeft(parentId, allElements, setAllElements, gridPixelSize) {
+export default function justifyLeft(parentId: number, allElements: AllElements, setAllElements: SetAllElements, gridPixelSize: number) {
     const parentElement = allElements[parentId]
 
     // Sort children by their current left position

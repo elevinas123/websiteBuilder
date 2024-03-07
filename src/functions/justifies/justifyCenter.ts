@@ -1,6 +1,7 @@
+import { AllElements, SetAllElements } from "../../Types"
 import calculateNewStyle from "../calculateNewStyle"
 
-export default function justifyCenter(parentId, allElements, setAllElements, gridPixelSize) {
+export default function justifyCenter(parentId: string, allElements:  AllElements, setAllElements: SetAllElements, gridPixelSize: number) {
     const parentElement = allElements[parentId]
 
     // Sort children by their current left position
@@ -41,7 +42,7 @@ export default function justifyCenter(parentId, allElements, setAllElements, gri
         }
 
         // Add the current child's width to the accumulatedWidth for the next child's position
-        accumulatedWidth += childrenWidths[index]-1
+        accumulatedWidth += childrenWidths[index] - 1
     })
     updatedElements[parentId] = {
         ...updatedElements[parentId],

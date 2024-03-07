@@ -1,4 +1,8 @@
-export default function startElementInteraction(id, x, y, type, setGridMoving) {
+import { SetGridMoving } from "../atoms"
+
+
+
+export default function startElementInteraction(id: string, x: number, y: number, type: string, setGridMoving: SetGridMoving) {
     setGridMoving({
         type: type,
         id: id,

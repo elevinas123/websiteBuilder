@@ -1,7 +1,9 @@
 import { produce } from "immer"
 import calculateNewStyle from "./calculateNewStyle"
+import { AllElements, SetAllElements } from "../Types"
+import { GridMoving, SetGridMoving } from "../atoms"
 
-export default function handlePaddingResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements, setCursorType) {
+export default function handlePaddingResize(gridMoving: GridMoving, allElements: AllElements, gridPixelSize: number, HistoryClass, setGridMoving: SetGridMoving, setAllElements: SetAllElements) {
     let { top, left, right, bottom } = allElements[gridMoving.id].info.padding
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
@@ -62,3 +64,4 @@ export default function handlePaddingResize(gridMoving, allElements, gridPixelSi
     setGridMoving((i) => ({ ...i, setBox: true }))
     return
 }
+

@@ -8,9 +8,43 @@ import { diff } from "jsondiffpatch"
 import { v4 as uuidv4 } from "uuid"
 import { createNewGrid } from "./functions/gridCRUD"
 import calculateNewStyle from "./functions/calculateNewStyle"
-import { parseHTML, serializeASTtoHTML } from "./parseHTML"
+import { Ast, parseHTML, serializeASTtoHTML } from "./functions/parseHTML"
 import _ from "lodash"
 import {produce} from "immer"
+import { AllElements, GridElement } from "./Types"
+import { updateAllElements } from "./functions/codeToVisuals"
+import isInt from "./functions/isInt"
+export interface Modify {
+    action: string
+    visualId: null  | string
+    change: Change
+    parentId: null | string
+    newIndex: number
+    newPlace: string
+}
+export interface Change {
+
+}
+interface AstDelta {
+    tagName?: [string, string] // Optional: Previous value and new value
+    childNodes?: AstChildNodesDelta | ArrayChangeDescriptor<AstDelta>
+    textContent?: [string, string] // Optional: Previous value and new value
+    attribs?: { [key: string]: [string, string] | string } // For added or changed attributes
+}
+
+interface AstChildNodesDelta {
+    [index: number]: AstDelta // Index-based changes in childNodes
+}
+
+// General structure for array changes (simplified and specific to your case)
+interface ArrayChangeDescriptor<T> {
+    _t: "a" // Marker for array change
+    [key: string]: any // Includes detailed changes, moves, etc., in arrays
+}
+
+// Enhancing the Delta type to cater to recursive structures and specific changes
+export type Diff = AstDelta | ArrayChangeDescriptor<AstDelta> | { [key: string]: Diff }
+
 export default function MarkdownScreen() {
     const [text, setText] = useState("")
     const [allElements, setAllElements] = useAtom(allElementsAtom)
@@ -42,7 +76,7 @@ export default function MarkdownScreen() {
         debouncedUpdateTheEditor(visualsUpdate, previousAst, allElements, setPreviousAst, setText)
     }, [visualsUpdate])
 
-    const updateAst = (path, ast, amountOfElements) => {
+    const updateAst = (path: number[], ast: Ast[], amountOfElements: number) => {
         let node = ast[0]
         for (let i = 0; i < path.length - 1; i++) {
             node = node.childNodes[path[i]]
@@ -59,7 +93,7 @@ export default function MarkdownScreen() {
         console.log("node", node)
         return ast
     }
-    const createPathToElement = (id, allElements) => {
+    const createPathToElement = (id: string, allElements: AllElements) => {
         let currId = id
         let path = []
         while (currId !== "main-webGrid") {
@@ -74,7 +108,7 @@ export default function MarkdownScreen() {
         editorRef.current = editor
     }
 
-    const handleChange = (value, event) => {
+    const handleChange = (value: string, event) => {
         console.log("value", value)
         value = `<div>${value}</div>`
         const newAst = parseHTML(value)
@@ -88,16 +122,19 @@ export default function MarkdownScreen() {
         let updateThings = applyChangesFromDiff(diffedAst, allElements)
         console.log("updateThings", updateThings)
         console.log("allELements pradzioj", allElements)
-        updateAllElements(updateThings, allElements, setAllElements)
+        updateAllElements(updateThings, allElements, gridPixelsize, setAllElements)
         setPreviousAst(newAst)
     }
 
+    
+
+
     function applyChangesFromDiff(
-        diff,
-        allElements,
-        allElementsChanges = [],
-        parentId = "main-webGrid",
-        visualId = "main-webGrid",
+        diff: Diff,
+        allElements: AllElements,
+        allElementsChanges: Modify[] = [] ,
+        parentId: string   | null = "main-webGrid",
+        visualId: string   | null = "main-webGrid",
         index = 0,
         place = "tagName"
     ) {
@@ -116,7 +153,7 @@ export default function MarkdownScreen() {
             if (key === "childNodes") {
                 parentId = visualId
                 visualId =
-                    parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : undefined) : "main-webGrid"
+                    parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : null) : "main-webGrid"
             }
             // Adjust the handling based on your structure. Assuming 'attribs' for attributes
             if (key === "attribs") newPlace = "attribs"
@@ -124,7 +161,6 @@ export default function MarkdownScreen() {
             console.log("parentId", parentId)
             console.log("visualId", visualId)
             console.log("visualId")
-            console.log("visualId", allElements[parentId])
             if (Array.isArray(change)) {
                 // Handle modifications, deletions, or additions based on change array structure
                 const action = determineAction(change)
@@ -178,197 +214,15 @@ export default function MarkdownScreen() {
 
         return allElementsChanges
     }
-    function processStyles(attribs) {
-        return Object.entries(attribs || {}).reduce((acc, [attrName, attrValue]) => {
-            if (attrName === "class") {
-                acc.className = attrValue // Handle class attribute
-            }
-            return acc
-        }, {})
-    }
+    
 
-    function processChildNodes(childNodes, parentId, elements, offset) {
-        let text = ""
-        let childrenIds = []
-        let totalHeight = offset
+   
 
-        childNodes.forEach((child) => {
-            if (child.nodeType === 3) {
-                // Text node
-                text += child.textContent
-                return
-            }
-            const [updatedElements, childId, , h] = addElementRecursively(child, parentId, elements, 1, totalHeight)
-            totalHeight += h
-            Object.assign(elements, updatedElements)
-            childrenIds.push(childId)
-        })
-
-        return { text, childrenIds, totalHeight }
-    }
-
-    function addElementRecursively(change, parentId, draft, offsetLeft = 1, offsetTop = 1) {
-        const newElementId = uuidv4()
-        const styles = processStyles(change.attribs)
-        const { text, childrenIds, totalHeight } = processChildNodes(change.childNodes || [], newElementId, draft, offsetTop)
-
-        draft[newElementId] = createNewGrid(
-            newElementId,
-            parentId,
-            offsetLeft,
-            totalHeight,
-            10, // elementWidth,
-            10, // elementHeight,
-            { top: 0, left: 0, bottom: 0, right: 0 },
-            gridPixelsize,
-            childrenIds
-        )
-
-        return [draft, newElementId, 10 /* elementWidth */, 10 /* elementHeight */]
-    }
+    
+    
 
 
-    function handleElementAddition(changeDetails, parentId, allElements, draft) {
-        let elementsIds = []
-        let totalHeight = calculateStartingHeight(parentId, 0, allElements) + 1 // +1 to start from the next possible height
-
-        // Directly use `addElementRecursively` to modify the draft
-        const [, childId, , h] = addElementRecursively(changeDetails, parentId, draft, 1, totalHeight)
-        elementsIds.push(childId)
-        totalHeight += h
-        draft[parentId].children.push(childId)
-
-        return { draft, elementsIds, totalHeight } // Return draft for clarity, even though it's modified in place
-    }
-    const deepCopyElement = (elements) => {
-        let newElements = {}
-        Object.entries(elements).forEach(([key, value]) => {
-            // Since children are just strings, this does effectively deep copy them
-            newElements[key] = { ...value, children: [...value.children] }
-        })
-        return newElements // Make sure to return the newElements object
-    }
-
-    function updateAllElements(changes, allElements, setAllElements) {
-        setAllElements(produce(allElements, draft => {
-            changes.forEach(({ action, visualId, change: changeDetails, parentId, newPlace }) => {
-                if (action === "add" && changeDetails.nodeType !== 3) {
-                    // Adjusted to use draft directly
-                    handleElementAddition(changeDetails, parentId, draft, draft);
-                } else if (action === "modify") {
-                    handleElementModify(changeDetails, newPlace, visualId, draft)
-                } else if (action === "delete" && newPlace === "tagName") {
-                    const parentElement = draft[parentId]
-                    if (parentElement && parentElement.children) {
-                        const index = parentElement.children.findIndex((childId) => childId === visualId)
-                        if (index !== -1) {
-                            // Directly mutate the draft's children array to remove the element
-                            parentElement.children.splice(index, 1)
-                        }
-                    }
-                } else {
-                    console.warn("Unknown action type or unsupported change detected:", action)
-                }
-            })
-        
-        }))
-    }
-    const handleElementModify = (changeDetails, newPlace, id, draft) => {
-        const element = draft[id]
-        if (!element) return // Early return if the element doesn't exist
-
-        if (changeDetails.place === "classname") {
-            const cssClasses = tailwindClassToCSS(changeDetails.changed[1])
-            let width = cssClasses.width || element.width
-            let height = cssClasses.height || element.height
-            let backgroundColor = cssClasses.bg || element.backgroundColor
-            element.info = {
-                ...element.info, 
-                width,
-                height,
-                backgroundColor
-
-            }
-            // Apply new styles calculated based on potential changes
-            const newStyles = calculateNewStyle(element.info.left, element.info.top, width, height, gridPixelSizeAtom, height)
-            element.style = { ...element.style, ...newStyles }
-        } else if (changeDetails.place === "text") {
-            element.text = changeDetails.changed[1]
-        } else if (changeDetails.place === "tagName") {
-            //I will add tag functionality later
-        }
-
-        if (newPlace === "attribs") {
-            element[changeDetails.place] = changeDetails.changed[1]
-        }
-        
-
-        return 
-    }
-    function tailwindClassToCSS(classNames) {
-        const unitToPx = (unit) => `${unit * 4}px` // Ensure the unit is a string with px for CSS
-
-        const colorMappings = {
-            "red-500": "#f56565", // Example color mapping
-            // Additional color mappings as needed
-        }
-
-        const regex = /^([a-z]+(?:-[a-z]+)*?)-(\d+|[a-z]+\-\d+)$/
-        let styles = {}
-
-        classNames.split(" ").forEach((className) => {
-            const match = className.match(regex)
-            if (!match) return
-
-            const [, type, value] = match
-
-            if (type.startsWith("bg") && colorMappings[value]) {
-                styles["backgroundColor"] = colorMappings[value]
-                return
-            }
-
-            // Numeric values handling
-            if (!isNaN(value)) {
-                const cssValue = unitToPx(parseInt(value))
-                const mappings = {
-                    w: "width",
-                    h: "height",
-                    // Add more mappings as needed
-                }
-
-                Object.entries(mappings).forEach(([key, cssProperty]) => {
-                    if (type.startsWith(key)) {
-                        styles[cssProperty] = cssValue
-                    }
-                })
-            }
-        })
-
-        return styles
-    }
-
-    const calculateStartingHeight = (parentId, itemIndex, allELements) => {
-        let minHeight = 0
-        for (let i = 0; i < itemIndex; i++) {
-            minHeight += allElements[allELements[parentId].children[i]].height
-        }
-        return minHeight
-    }
-
-    function extractPropertiesForModification(changeDetails) {
-        // Assuming changeDetails contains the updated properties for the element
-        // This function should extract these properties and return an object that can be
-        // used to update the element. Adjust according to the structure of your changeDetails.
-        return changeDetails.reduce((acc, curr) => {
-            const [propName, propValue] = curr
-            acc[propName] = propValue
-            return acc
-        }, {})
-    }
-
-    function isInt(value) {
-        return !isNaN(value) && parseInt(Number(value)) == value && !isNaN(parseInt(value, 10))
-    }
+    
 
     function determineAction(change) {
         if (change.length === 1) return "add"
@@ -377,36 +231,6 @@ export default function MarkdownScreen() {
         return "unknown"
     }
 
-    const addVisual = (id, change, allElements) => {
-        console.log("addVisuals", id, change)
-        return {
-            ["labas"]: {
-                id: id,
-                change: change,
-                parent: "parent",
-            },
-        }
-    }
-    const modifyVisual = (id, change, allElements) => {
-        console.log("modifyVisual", id, change)
-        return {
-            ["modifyVisual"]: {
-                id: id,
-                change: change,
-                parent: "parent",
-            },
-        }
-    }
-    const deleteVisual = (id, change, allElements) => {
-        console.log("deleteVisual", id, change)
-        return {
-            ["deleteVisual"]: {
-                id: id,
-                change: change,
-                parent: "parent",
-            },
-        }
-    }
 
     return (
         <div className="w-full">

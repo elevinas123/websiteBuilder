@@ -1,6 +1,7 @@
+import { AllElements, SetAllElements } from "../../Types"
 import calculateNewStyle from "../calculateNewStyle"
 
-export default function justifyBetween(parentId, allElements, setAllElements) {
+export default function justifyCenter(parentId: string, allElements: AllElements, setAllElements: SetAllElements, gridPixelSize: number) {
     const parentElement = allElements[parentId]
 
     // Sort children by their current left position to maintain their visual order
@@ -25,7 +26,7 @@ export default function justifyBetween(parentId, allElements, setAllElements) {
         const child = updatedElements[childId]
 
         // For each child, set the new left position based on the accumulatedWidth
-        const newStyle = calculateNewStyle(accumulatedWidth, child.info.top, child.info.width, child.info.height, child.info.backgroundColor)
+        const newStyle = calculateNewStyle(accumulatedWidth, child.info.top, child.info.width, child.info.height, gridPixelSize, child.info.backgroundColor)
 
         updatedElements[childId] = {
             ...updatedElements[childId],
