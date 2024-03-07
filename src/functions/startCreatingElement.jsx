@@ -11,12 +11,12 @@ export default function startCreatingElement(x, y, parentId, allElements, mainGr
     let pId = allElements[parentId].parent
     while (pId !== null) {
         let ell = allElements[pId]
-        offSetLeft -= ell.left + ell.padding.left
-        offSetTop -= ell.top + ell.padding.top
+        offSetLeft -= ell.info.left + ell.info.padding.left
+        offSetTop -= ell.info.top + ell.info.padding.top
         pId = ell.parent
     }
-    const left = x / gridPixelSize + offSetLeft - allElements[parentId].padding.left - allElements[parentId].left
-    const top = y / gridPixelSize + offSetTop - allElements[parentId].padding.top - allElements[parentId].top
+    const left = x / gridPixelSize + offSetLeft - allElements[parentId].info.padding.left - allElements[parentId].info.left
+    const top = y / gridPixelSize + offSetTop - allElements[parentId].info.padding.top - allElements[parentId].info.top
     setAllElements((elements) => ({
         ...elements,
         [parentId]: { ...elements[parentId], children: [...elements[parentId].children, uuid] },

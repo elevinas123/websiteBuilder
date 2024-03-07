@@ -58,43 +58,7 @@ export default function Grid(props) {
         }
     }, [gridChecked, props.id])
     useEffect(() => {}, [allElements[props.id].style])
-    /*
-    useEffect(() => {
-        if (props.id !== mainGridId) return
-        console.log("intersectionLines", intersectionLines)
-        let absLines = intersectionLines.map((line, index) =>
-            line.type === "horizontal" ? (
-                <div
-                    key={`line-${index}`}
-                    style={{
-                        zIndex: 100,
-                        position: "absolute",
-                        left: `${line.start * gridPixelSize}px`,
-                        width: `${(line.end - line.start) * gridPixelSize}px`,
-                        top: `${line.at * gridPixelSize}px`,
-                        height: `${4 / gridPixelSize}px`,
-                        backgroundColor: "red", // Choose a color that stands out
-                    }}
-                />
-            ) : (
-                <div
-                    key={`line-${index}`}
-                    style={{
-                        zIndex: 100,
-                        position: "absolute",
-                        top: `${line.start * gridPixelSize}px`,
-                        height: `${(line.end - line.start) * gridPixelSize}px`,
-                        left: `${line.at * gridPixelSize}px`,
-                        width: `${4 / gridPixelSize}px`,
-                        backgroundColor: "red", // Choose a color that stands out
-                    }}
-                />
-            )
-        )
-        console.log("lines", absLines)
-        setLines(absLines)
-    }, [intersectionLines])
-    */
+    
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
@@ -207,16 +171,16 @@ export default function Grid(props) {
             className={`relative z-10 box-content grid h-full w-full  select-none   ${selecteCursorType[cursorType]} ${gridSelect && cursorType !== "padding" ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
         >
             {/* Conditionally render the padding resize handles if padding is being adjusted or is non-zero */}
-            {(Object.values(allElements[props.id].padding).some((value) => value > 0) || (cursorType === "padding" && gridChecked === props.id)) && (
+            {(Object.values(allElements[props.id].info.padding).some((value) => value > 0) || (cursorType === "padding" && gridChecked === props.id)) && (
                 <div className="pointer-events-none absolute h-full w-full">
                     {/* Padding area rectangle with resize handles */}
                     <div
                         className="pointer-events-auto absolute border-2 border-dashed border-blue-500"
                         style={{
-                            top: `${allElements[props.id].padding.top * gridPixelSize}px`,
-                            right: `${allElements[props.id].padding.right * gridPixelSize}px`,
-                            bottom: `${allElements[props.id].padding.bottom * gridPixelSize}px`,
-                            left: `${allElements[props.id].padding.left * gridPixelSize}px`,
+                            top: `${allElements[props.id].info.padding.top * gridPixelSize}px`,
+                            right: `${allElements[props.id].info.padding.right * gridPixelSize}px`,
+                            bottom: `${allElements[props.id].info.padding.bottom * gridPixelSize}px`,
+                            left: `${allElements[props.id].info.padding.left * gridPixelSize}px`,
                         }}
                     >
                         {/* Top resize handle */}

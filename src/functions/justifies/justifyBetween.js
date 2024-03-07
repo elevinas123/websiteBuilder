@@ -4,14 +4,14 @@ export default function justifyBetween(parentId, allElements, setAllElements) {
     const parentElement = allElements[parentId]
 
     // Sort children by their current left position to maintain their visual order
-    const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].left - allElements[b].left)
+    const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].info.left - allElements[b].info.left)
 
     // Calculate the total width of all children
-    const childrenWidths = sortedChildren.map((childId) => allElements[childId].width)
+    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.width)
     const totalChildrenWidth = childrenWidths.reduce((total, width) => total + width, 0)
 
     // Calculate the total available space by subtracting the total children width from the parent's width
-    const availableSpace = parentElement.width - totalChildrenWidth
+    const availableSpace = parentElement.info.width - totalChildrenWidth
 
     // Calculate the spacing between elements based on the available space and the number of gaps
     // The number of gaps is one less than the number of children
@@ -25,13 +25,16 @@ export default function justifyBetween(parentId, allElements, setAllElements) {
         const child = updatedElements[childId]
 
         // For each child, set the new left position based on the accumulatedWidth
-        const newStyle = calculateNewStyle(accumulatedWidth, child.top, child.width, child.height, child.style.backgroundColor)
+        const newStyle = calculateNewStyle(accumulatedWidth, child.info.top, child.info.width, child.info.height, child.info.backgroundColor)
 
         updatedElements[childId] = {
-            ...child,
-            left: accumulatedWidth, // Set new left position
+            ...updatedElements[childId],
+            info: {
+                ...updatedElements[childId].info,
+                left: accumulatedWidth,
+            },
             style: {
-                ...child.style,
+                ...updatedElements[childId].style,
                 ...newStyle,
             },
         }
@@ -40,15 +43,15 @@ export default function justifyBetween(parentId, allElements, setAllElements) {
         // After positioning each child, add its width and the calculated space between to the accumulated width
         // Except for the last child, which does not need space added after it
         if (index < sortedChildren.length - 1) {
-            accumulatedWidth += child.width + spaceBetween
+            accumulatedWidth += child.info.width + spaceBetween
         }
     })
     updatedElements[parentId] = {
         ...updatedElements[parentId],
-        css: {
-            ...updatedElements[parentId].css,
-        justify: "justify-between",
-        }
+        info: {
+            ...updatedElements[parentId].info,
+            justify: "justifyBetween",
+        },
     }
 
     // Update the state with the new elements

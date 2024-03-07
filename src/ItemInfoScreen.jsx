@@ -43,9 +43,9 @@ export default function ItemInfoScreen() {
                     ...prevElements[itemId].style,
                     backgroundColor: e.target.value,
                 },
-                css: {
-                    ...prevElements[itemId].css,
-                    backgroundColor: `bg-${e.target.value}`,
+                info: {
+                    ...prevElements[itemId].info,
+                    backgroundColor: e.target.value,
                 },
             },
         }))
@@ -67,9 +67,9 @@ export default function ItemInfoScreen() {
                     ...prevElements[itemId].style,
                     borderColor: e.target.value,
                 },
-                css: {
-                    ...prevElements[itemId].css,
-                    backgroundColor: `border-${e.target.value}`,
+                info: {
+                    ...prevElements[itemId].info,
+                    borderColor: e.target.value,
                 },
             },
         }))
@@ -125,21 +125,21 @@ export default function ItemInfoScreen() {
                 <div>
                     <div className="mt-2 flex w-20 flex-row border border-white bg-red-500 p-1 hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">X</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].top}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].info.top}</div>
                     </div>
                     <div className="mt-2 flex flex-row border border-white p-1 hover:border hover:border-gray-300 ">
                         <div className="ml-3 text-xs text-gray-400">Y</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].left}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].info.left}</div>
                     </div>
                 </div>
                 <div className="ml-4">
                     <div className="mt-2 flex flex-row border border-white p-1  hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">X</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].width}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].info.width}</div>
                     </div>
                     <div className="mt-2 flex flex-row border border-white p-1  hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">W</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].height}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].info.height}</div>
                     </div>
                 </div>
             </div>

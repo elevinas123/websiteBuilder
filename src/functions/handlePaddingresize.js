@@ -2,23 +2,23 @@ import { produce } from "immer"
 import calculateNewStyle from "./calculateNewStyle"
 
 export default function handlePaddingResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements, setCursorType) {
-    let { top, left, right, bottom } = allElements[gridMoving.id].padding
+    let { top, left, right, bottom } = allElements[gridMoving.id].info.padding
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
 
     if (gridMoving.type === "padding-top") {
         top += deltaY
         // Prevent top padding from extending past the bottom padding
-        if (top + bottom > allElements[gridMoving.id].height) {
-            top = allElements[gridMoving.id].height - bottom
+        if (top + bottom > allElements[gridMoving.id].info.height) {
+            top = allElements[gridMoving.id].info.height - bottom
         }
     } else if (gridMoving.type === "padding-right") {
         right -= deltaX // Assuming this should be deltaX instead of deltaY
     } else if (gridMoving.type === "padding-bottom") {
         bottom -= deltaY
         // Prevent bottom padding from extending past the top padding
-        if (top + bottom > allElements[gridMoving.id].height) {
-            bottom = allElements[gridMoving.id].height - top
+        if (top + bottom > allElements[gridMoving.id].info.height) {
+            bottom = allElements[gridMoving.id].info.height - top
         }
     } else if (gridMoving.type === "padding-left") {
         left += deltaX
@@ -41,12 +41,15 @@ export default function handlePaddingResize(gridMoving, allElements, gridPixelSi
                 paddingTop: top * gridPixelSize,
                 paddingBottom: bottom * gridPixelSize,
             },
-            padding: {
-                top,
-                left,
-                bottom,
-                right,
-            },
+            info: {
+                ...elements[gridMoving.id].info,
+                padding: {
+                    top,
+                    left,
+                    bottom,
+                    right,
+                },
+            }
         },
     }))
     if (gridMoving.moved) {

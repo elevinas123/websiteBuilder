@@ -32,7 +32,7 @@ export default function MarkdownScreen() {
             console.log("html", html)
             setPreviousAst(updatedAst)
             setText(html)
-        }, 3000),
+        }, 300),
         []
     ) // 300ms debounce time, adjust as needed
 
@@ -256,7 +256,7 @@ export default function MarkdownScreen() {
                     // Adjusted to use draft directly
                     handleElementAddition(changeDetails, parentId, draft, draft);
                 } else if (action === "modify") {
-                    handleElementModify(changeDetails, visualId, draft)
+                    handleElementModify(changeDetails, newPlace, visualId, draft)
                 } else if (action === "delete" && newPlace === "tagName") {
                     const parentElement = draft[parentId]
                     if (parentElement && parentElement.children) {
@@ -273,25 +273,35 @@ export default function MarkdownScreen() {
         
         }))
     }
-    const handleElementModify = (changeDetails, id, draft) => {
+    const handleElementModify = (changeDetails, newPlace, id, draft) => {
         const element = draft[id]
         if (!element) return // Early return if the element doesn't exist
 
         if (changeDetails.place === "classname") {
             const cssClasses = tailwindClassToCSS(changeDetails.changed[1])
-            element.width = cssClasses.width || element.width
-            element.height = cssClasses.height || element.height
-            element.backgroundColor = cssClasses.bg || element.backgroundColor
+            let width = cssClasses.width || element.width
+            let height = cssClasses.height || element.height
+            let backgroundColor = cssClasses.bg || element.backgroundColor
+            element.info = {
+                ...element.info, 
+                width,
+                height,
+                backgroundColor
 
+            }
             // Apply new styles calculated based on potential changes
-            const newStyles = calculateNewStyle(element.left, element.top, element.width, element.height, gridPixelSizeAtom, element.backgroundColor)
+            const newStyles = calculateNewStyle(element.info.left, element.info.top, width, height, gridPixelSizeAtom, height)
             element.style = { ...element.style, ...newStyles }
         } else if (changeDetails.place === "text") {
             element.text = changeDetails.changed[1]
         } else if (changeDetails.place === "tagName") {
             //I will add tag functionality later
-            return 
         }
+
+        if (newPlace === "attribs") {
+            element[changeDetails.place] = changeDetails.changed[1]
+        }
+        
 
         return 
     }

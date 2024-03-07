@@ -1,18 +1,17 @@
-
 import calculateNewStyle from "../calculateNewStyle"
 
 export default function justifyRight(parentId, allElements, setAllElements) {
     const parentElement = allElements[parentId]
 
     // Sort children by their current left position to maintain their relative order
-    const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].left - allElements[b].left)
+    const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].info.left - allElements[b].info.left)
 
     // Calculate the total width of all children
-    const childrenWidths = sortedChildren.map((childId) => allElements[childId].width)
+    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.width)
     const totalChildrenWidth = childrenWidths.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
 
     // Calculate starting left position for the first child based on the total width
-    let accumulatedWidth = parentElement.width - totalChildrenWidth // Start from the right, without grid size adjustments
+    let accumulatedWidth = parentElement.info.width - totalChildrenWidth // Start from the right, without grid size adjustments
 
     // Prepare updated elements with new positions
     const updatedElements = { ...allElements }
@@ -20,11 +19,14 @@ export default function justifyRight(parentId, allElements, setAllElements) {
         const child = updatedElements[childId]
 
         // Update left position for each child based on the accumulatedWidth
-        const newStyle = calculateNewStyle(accumulatedWidth, child.top, child.width, child.height, child.style.backgroundColor)
+        const newStyle = calculateNewStyle(accumulatedWidth, child.info.top, child.info.width, child.info.height, child.info.backgroundColor)
 
         updatedElements[childId] = {
             ...child,
-            left: accumulatedWidth, // Set new left position
+            info: {
+                ...child.info,
+                left: accumulatedWidth,
+            },
             style: {
                 ...child.style,
                 ...newStyle,
@@ -32,13 +34,13 @@ export default function justifyRight(parentId, allElements, setAllElements) {
         }
 
         // Increment accumulatedWidth for the next child's position
-        accumulatedWidth += child.width
+        accumulatedWidth += child.info.width
     })
     updatedElements[parentId] = {
         ...updatedElements[parentId],
-        css: {
-            ...updatedElements[parentId].css,
-            justify: "justify-right",
+        info: {
+            ...updatedElements[parentId].info,
+            justify: "justifyRight",
         },
     }
 

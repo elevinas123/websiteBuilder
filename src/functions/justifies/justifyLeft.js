@@ -4,7 +4,7 @@ export default function justifyLeft(parentId, allElements, setAllElements, gridP
     const parentElement = allElements[parentId]
 
     // Sort children by their current left position
-    const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].left - allElements[b].left)
+    const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].info.left - allElements[b].info.left)
 
     let accumulatedWidth = 1 // Start from the left edge of the parent
 
@@ -13,15 +13,18 @@ export default function justifyLeft(parentId, allElements, setAllElements, gridP
     sortedChildren.forEach((childId, index) => {
         const newStyle = calculateNewStyle(
             accumulatedWidth,
-            updatedElements[childId].top,
-            updatedElements[childId].width,
-            updatedElements[childId].height,
+            updatedElements[childId].info.top,
+            updatedElements[childId].info.width,
+            updatedElements[childId].info.height,
             gridPixelSize,
-            updatedElements[childId].style.backgroundColor
+            updatedElements[childId].info.backgroundColor
         )
         updatedElements[childId] = {
             ...updatedElements[childId],
-            left: accumulatedWidth,
+            info: {
+                ...updatedElements[childId].info,
+                left: accumulatedWidth
+            },
             style: {
                 ...updatedElements[childId].style,
                 ...newStyle,
@@ -33,9 +36,9 @@ export default function justifyLeft(parentId, allElements, setAllElements, gridP
     })
     updatedElements[parentId] = {
         ...updatedElements[parentId],
-        css: {
-            ...updatedElements[parentId].css,
-            justify: "justify-left",
+        info: {
+            ...updatedElements[parentId].info,
+            justify: "justifyLeft",
         },
     }
 

@@ -18,6 +18,7 @@ import getBoundingBox from "./functions/getBoundingBox"
 import ItemInfoScreen from "./ItemInfoScreen"
 import calculateNewStyle from "./functions/calculateNewStyle"
 import UndoTree from "./UndoTree"
+import { createNewGrid } from "./functions/gridCRUD"
 export default function WebsiteScreen() {
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
@@ -75,14 +76,14 @@ export default function WebsiteScreen() {
                     style: {
                         ...element.style, // Spread to copy existing styles
                         // Update specific style properties
-                        gridTemplateColumns: `repeat(${element.width}, ${gridPixelSize}px)`,
-                        gridTemplateRows: `repeat(${element.height}, ${gridPixelSize}px)`,
-                        width: element.width * gridPixelSize + element.padding.left * gridPixelSize + element.padding.right * gridPixelSize,
-                        height: element.height * gridPixelSize + element.padding.top * gridPixelSize + element.padding.bottom * gridPixelSize,
-                        paddingLeft: element.padding.left * gridPixelSize,
-                        paddingRight: element.padding.right * gridPixelSize,
-                        paddingTop: element.padding.top * gridPixelSize,
-                        paddingBottom: element.padding.bottom * gridPixelSize,
+                        gridTemplateColumns: `repeat(${element.info.width}, ${gridPixelSize}px)`,
+                        gridTemplateRows: `repeat(${element.info.height}, ${gridPixelSize}px)`,
+                        width: element.info.width * gridPixelSize + element.info.padding.left * gridPixelSize + element.info.padding.right * gridPixelSize,
+                        height: element.info.height * gridPixelSize + element.info.padding.top * gridPixelSize + element.info.padding.bottom * gridPixelSize,
+                        paddingLeft: element.info.padding.left * gridPixelSize,
+                        paddingRight: element.info.padding.right * gridPixelSize,
+                        paddingTop: element.info.padding.top * gridPixelSize,
+                        paddingBottom: element.info.padding.bottom * gridPixelSize,
                     },
                 }
             })
@@ -106,64 +107,8 @@ export default function WebsiteScreen() {
         setStartingElementBoundingBox(mainGridBoundingBox)
 
         setAllElements({
-            [mainId]: {
-                item: <Grid mainRef={mainRef} key={mainId} className="bg-red-500" id={mainId}></Grid>,
-                id: mainId,
-                width: 10000,
-                height: 10000,
-                top: 0,
-                left: 0,
-                style: {
-                    gridTemplateColumns: `repeat(${10000}, ${gridPixelSize}px)`, // 10 columns, each 4px wide
-                    gridTemplateRows: `repeat(${10000}, ${gridPixelSize}px)`,
-                    backgroundColor: "gray",
-                    width: 10000 * gridPixelSize,
-                    height: 10000 * gridPixelSize,
-                },
-                css: {
-                    width: "w-10000",
-                    backgroundColor: "bg-gray",
-                    height: "h-10000",
-                },
-                padding: {
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                },
-                parent: null,
-                children: ["main-webGrid"],
-                text: "",
-            },
-            ["main-webGrid"]: {
-                item: <Grid key={mainId} className="bg-red-500" id={"main-webGrid"}></Grid>,
-                id: "main-webGrid",
-                css: {
-                    width: "w-1920",
-                    height: "h-1080",
-                    backgroundColor: "bg-red",
-                },
-                width: 1920,
-                height: 1080,
-                top: 50,
-                left: 50,
-                style: {
-                    ...calculateNewStyle(50, 50, 1920, 1080, gridPixelSize, "red"),
-                    paddingLeft: 50 * gridPixelSize,
-                    paddingRight: 50 * gridPixelSize,
-                    paddingTop: 50 * gridPixelSize,
-                    paddingBottom: 50 * gridPixelSize,
-                },
-                padding: {
-                    top: 50,
-                    left: 50,
-                    right: 50,
-                    bottom: 50,
-                },
-                parent: mainId,
-                children: [],
-                text: "",
-            },
+            [mainId]: createNewGrid(mainId, null, 0, 0, 10000, 10000, { top: 0, left: 0, right: 0, bottom: 0 }, gridPixelSize, ["main-webGrid"]),
+            ["main-webGrid"]: createNewGrid("main-webGrid", mainId, 50, 50, 1920, 1080, { top: 50, left: 50, right: 50, bottom: 50 }, gridPixelSize, [], "", "black"),
         })
 
         setMainGridId(mainId)

@@ -13,10 +13,9 @@ export default function handleElementResize(
     setAllPositions,
     setIntersectionLines
 ) {
-    let { top, left, width, height } = allElements[gridMoving.id]
+    let { top, left, width, height, backgroundColor } = allElements[gridMoving.id].info
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
-    const backgroundColor = allElements[gridMoving.id].style.backgroundColor
 
     // Handle creating and resizing-1
     if (gridMoving.type === "creating") {
@@ -74,18 +73,16 @@ export default function handleElementResize(
             produce(currentState, (draft) => {
                 const element = draft[gridMoving.id]
                 if (element) {
-                    element.height = height
-                    element.width = width
-                    element.top = top
-                    element.left = left
                     element.style = {
                         ...element.style,
                         ...newStyle,
                     }
-                    element.css = {
-                        ...element.css,
-                        width: `w-${width}`,
-                        height: `w-${height}`,
+                    element.info = {
+                        ...element.info,
+                        height,
+                        width,
+                        top,
+                        left
                     }
                 }
             })
@@ -102,13 +99,16 @@ export default function handleElementResize(
         produce(currentState, (draft) => {
             const element = draft[gridMoving.id]
             if (element) {
-                element.height = height
-                element.width = width
-                element.top = top
-                element.left = left
                 element.style = {
                     ...element.style,
                     ...newStyle,
+                }
+                element.info = {
+                    ...element.info,
+                    height,
+                    width,
+                    top,
+                    left,
                 }
             }
         })

@@ -4,14 +4,14 @@ export default function justifyCenter(parentId, allElements, setAllElements, gri
     const parentElement = allElements[parentId]
 
     // Sort children by their current left position
-    const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].left - allElements[b].left)
+    const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].info.left - allElements[b].info.left)
 
     // Calculate the total width of all children
-    const childrenWidths = sortedChildren.map((childId) => allElements[childId].width)
+    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.width)
     const totalChildrenWidth = childrenWidths.reduce((accumulator, currentValue) => accumulator + currentValue, 1)
 
     // Calculate the total spacing and the space on each side
-    const totalSpacing = parentElement.width - totalChildrenWidth
+    const totalSpacing = parentElement.info.width - totalChildrenWidth
     const spaceOnEachSide = totalSpacing / 2
 
     let accumulatedWidth = spaceOnEachSide // Start from the left space
@@ -22,15 +22,18 @@ export default function justifyCenter(parentId, allElements, setAllElements, gri
         // Update left position for each child based on the accumulatedWidth
         const newStyle = calculateNewStyle(
             accumulatedWidth,
-            updatedElements[childId].top,
-            updatedElements[childId].width,
-            updatedElements[childId].height,
+            updatedElements[childId].info.top,
+            updatedElements[childId].info.width,
+            updatedElements[childId].info.height,
             gridPixelSize,
-            updatedElements[childId].style.backgroundColor
+            updatedElements[childId].info.backgroundColor
         )
         updatedElements[childId] = {
             ...updatedElements[childId],
-            left: accumulatedWidth,
+            info: {
+                ...updatedElements[childId].info,
+                left: accumulatedWidth,
+            },
             style: {
                 ...updatedElements[childId].style,
                 ...newStyle,
@@ -42,9 +45,9 @@ export default function justifyCenter(parentId, allElements, setAllElements, gri
     })
     updatedElements[parentId] = {
         ...updatedElements[parentId],
-        css: {
-            ...updatedElements[parentId].css,
-            justify: "justify-center",
+        info: {
+            ...updatedElements[parentId].info,
+            justify: "justifyCenter",
         },
     }
 
