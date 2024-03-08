@@ -4,7 +4,7 @@ import { allElementsAtom, gridPixelSizeAtom, visualsUpdatedAtom } from "./atoms"
 import { debounce} from "lodash" // Assuming you are using lodash for debouncing
 import Editor, { OnMount, OnChange } from '@monaco-editor/react'; // Adjusted based on your wrapper
 import * as monaco from "monaco-editor"
-import { diff } from "jsondiffpatch"
+import { Delta, diff } from "jsondiffpatch"
 import { Ast, parseHTML, serializeASTtoHTML } from "./functions/parseHTML"
 import _ from "lodash"
 import { AllElements, GridElement } from "./Types"
@@ -105,7 +105,7 @@ export default function MarkdownScreen() {
         console.log("oldAst", previousAst)
         console.log("newAst1", newAst)
 
-        const diffedAst: Diff | undefined = diff(previousAst, newAst)
+        const diffedAst= diff(previousAst, newAst)
         if (!diffedAst) return
         console.log("diff", diffedAst)
         let updateThings = applyChangesFromDiff(diffedAst, allElements)
@@ -115,8 +115,11 @@ export default function MarkdownScreen() {
         updateAllElements(updateThings, allElements, gridPixelsize, setAllElements)
         setPreviousAst(newAst)
     }
+    function isObject(variable: unknown) {
+        return typeof variable === "object" && variable !== null && !Array.isArray(variable)
+    }
     function applyChangesFromDiff(
-        diff: Diff,
+        diff: Delta,
         allElements: AllElements,
         allElementsChanges: Modify[] = [] ,
         parentId: string   | null = "main-webGrid",
@@ -124,6 +127,7 @@ export default function MarkdownScreen() {
         index = 0,
         place = "tagName"
     ) {
+        if (!isObject(diff))return allElementsChanges
         Object.entries(diff).forEach(([key, change]) => {
             if (change === undefined || key === "_t") {
                 // Skip undefined changes and array change markers
