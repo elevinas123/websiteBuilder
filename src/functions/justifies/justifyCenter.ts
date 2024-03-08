@@ -48,7 +48,7 @@ export default function justifyCenter(parentId: string, allElements:  AllElement
         ...updatedElements[parentId],
         info: {
             ...updatedElements[parentId].info,
-            justify: "justifyCenter",
+            justify: "center",
         },
     }
 

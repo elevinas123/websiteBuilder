@@ -1,49 +1,38 @@
 import { useAtom } from "jotai"
 import { useEffect, useState, useCallback, useRef } from "react"
 import { allElementsAtom, gridPixelSizeAtom, visualsUpdatedAtom } from "./atoms"
-import { debounce, every, transform } from "lodash" // Assuming you are using lodash for debouncing
-import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react"
-// eslint-disable-next-line no-undef
+import { debounce} from "lodash" // Assuming you are using lodash for debouncing
+import Editor, { OnMount, OnChange } from '@monaco-editor/react'; // Adjusted based on your wrapper
+import * as monaco from "monaco-editor"
 import { diff } from "jsondiffpatch"
-import { v4 as uuidv4 } from "uuid"
-import { createNewGrid } from "./functions/gridCRUD"
-import calculateNewStyle from "./functions/calculateNewStyle"
 import { Ast, parseHTML, serializeASTtoHTML } from "./functions/parseHTML"
 import _ from "lodash"
-import {produce} from "immer"
 import { AllElements, GridElement } from "./Types"
 import { updateAllElements } from "./functions/codeToVisuals"
 import isInt from "./functions/isInt"
+
+
+interface ChildrenDiff {
+    childNodes: {
+        [key: number]: Ast[]
+        _t?: string
+    }
+}
+
+export interface Diff {
+    _t?: string
+    [key: number]: ChildrenDiff
+}
+
 export interface Modify {
-    action: string
-    visualId: null  | string
-    change: Change
-    parentId: null | string
+    action: "add" | "delete" | "modify"
+    visualId: string | null
+    parentId: string | null
+    change: unknown
     newIndex: number
     newPlace: string
 }
-export interface Change {
 
-}
-interface AstDelta {
-    tagName?: [string, string] // Optional: Previous value and new value
-    childNodes?: AstChildNodesDelta | ArrayChangeDescriptor<AstDelta>
-    textContent?: [string, string] // Optional: Previous value and new value
-    attribs?: { [key: string]: [string, string] | string } // For added or changed attributes
-}
-
-interface AstChildNodesDelta {
-    [index: number]: AstDelta // Index-based changes in childNodes
-}
-
-// General structure for array changes (simplified and specific to your case)
-interface ArrayChangeDescriptor<T> {
-    _t: "a" // Marker for array change
-    [key: string]: any // Includes detailed changes, moves, etc., in arrays
-}
-
-// Enhancing the Delta type to cater to recursive structures and specific changes
-export type Diff = AstDelta | ArrayChangeDescriptor<AstDelta> | { [key: string]: Diff }
 
 export default function MarkdownScreen() {
     const [text, setText] = useState("")
@@ -52,7 +41,7 @@ export default function MarkdownScreen() {
     const [visualsUpdate, setVisualsUpdated] = useAtom(visualsUpdatedAtom)
     const [previousAst, setPreviousAst] = useState(parseHTML("<div></div>"))
     const mainId = "main-webGrid"
-    const editorRef = useRef(null)
+    const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
 
     const debouncedUpdateTheEditor = useCallback(
         debounce((visualsUpdate, previousAst, allElements, setPreviousAst, setText) => {
@@ -98,37 +87,34 @@ export default function MarkdownScreen() {
         let path = []
         while (currId !== "main-webGrid") {
             let parentId = allElements[currId].parent
-            if (!parent) console.error("wtf negalima tokio", currId, parentId)
+            if (!parentId) throw new Error("wtf negalima tokio parent id negali  but ne string")
             path.unshift(allElements[parentId].children.indexOf(currId))
             currId = parentId
         }
         return path
     }
-    const handleEditorMount = (editor, monaco) => {
+    const handleEditorMount: OnMount = (editor, monacoInstance) => {
         editorRef.current = editor
+        // You can now use 'monacoInstance' to access the monaco object if needed
     }
 
-    const handleChange = (value: string, event) => {
+    const handleChange: OnChange = (value, event) => {
         console.log("value", value)
         value = `<div>${value}</div>`
         const newAst = parseHTML(value)
         console.log("oldAst", previousAst)
         console.log("newAst1", newAst)
 
-        const diffedAst = diff(previousAst, newAst)
+        const diffedAst: Diff | undefined = diff(previousAst, newAst)
         if (!diffedAst) return
         console.log("diff", diffedAst)
-        console.log("allElements", allElements)
         let updateThings = applyChangesFromDiff(diffedAst, allElements)
+        return
         console.log("updateThings", updateThings)
         console.log("allELements pradzioj", allElements)
         updateAllElements(updateThings, allElements, gridPixelsize, setAllElements)
         setPreviousAst(newAst)
     }
-
-    
-
-
     function applyChangesFromDiff(
         diff: Diff,
         allElements: AllElements,

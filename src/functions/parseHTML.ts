@@ -5,13 +5,13 @@ export interface Attribs {
 }
 export interface Ast {
     tagName: string
+    attribs: { [key: string]: string }
     childNodes: Ast[]
-    textContent?: string
-    attribs?: {[s: string]: string}
+    textContent: string
 }
 
-export const parseHTML = (html: string) => {
-    let root: Ast = { tagName: "root", childNodes: [] }
+export const parseHTML = (html: string): Ast[] => {
+    let root: Ast = { tagName: "root", childNodes: [], attribs: {}, textContent: "" }
     let currentParent = root
     const stack = [root] // Use to track open elements
     let errors = [] // Accumulate errors found during parsing
@@ -45,9 +45,9 @@ export const parseHTML = (html: string) => {
                     errors.push(`No open tag for closing tag </${tagName}>.`)
                     return
                 }
-                 if (tagName[tagName.length - 1] === "<") {
-                     tagName = tagName.slice(0, -1)
-                 }
+                if (tagName[tagName.length - 1] === "<") {
+                    tagName = tagName.slice(0, -1)
+                }
                 // Check if the current closing tag matches the last opened tag
                 const lastOpenedTag = stack[stack.length - 1]
                 if (lastOpenedTag.tagName !== tagName) {
@@ -83,7 +83,7 @@ export const parseHTML = (html: string) => {
     return root.childNodes
 }
 
-export const serializeASTtoHTML = (nodes, depth = 0) => {
+export const serializeASTtoHTML = (nodes: Ast[], depth = 0) => {
     // Ensure nodes is always an array
     if (!Array.isArray(nodes)) {
         nodes = [nodes]
@@ -137,7 +137,7 @@ export const serializeASTtoHTML = (nodes, depth = 0) => {
         .join("") // Combine the HTML strings of all nodes
 }
 
-function isSelfClosing(tagName) {
+function isSelfClosing(tagName: string) {
     const selfClosingTags = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]
     return selfClosingTags.includes(tagName)
 }

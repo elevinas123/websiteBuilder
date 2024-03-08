@@ -4,7 +4,7 @@ import calculateNewStyle from "./calculateNewStyle"
 
 export const createNewGrid = (
     id: string,
-    parentId: string,
+    parentId: string | null,
     left: number,
     top: number,
     width: number,
@@ -27,7 +27,13 @@ export const createNewGrid = (
             backgroundColor,
         },
         id: id,
-        style: { ...newStyle },
+        style: {
+            ...newStyle,
+            paddingLeft: padding.left * gridPixelSize,
+            paddingRight: padding.right * gridPixelSize,
+            paddingTop: padding.top * gridPixelSize,
+            paddingBottom: padding.bottom * gridPixelSize,
+        },
         text: text,
         parent: parentId,
         children: children,

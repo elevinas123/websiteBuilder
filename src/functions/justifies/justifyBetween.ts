@@ -51,7 +51,7 @@ export default function justifyCenter(parentId: string, allElements: AllElements
         ...updatedElements[parentId],
         info: {
             ...updatedElements[parentId].info,
-            justify: "justifyBetween",
+            justify: "spaceBetween",
         },
     }
 

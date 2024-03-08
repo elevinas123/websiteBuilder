@@ -3,8 +3,8 @@ import { v4 as uuidv4 } from "uuid"
 import startElementInteraction from "./startElementInteraction"
 import calculateNewStyle from "./calculateNewStyle"
 import { createNewGrid } from "./gridCRUD"
-import { AllElements, GridElement } from "../Types"
-import { SetGridMoving } from "../atoms"
+import { AllElements, GridElement, SetAllElements } from "../Types"
+import { SetGridChecked, SetGridMoving } from "../atoms"
 
 interface MainGridOffset {
     left: number,
@@ -20,8 +20,8 @@ export default function startCreatingElement(
     mainGridOffset: MainGridOffset,
     gridPixelSize: number,
     setGridMoving: SetGridMoving,
-    setAllElements,
-    setGridChecked
+    setAllElements: SetAllElements,
+    setGridChecked: SetGridChecked
 ) {
     const uuid = uuidv4()
     let offSetLeft = mainGridOffset.left

@@ -1,16 +1,16 @@
 import { produce } from "immer"
 import calculateNewStyle from "./calculateNewStyle"
+import { GridMoving, SetGridMoving } from "./../atoms"
+import { AllElements, SetAllElements } from "../Types";
+import UndoTree from "../UndoTree";
 
 export default function handleGridMove(
-    gridMoving,
-    allElements,
-    gridPixelSize,
-    HistoryClass,
-    allPositions,
-    setGridMoving,
-    setAllElements,
-    setAllPositions,
-    setIntersectionLines
+    gridMoving: GridMoving,
+    allElements: AllElements,
+    gridPixelSize: number,
+    HistoryClass: UndoTree<AllElements>,
+    setGridMoving: SetGridMoving,
+    setAllElements: SetAllElements,
 ) {
     let top = allElements[gridMoving.id].info.top
     let left = allElements[gridMoving.id].info.left
@@ -23,6 +23,7 @@ export default function handleGridMove(
     let newTop = Math.round((top + (gridMoving.y2 - gridMoving.y1) / gridPixelSize) * 100) / 100
 
     const parentId = allElements[gridMoving.id].parent
+    if (!parentId) throw new Error("parentId must be a string when moving elements")
     const parentInfo = {
         top: allElements[parentId].info.top,
         left: allElements[parentId].info.left,
@@ -43,8 +44,6 @@ export default function handleGridMove(
     if (newLeft < 0) {
         newLeft = 0
     }
-    //const intersections = calculateIntersectLines(gridMoving.id, newLeft, newTop, width, height, allElements, allPositions, setAllPositions)
-    const intersections = []
     let offsetConfig = {
         offset: gridMoving.offset,
         offsetLeft: gridMoving.offsetLeft,
@@ -76,13 +75,11 @@ export default function handleGridMove(
 
     // Reset moving state if the move is completed
     if (gridMoving.moved === true) {
-        setGridMoving({ moving: false })
+        setGridMoving(i => ({...i, moving: false }))
         HistoryClass.performAction(allElements)
-        setIntersectionLines([])
 
         return
     }
     // Continue moving
-    setIntersectionLines(intersections)
     setGridMoving((i) => ({ ...i, setBox: true, ...offsetConfig }))
 }

@@ -43,7 +43,7 @@ export default function justifyLeft(parentId: string, allElements: AllElements, 
         ...updatedElements[parentId],
         info: {
             ...updatedElements[parentId].info,
-            justify: "justifyRight",
+            justify: "right",
         },
     }
 

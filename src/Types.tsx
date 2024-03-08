@@ -12,6 +12,10 @@ export interface Style {
     maxWidth: string
     maxHeight: string
     backgroundColor: string
+    paddingLeft?: number
+    paddingRight?: number
+    paddingTop?: number
+    paddingBottom?: number
     // Add other style properties as needed
 }
 export interface Padding {
@@ -20,6 +24,7 @@ export interface Padding {
     right: number
     bottom: number
 }
+export type Justify = "left" | "center" | "spaceBetween" | "right"
 
 // Define the structure for the "info" part of the grid element
 export interface GridInfo {
@@ -29,6 +34,7 @@ export interface GridInfo {
     height: number
     padding: Padding
     backgroundColor: string
+    justify?: Justify
 }
 
 // Assuming Grid is a React component with these props
@@ -37,6 +43,7 @@ export interface GridProps {
     className: string
     id: string
     childStyle: Style
+
 }
 
 // Define what a grid element looks like
@@ -46,7 +53,7 @@ export interface GridElement {
     id: string
     style: Style
     text: string
-    parent: string
+    parent: string |null
     children: string[] // Assuming children are of the same type
 }
 

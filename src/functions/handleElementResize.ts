@@ -1,16 +1,17 @@
 import { produce } from "immer"
 import calculateNewStyle from "./calculateNewStyle"
-import { GridMoving } from "../atoms"
-import { AllElements } from "../Types"
+import { GridMoving, SetCursorType, SetGridMoving } from "../atoms"
+import { AllElements, SetAllElements } from "../Types"
+import UndoTree from "../UndoTree"
 
 export default function handleElementResize(
     gridMoving: GridMoving,
     allElements: AllElements,
     gridPixelSize: number,
-    HistoryClass,
-    setGridMoving: ,
-    setAllElements,
-    setCursorType,
+    HistoryClass: UndoTree<AllElements>,
+    setGridMoving: SetGridMoving ,
+    setAllElements: SetAllElements,
+    setCursorType: SetCursorType,
 ) {
     let { top, left, width, height, backgroundColor } = allElements[gridMoving.id].info
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
@@ -86,7 +87,7 @@ export default function handleElementResize(
                 }
             })
         )
-        setGridMoving({ moving: false })
+        setGridMoving((i) => ({ ...i, moving: false }))
         HistoryClass.performAction(allElements)
         console.log(HistoryClass.currentNode)
         if (gridMoving.type === "creating") {

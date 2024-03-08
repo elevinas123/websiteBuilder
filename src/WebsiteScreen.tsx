@@ -19,6 +19,17 @@ import ItemInfoScreen from "./ItemInfoScreen"
 import calculateNewStyle from "./functions/calculateNewStyle"
 import UndoTree from "./UndoTree"
 import { createNewGrid } from "./functions/gridCRUD"
+import { AllElements } from "./Types"
+
+export interface BoundingBox {
+    left: number
+    top: number
+    right: number
+    bottom: number
+    width: number
+    height: number
+}
+
 export default function WebsiteScreen() {
     const [gridMoving, setGridMoving] = useAtom(gridMovingAtom)
     const [cursorType, setCursorType] = useAtom(cursorTypeAtom)
@@ -29,12 +40,12 @@ export default function WebsiteScreen() {
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
-    const latestValuesRef = useRef({ scrollLeft: 0, scrollTop: 0 })
+    const latestValuesRef = useRef({ cursorX: 0, cursorY: 0 })
     const MIN_GRID_PIXEL_SIZE = 0.25 // Example minimum zoom level
     const MAX_GRID_PIXEL_SIZE = 10 // Example maximum zoom level
 
     const [prevSize, setPrevSize] = useState(2)
-    function roundBoundingBox(boundingBox) {
+    function roundBoundingBox(boundingBox: BoundingBox) {
         if (!boundingBox) return
         return {
             left: Math.floor(boundingBox.left),
@@ -48,7 +59,7 @@ export default function WebsiteScreen() {
     useLayoutEffect(() => {
         console.log(gridPixelSize, prevSize)
         if (gridPixelSize === undefined) return // Ensure gridPixelSize is initialized
-
+        if (!mainRef.current) return
         // Use the latest event details for calculations
         const { cursorX, cursorY } = latestValuesRef.current
         const logicalXPreZoom = (cursorX + mainRef.current.scrollLeft) / prevSize
@@ -63,9 +74,10 @@ export default function WebsiteScreen() {
         mainRef.current.scrollTop = newScrollTop
     }, [gridPixelSize]) // This effect runs every time gridPixelSize changes
     useEffect(() => {
-        setMainGridOffset({ top: mainRef.current.scrollTop / gridPixelSize, left: mainRef.current.scrollLeft / gridPixelSize })
+        
+        setMainGridOffset((i) => (mainRef.current? { ...i, top: mainRef.current.scrollTop / gridPixelSize, left: mainRef.current.scrollLeft / gridPixelSize }: {...i}))
         setAllElements((currentElements) => {
-            const updatedElements = {}
+            const updatedElements: AllElements = {}
 
             // Iterate over each element in the current state
             Object.entries(currentElements).forEach(([id, element]) => {
@@ -78,8 +90,8 @@ export default function WebsiteScreen() {
                         // Update specific style properties
                         gridTemplateColumns: `repeat(${element.info.width}, ${gridPixelSize}px)`,
                         gridTemplateRows: `repeat(${element.info.height}, ${gridPixelSize}px)`,
-                        width: element.info.width * gridPixelSize + element.info.padding.left * gridPixelSize + element.info.padding.right * gridPixelSize,
-                        height: element.info.height * gridPixelSize + element.info.padding.top * gridPixelSize + element.info.padding.bottom * gridPixelSize,
+                        //width: element.info.width * gridPixelSize + element.info.padding.left * gridPixelSize + element.info.padding.right * gridPixelSize,
+                        //height: element.info.height * gridPixelSize + element.info.padding.top * gridPixelSize + element.info.padding.bottom * gridPixelSize,
                         paddingLeft: element.info.padding.left * gridPixelSize,
                         paddingRight: element.info.padding.right * gridPixelSize,
                         paddingTop: element.info.padding.top * gridPixelSize,
@@ -98,7 +110,7 @@ export default function WebsiteScreen() {
         console.log(HistoryClass)
     }, [prevSize])
 
-    const mainRef = useRef(null)
+    const mainRef = useRef<HTMLDivElement | null>(null)
     useEffect(() => {
         if (!mainRef.current) return
         const mainId = uuidv4()
@@ -108,7 +120,19 @@ export default function WebsiteScreen() {
 
         setAllElements({
             [mainId]: createNewGrid(mainId, null, 0, 0, 10000, 10000, { top: 0, left: 0, right: 0, bottom: 0 }, gridPixelSize, ["main-webGrid"]),
-            ["main-webGrid"]: createNewGrid("main-webGrid", mainId, 50, 50, 1920, 1080, { top: 50, left: 50, right: 50, bottom: 50 }, gridPixelSize, [], "", "black"),
+            ["main-webGrid"]: createNewGrid(
+                "main-webGrid",
+                mainId,
+                50,
+                50,
+                1920,
+                1080,
+                { top: 50, left: 50, right: 50, bottom: 50 },
+                gridPixelSize,
+                [],
+                "",
+                "black"
+            ),
         })
 
         setMainGridId(mainId)
@@ -135,11 +159,12 @@ export default function WebsiteScreen() {
     }, []) // Empty array ensures this effect runs only on mount and unmo
 
     useEffect(() => {
+        if (!mainRef.current) return
         mainRef.current.scrollTop = 0
         mainRef.current.scrollLeft = 0
         setMainGridOffset({ top: 0, left: 0, width: 10000, height: 10000 })
     }, [mainGridId])
-    const handleMousemove = (e) => {
+    const handleMousemove:  React.MouseEventHandler<HTMLDivElement>= (event) => {
         if (gridMoving.moving) {
             setGridMoving((i) => {
                 if (i.moved) return { ...i, setBox: false }
@@ -148,15 +173,15 @@ export default function WebsiteScreen() {
                 }
                 let x1 = i.x2
                 let y1 = i.y2
-                let x2 = e.clientX - startElementBoundingBox.left
-                let y2 = e.clientY - startElementBoundingBox.top
+                let x2 = event.clientX - startElementBoundingBox.left
+                let y2 = event.clientY - startElementBoundingBox.top
                 return { ...i, x1, x2, y1, y2, setBox: false }
             })
 
             return
         }
     }
-    const handleTextWritten = (event) => {
+    const handleTextWritten: React.KeyboardEventHandler<HTMLDivElement> = (event) => {
         console.log(event.key)
         if (event.key === "Backspace") {
             console.log("no backspace functionality")
@@ -170,12 +195,14 @@ export default function WebsiteScreen() {
             }))
         }
     }
-    const handleDragStart = (e, index) => {
-        e.preventDefault()
+    const handleDragStart: React.MouseEventHandler<HTMLDivElement> = (event) => {
+        event.preventDefault()
+        if (!mainRef.current) return
         mainRef.current.scrollTop = mainGridOffset.top * gridPixelSize
     }
     useEffect(() => {
-        const handleWheel = (event) => {
+        const handleWheel = (event: WheelEvent) => {
+            if (!mainRef.current) return
             if (event.ctrlKey) {
                 event.preventDefault()
 
@@ -255,7 +282,7 @@ export default function WebsiteScreen() {
                 </div>
                 <div
                     ref={mainRef}
-                    onScroll={(e) => handleDragStart(e)}
+                    onScroll={handleDragStart}
                     tabIndex={0}
                     onKeyDown={handleTextWritten}
                     className="element bg-red mt-10  h-full w-full overflow-scroll text-black"

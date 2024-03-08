@@ -1,7 +1,7 @@
 import { AllElements, SetAllElements } from "../../Types"
 import calculateNewStyle from "../calculateNewStyle"
 
-export default function justifyLeft(parentId: number, allElements: AllElements, setAllElements: SetAllElements, gridPixelSize: number) {
+export default function justifyLeft(parentId: string, allElements: AllElements, setAllElements: SetAllElements, gridPixelSize: number) {
     const parentElement = allElements[parentId]
 
     // Sort children by their current left position
@@ -33,13 +33,13 @@ export default function justifyLeft(parentId: number, allElements: AllElements, 
         }
 
         // Add the current child's width to the accumulatedWidth for the next child's position
-        accumulatedWidth += updatedElements[childId].width -1 
+        accumulatedWidth += updatedElements[childId].info.width -1 
     })
     updatedElements[parentId] = {
         ...updatedElements[parentId],
         info: {
             ...updatedElements[parentId].info,
-            justify: "justifyLeft",
+            justify: "left",
         },
     }
 

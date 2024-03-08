@@ -7,6 +7,7 @@ import justifyLeft from "./functions/justifies/justifyLeft"
 import justifyRight from "./functions/justifies/justifyRight"
 import justifyBetween from "./functions/justifies/justifyBetween"
 import { debounce } from "lodash"
+import { Justify } from "./Types"
 
 export default function ItemInfoScreen() {
     const [allElements, setAllElements] = useAtom(allElementsAtom)
@@ -32,7 +33,7 @@ export default function ItemInfoScreen() {
         []
     )
 
-    const changeColor = (e) => {
+    const changeColor = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (gridChecked == "") return
 
         setAllElements((prevElements) => ({
@@ -58,7 +59,7 @@ export default function ItemInfoScreen() {
             setItemId(gridChecked)
         }
     }, [gridChecked, mainGridId])
-    const changeBorderColor = (e) => {
+    const changeBorderColor = (e: React.ChangeEvent<HTMLInputElement>) => {
         setAllElements((prevElements) => ({
             ...prevElements,
             [itemId]: {
@@ -76,7 +77,7 @@ export default function ItemInfoScreen() {
         debouncedUpdateHistory()
     }
 
-    const justifyElement = (type) => {
+    const justifyElement = (type: Justify) => {
         if (type === "left") {
             justifyLeft(itemId, allElements, setAllElements, gridPixelSize)
         } else if (type === "center") {
@@ -177,7 +178,11 @@ export default function ItemInfoScreen() {
             </div>
             <div>
                 <div>GridSize</div>
-                <input className="bg-zinc-200 text-black" onBlur={(e) => setGridPixelSize(e.target.value - 0)} type=""></input>
+                <input
+                    className="bg-zinc-200 text-black"
+                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => setGridPixelSize(parseFloat(e.target.value))}
+                    type=""
+                ></input>
             </div>
         </div>
     )

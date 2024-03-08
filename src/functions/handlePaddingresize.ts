@@ -2,8 +2,16 @@ import { produce } from "immer"
 import calculateNewStyle from "./calculateNewStyle"
 import { AllElements, SetAllElements } from "../Types"
 import { GridMoving, SetGridMoving } from "../atoms"
+import UndoTree from "../UndoTree"
 
-export default function handlePaddingResize(gridMoving: GridMoving, allElements: AllElements, gridPixelSize: number, HistoryClass, setGridMoving: SetGridMoving, setAllElements: SetAllElements) {
+export default function handlePaddingResize(
+    gridMoving: GridMoving,
+    allElements: AllElements,
+    gridPixelSize: number,
+    HistoryClass: UndoTree<AllElements>,
+    setGridMoving: SetGridMoving,
+    setAllElements: SetAllElements
+) {
     let { top, left, right, bottom } = allElements[gridMoving.id].info.padding
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
@@ -51,11 +59,11 @@ export default function handlePaddingResize(gridMoving: GridMoving, allElements:
                     bottom,
                     right,
                 },
-            }
+            },
         },
     }))
     if (gridMoving.moved) {
-        setGridMoving({ moving: false })
+        setGridMoving(i => ({...i, moving: false }))
         HistoryClass.performAction(allElements)
         console.log(HistoryClass.currentNode)
         return
