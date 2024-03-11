@@ -23,10 +23,10 @@ export interface Diff {
     [key: number]: ChildrenDiff
 }
 
-export type Change = Ast[] | string[] | number[] | [string, number, number]
+export type Change = Ast | string | number
 export interface ChangeDetails {
-        place: string
-        changed: Change
+    place: string
+    changed: Change
 }
 export interface Modify {
     action: "add" | "delete" | "modify"
@@ -112,7 +112,6 @@ export default function MarkdownScreen() {
         if (!diffedAst) return
         console.log("diff", diffedAst)
         let updateThings = applyChangesFromDiff(diffedAst, allElements)
-        return
         console.log("updateThings", updateThings)
         console.log("allELements pradzioj", allElements)
         updateAllElements(updateThings, allElements, gridPixelsize, setAllElements)
@@ -127,8 +126,9 @@ export default function MarkdownScreen() {
         allElementsChanges: Modify[] = [],
         parentId: string | null = "main-webGrid",
         visualId: string | null = "main-webGrid",
-        index = 0,
-        place = "tagName"
+        index: number | null = null,
+        place = "tagName",
+        parentKey: string = "root"
     ) {
         if (!isObject(diff)) return allElementsChanges
         if (!diff) return allElementsChanges
@@ -138,23 +138,21 @@ export default function MarkdownScreen() {
                 return
             }
             console.log("change", change)
-            console.log("key", key)
             let newIndex = index
             let newPlace = place
             if (isInt(key)) {
-                newIndex = parseInt(key)
-            }
-            if (key === "childNodes") {
-                parentId = visualId
-                visualId = parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : null) : "main-webGrid"
             }
             // Adjust the handling based on your structure. Assuming 'attribs' for attributes
             if (key === "attribs") newPlace = "attribs"
             if (key === "tagName") newPlace = "tagName"
+            if (parentKey === "childNodes" && isInt(key)) {
+                newIndex = parseInt(key)
+                console.log("newIndex", newIndex)
+            }
             console.log("parentId", parentId)
             console.log("visualId", visualId)
             console.log("visualId")
-            if (Array.isArray(change)) {
+            if (Array.isArray(change) && newIndex !== null) {
                 // Handle modifications, deletions, or additions based on change array structure
                 const action = determineAction(change)
                 console.log("this change", change)
@@ -166,16 +164,18 @@ export default function MarkdownScreen() {
                     allElementsChanges.push({ action, visualId, change: { place: "idk", changed: change[0] }, parentId, newIndex, newPlace })
                 }
             } else {
-                // Nested changes within properties like childNodes or attribsif  ()
-
-                applyChangesFromDiff(change, allElements, allElementsChanges, parentId, visualId, newIndex, newPlace)
+                if (key === "childNodes" && newIndex !== null) {
+                    parentId = visualId
+                    visualId = parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : null) : "main-webGrid"
+                }
+                applyChangesFromDiff(change, allElements, allElementsChanges, parentId, visualId, newIndex, newPlace, key)
             }
         })
 
         return allElementsChanges
     }
 
-    function determineAction(change: Change) {
+    function determineAction(change: Ast[] | string[] | number[]) {
         if (change.length === 1) return "add"
         if (change.length === 2) return "modify"
         if (change.length === 3 && change[2] === 0) return "delete"

@@ -8,13 +8,13 @@ import { Ast } from "./parseHTML"
 export const updateAllElements = (changes: Modify[], allElements: AllElements, gridPixelSize: number, setAllElements: SetAllElements) => {
     setAllElements(
         produce(allElements, (draft) => {
-            changes.forEach(({ action, visualId, change: changeDetails, parentId, newPlace }) => {
+            changes.forEach(({ action, visualId, change: changeDetails, newIndex, parentId, newPlace }) => {
                 if (!parentId) throw new Error(`parentId must be string, got ${parentId}`)
-                if (!visualId) throw new Error(`visualId must be string, got ${visualId}`)
                 if (action === "add") {
                     // Adjusted to use draft directly
-                    handleElementAddition(changeDetails.changed, parentId, draft, draft)
+                    handleElementAddition(changeDetails.changed, parentId, newIndex, draft, gridPixelSize)
                 } else if (action === "modify") {
+                    if (!visualId) return
                     handleElementModify(changeDetails, newPlace, visualId, draft, gridPixelSize)
                 } else if (action === "delete" && newPlace === "tagName") {
                     const parentElement = draft[parentId]
@@ -65,18 +65,19 @@ function isAst(value: any): value is Ast {
     return value && "childNodes" in value
 }
 
-const handleElementAddition = (changeDetails: Change, parentId: string | null, allElements: AllElements, draft: AllElements) => {
+const handleElementAddition = (changeDetails: Change, parentId: string | null, index: number, draft: AllElements, gridPixelSize: number) => {
     if (!parentId) throw new Error(`parentId must be string, got ${parentId}`)
     if (!changeDetails) throw new Error(`parentId must be string, got ${parentId}`)
-    if (!(changeDetails[0] && isAst(changeDetails[0]))) throw new Error("changeDetails cant be non ast type")
+    if (!isAst(changeDetails)) throw new Error(`ChangeDetails must be ast, got ${changeDetails}`)
+    console.log(changeDetails)
     let elementsIds = []
-    let totalHeight = calculateStartingHeight(parentId, 0, allElements) + 1 // +1 to start from the next possible height
+    let totalHeight = calculateStartingHeight(parentId, 0, draft) + 1 // +1 to start from the next possible height
 
     // Directly use `addElementRecursively` to modify the draft
-    const [, childId, , h] = addElementRecursively(changeDetails[0], parentId, draft, 1, totalHeight)
+    const [, childId, , h] = addElementRecursively(changeDetails, parentId, draft, gridPixelSize, 1, totalHeight)
     elementsIds.push(childId)
     totalHeight += h
-    draft[parentId].children.push(childId)
+    draft[parentId].children.splice(index, 0, childId)
 
     return { draft, elementsIds, totalHeight } // Return draft for clarity, even though it's modified in place
 }
@@ -85,7 +86,7 @@ const handleElementModify = (changeDetails: ChangeDetails, newPlace: string, id:
     if (!element) return // Early return if the element doesn't exist
 
     if (changeDetails.place === "classname") {
-        const cssClasses = tailwindClassToCSS(changeDetails.changed[1])
+        const cssClasses = tailwindClassToCSS(changeDetails.changed)
         let width: number = parseInt(cssClasses.width) || element.info.width
         let height: number = parseInt(cssClasses.height) || element.info.height
         let backgroundColor = cssClasses.bg || element.info.backgroundColor
@@ -98,8 +99,8 @@ const handleElementModify = (changeDetails: ChangeDetails, newPlace: string, id:
         // Apply new styles calculated based on potential changes
         const newStyles = calculateNewStyle(element.info.left, element.info.top, width, height, gridPixelSize, backgroundColor)
         element.style = { ...element.style, ...newStyles }
-    } else if (changeDetails.place === "text" && typeof changeDetails.changed[1] === "string") {
-        element.text = changeDetails.changed[1]
+    } else if (changeDetails.place === "text" && typeof changeDetails.changed === "string") {
+        element.text = changeDetails.changed
     } else if (changeDetails.place === "tagName") {
         //I will add tag functionality later
     }
