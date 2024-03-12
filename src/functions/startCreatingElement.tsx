@@ -29,8 +29,8 @@ export default function startCreatingElement(
     let pId: string | null = parentId
     while (pId !== null) {
         const ell: GridElement = allElements[pId]
-        offSetLeft -= ell.info.left + ell.info.padding.left + ell.info.border.borderLeft.borderWidth
-        offSetTop -= ell.info.top + ell.info.padding.top + ell.info.border.borderTop.borderWidth
+        offSetLeft -= ell.info.left + ell.info.padding.left + ell.info.border.borderLeft.borderWidth -1
+        offSetTop -= ell.info.top + ell.info.padding.top + ell.info.border.borderTop.borderWidth - 1
         pId = ell.parent
     }
     const left = x / gridPixelSize + offSetLeft 

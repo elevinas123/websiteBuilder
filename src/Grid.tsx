@@ -180,7 +180,7 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative z-10 box-content grid h-full w-full  select-none   ${selecteCursorType[cursorType]} ${gridSelect && cursorType !== "padding" ? "border-dashed" : ""} `}
+            className={`relative z-10 box-content grid h-full w-full  select-none    `}
         >
             {/* Conditionally render the padding resize handles if padding is being adjusted or is non-zero */}
             {(Object.values(allElements[props.id].info.padding).some((value) => value > 0) || ((cursorType === "padding" || cursorType === "border") && gridChecked === props.id)) && (
