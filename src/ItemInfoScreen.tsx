@@ -66,11 +66,31 @@ export default function ItemInfoScreen() {
                 ...prevElements[itemId],
                 style: {
                     ...prevElements[itemId].style,
-                    borderColor: e.target.value,
+                    borderRightColor: e.target.value,
+                    borderLeftColor: e.target.value,
+                    borderTopColor: e.target.value,
+                    borderBottomColor: e.target.value,
                 },
                 info: {
                     ...prevElements[itemId].info,
-                    borderColor: e.target.value,
+                    border: {
+                        borderRight: {
+                            ...prevElements[itemId].info.border.borderRight,
+                            borderColor: e.target.value,
+                        },
+                        borderLeft: {
+                            ...prevElements[itemId].info.border.borderLeft,
+                            borderColor: e.target.value,
+                        },
+                        borderTop: {
+                            ...prevElements[itemId].info.border.borderTop,
+                            borderColor: e.target.value,
+                        },
+                        borderBottom: {
+                            ...prevElements[itemId].info.border.borderBottom,
+                            borderColor: e.target.value,
+                        },
+                    },
                 },
             },
         }))

@@ -19,7 +19,7 @@ import handleElementResize from "./functions/handleElementResize"
 import startElementInteraction from "./functions/startElementInteraction"
 import handlePaddingResize from "./functions/handlePaddingresize"
 import { Style } from "./Types"
-
+import handleBorderResize from "./functions/handleBorderResize"
 
 interface VisualsUpdated {
     count: number
@@ -47,7 +47,6 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
-    const [allPositions, setAllPositions] = useAtom(allPositionsAtom)
     const [lines, setLines] = useState([])
     const [visualsUpdate, setVisualsUpdated] = useAtom(visualsUpdatedAtom)
 
@@ -59,6 +58,7 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
         resizingT: "cursor-s-resize",
         creating: "cursor-default",
         padding: "cursor-default",
+        border: "cursor-default",
     }
     useEffect(() => {
         console.log("children changed", props.id)
@@ -73,18 +73,11 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
         }
     }, [gridChecked, props.id])
     useEffect(() => {}, [allElements[props.id].style])
-    
+
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
             if (gridMoving.type === "moving") {
-                handleGridMove(
-                    gridMoving,
-                    allElements,
-                    gridPixelSize,
-                    HistoryClass,
-                    setGridMoving,
-                    setAllElements,
-                )
+                handleGridMove(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements)
                 setVisualsUpdated((i) => ({ count: i.count + 1, id: gridMoving.id }))
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
@@ -95,26 +88,20 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
                     top: Math.max(0, i.top - (gridMoving.y2 - gridMoving.y1) / gridPixelSize),
                 }))
                 if (gridMoving.moved) {
-                    setGridMoving(i => ({...i, moving: false }))
+                    setGridMoving((i) => ({ ...i, moving: false }))
                     HistoryClass.performAction(allElements)
 
                     console.log(HistoryClass.currentNode)
                 } else setGridMoving((i) => ({ ...i, setBox: true }))
+            } else if (cursorType === "padding") {
+                handlePaddingResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements)
+                setVisualsUpdated((i) => ({ count: i.count + 1, id: gridMoving.id }))
+                return
+            } else if (cursorType === "border") {
+                handleBorderResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements)
+                setVisualsUpdated((i) => ({ count: i.count + 1, id: gridMoving.id }))
             } else {
-                if (cursorType === "padding") {
-                    handlePaddingResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements)
-                    return
-                }
-                handleElementResize(
-                    gridMoving,
-                    allElements,
-                    gridPixelSize,
-                    HistoryClass,
-                    setGridMoving,
-                    setAllElements,
-                    setCursorType,
-
-                )
+                handleElementResize(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements, setCursorType)
                 setVisualsUpdated((i) => ({ count: i.count + 1, id: gridMoving.id }))
             }
         }
@@ -138,6 +125,18 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
             return
         }
         if (cursorType === "padding") {
+            const target = event.target as HTMLElement
+            const type = target.id
+            setGridChecked(props.id)
+
+            setGridChecked(props.id)
+
+            startElementInteraction(props.id, mouseX, mouseY, type, setGridMoving)
+            console.log(gridChecked)
+            console.log(cursorType)
+            return
+        }
+        if (cursorType === "border") {
             const target = event.target as HTMLElement
             const type = target.id
             setGridChecked(props.id)
@@ -181,10 +180,10 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative z-10 box-content grid h-full w-full  select-none   ${selecteCursorType[cursorType]} ${gridSelect && cursorType !== "padding" ? "border-dashed" : ""} border border-red-500 bg-slate-200 `}
+            className={`relative z-10 box-content grid h-full w-full  select-none   ${selecteCursorType[cursorType]} ${gridSelect && cursorType !== "padding" ? "border-dashed" : ""} `}
         >
             {/* Conditionally render the padding resize handles if padding is being adjusted or is non-zero */}
-            {(Object.values(allElements[props.id].info.padding).some((value) => value > 0) || (cursorType === "padding" && gridChecked === props.id)) && (
+            {(Object.values(allElements[props.id].info.padding).some((value) => value > 0) || ((cursorType === "padding" || cursorType === "border") && gridChecked === props.id)) && (
                 <div className="pointer-events-none absolute h-full w-full">
                     {/* Padding area rectangle with resize handles */}
                     <div
@@ -234,7 +233,7 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
             {allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}
             {props.id === "main"}
-            {gridChecked === props.id && !props.mainGrid && cursorType !== "padding" ? (
+            {gridChecked === props.id && !props.mainGrid && cursorType !== "padding" && cursorType !== "border" ? (
                 <div className="absolute h-full w-full ">
                     <div
                         className=" absolute -left-1 -top-1 z-50 h-2 w-2 cursor-nw-resize border border-red-500 bg-white opacity-100 "
@@ -267,6 +266,5 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
         </div>
     )
 }
-
 
 export default Grid

@@ -26,15 +26,15 @@ export default function startCreatingElement(
     const uuid = uuidv4()
     let offSetLeft = mainGridOffset.left
     let offSetTop = mainGridOffset.top
-    let pId = allElements[parentId].parent
+    let pId: string | null = parentId
     while (pId !== null) {
-        let ell = allElements[pId]
-        offSetLeft -= ell.info.left + ell.info.padding.left
-        offSetTop -= ell.info.top + ell.info.padding.top
+        const ell: GridElement = allElements[pId]
+        offSetLeft -= ell.info.left + ell.info.padding.left + ell.info.border.borderLeft.borderWidth
+        offSetTop -= ell.info.top + ell.info.padding.top + ell.info.border.borderTop.borderWidth
         pId = ell.parent
     }
-    const left = x / gridPixelSize + offSetLeft - allElements[parentId].info.padding.left - allElements[parentId].info.left
-    const top = y / gridPixelSize + offSetTop - allElements[parentId].info.padding.top - allElements[parentId].info.top
+    const left = x / gridPixelSize + offSetLeft 
+    const top = y / gridPixelSize + offSetTop 
     setAllElements((elements) => ({
         ...elements,
         [parentId]: { ...elements[parentId], children: [...elements[parentId].children, uuid] },

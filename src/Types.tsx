@@ -1,5 +1,6 @@
 import React from "react"
 import { Dispatch, SetStateAction } from 'react';
+import { Border } from "./functions/gridCRUD";
 // Assuming the structure of the style object
 export interface Style {
     display: string
@@ -34,6 +35,7 @@ export interface GridInfo {
     height: number
     padding: Padding
     backgroundColor: string
+    border: Border
     justify?: Justify
 }
 

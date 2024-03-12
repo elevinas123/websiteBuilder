@@ -147,6 +147,8 @@ export default function MarkdownScreen() {
             if (key === "tagName") newPlace = "tagName"
             if (parentKey === "childNodes" && isInt(key)) {
                 newIndex = parseInt(key)
+                parentId = visualId
+                visualId = parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : null) : "main-webGrid"
                 console.log("newIndex", newIndex)
             }
             console.log("parentId", parentId)
@@ -164,10 +166,7 @@ export default function MarkdownScreen() {
                     allElementsChanges.push({ action, visualId, change: { place: "idk", changed: change[0] }, parentId, newIndex, newPlace })
                 }
             } else {
-                if (key === "childNodes" && newIndex !== null) {
-                    parentId = visualId
-                    visualId = parentId !== null ? (allElements[parentId].children[newIndex] ? allElements[parentId].children[newIndex] : null) : "main-webGrid"
-                }
+               
                 applyChangesFromDiff(change, allElements, allElementsChanges, parentId, visualId, newIndex, newPlace, key)
             }
         })
