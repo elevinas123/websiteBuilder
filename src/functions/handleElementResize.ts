@@ -13,10 +13,14 @@ export default function handleElementResize(
     setAllElements: SetAllElements,
     setCursorType: SetCursorType,
 ) {
+    if (gridMoving.id === null) throw new Error("gridMoving id cant be null")
+    if (!allElements[gridMoving.id].parent) throw new Error("parent id cant be null")
+    let element = allElements[gridMoving.id]
+    if (!element.parent)throw new Error("parent id cant be null")
+    let parentInfo = allElements[element.parent].info
     let { top, left, width, height, backgroundColor } = allElements[gridMoving.id].info
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
-
     // Handle creating and resizing-1
     if (gridMoving.type === "creating") {
         width += deltaX
@@ -50,12 +54,26 @@ export default function handleElementResize(
         left += deltaX
         width -= deltaX
     }
-
-    // Prevent negative dimensions
     width = Math.round(width * 100) / 100
     height = Math.round(height * 100) / 100
     top = Math.round(top * 100) / 100
     left = Math.round(left * 100) / 100
+    if (left < 0) {
+        width += left
+        left = 0
+    }
+    if (top < 0) {
+        height += top
+        top = 0
+    }
+    // Ensuring the element does not extend outside the parent's dimensions
+    if (left + width > parentInfo.width) {
+        width = Math.max(0, parentInfo.width - left) // Adjust width if extending outside parent's right edge
+    }
+    if (top + height > parentInfo.height) {
+        height = Math.max(0, parentInfo.height - top) // Adjust height if extending outside parent's bottom edge
+    }
+    // Prevent negative dimensions
     let newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, backgroundColor)
 
     if (gridMoving.moved === true) {

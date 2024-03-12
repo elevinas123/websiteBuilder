@@ -21,6 +21,8 @@ export default function handleGridMove(
     // Calculate new positions and round them to the nearest whole number
     let newLeft = Math.round((left + (gridMoving.x2 - gridMoving.x1) / gridPixelSize) * 100) / 100
     let newTop = Math.round((top + (gridMoving.y2 - gridMoving.y1) / gridPixelSize) * 100) / 100
+    let borderLeft = allElements[gridMoving.id].info.border.borderLeft.borderWidth
+    let borderTop = allElements[gridMoving.id].info.border.borderTop.borderWidth
 
     const parentId = allElements[gridMoving.id].parent
     if (!parentId) throw new Error("parentId must be a string when moving elements")
@@ -32,13 +34,13 @@ export default function handleGridMove(
     }
 
     // Adjust positions to ensure the moved element remains within its parent's bounds
-    if (newTop + height > parentInfo.height) {
+    if (newTop + height + borderTop > parentInfo.height) {
         newTop = parentInfo.height - height
     }
     if (newTop < 0) {
         newTop = 0
     }
-    if (newLeft + width > parentInfo.width) {
+    if (newLeft + width + borderLeft > parentInfo.width) {
         newLeft = parentInfo.width - width
     }
     if (newLeft < 0) {

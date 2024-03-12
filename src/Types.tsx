@@ -17,6 +17,8 @@ export interface Style {
     paddingRight?: number
     paddingTop?: number
     paddingBottom?: number
+    width?: number,
+    height?: number
     // Add other style properties as needed
 }
 export interface Padding {
