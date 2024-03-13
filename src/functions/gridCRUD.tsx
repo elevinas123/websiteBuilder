@@ -22,20 +22,20 @@ export interface Border {
 }
 const initialBorder = {
     borderLeft: {
-        borderColor: "white",
-        borderWidth: 1,
+        borderColor: "transparent",
+        borderWidth: 0,
     },
     borderTop: {
-        borderColor: "white",
-        borderWidth: 1,
+        borderColor: "transparent",
+        borderWidth: 0,
     },
     borderRight: {
-        borderColor: "white",
-        borderWidth: 1,
+        borderColor: "transparent",
+        borderWidth: 0,
     },
     borderBottom: {
-        borderColor: "white",
-        borderWidth: 1,
+        borderColor: "transparent",
+        borderWidth: 0,
     },
 }
 

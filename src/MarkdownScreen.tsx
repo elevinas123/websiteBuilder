@@ -68,18 +68,22 @@ export default function MarkdownScreen() {
         debouncedUpdateTheEditor(visualsUpdate, previousAst, allElements, setPreviousAst, setText)
     }, [visualsUpdate])
 
-    const updateAst = (path: number[], ast: Ast[], amountOfElements: number) => {
+    const updateAst = (path: number[], ast: Ast[], amountOfElements: number, allElements: AllElements, id: string) => {
         let node = ast[0]
+        let lastNumber = path[path.length - 1]
         for (let i = 0; i < path.length - 1; i++) {
             node = node.childNodes[path[i]]
         }
         if (node.childNodes.length >= amountOfElements) {
-            console.log("equeal")
+            let atribs = allElements[id].info
+            let cssClass = ""
+            Object.keys.
+            node.childNodes[lastNumber] = { attribs: { className: "w-10 h-10" }, childNodes: node.childNodes[lastNumber].childNodes, tagName: "div", textContent: "" }
             return ast
         } else {
             console.log(JSON.stringify(amountOfElements, null, 2))
             console.log(JSON.stringify(node, null, 2))
-            node.childNodes.splice(path[path.length - 1], 0, { attribs: {}, childNodes: [], tagName: "div", textContent: "" })
+            node.childNodes.splice(lastNumber, 0, { attribs: { className: "w-10 h-10" }, childNodes: [], tagName: "div", textContent: "" })
             console.log(JSON.stringify(node, null, 2))
         }
         console.log("node", node)
@@ -166,7 +170,6 @@ export default function MarkdownScreen() {
                     allElementsChanges.push({ action, visualId, change: { place: "idk", changed: change[0] }, parentId, newIndex, newPlace })
                 }
             } else {
-               
                 applyChangesFromDiff(change, allElements, allElementsChanges, parentId, visualId, newIndex, newPlace, key)
             }
         })
@@ -180,7 +183,6 @@ export default function MarkdownScreen() {
         if (change.length === 3 && change[2] === 0) return "delete"
         return "unknown"
     }
-
     return (
         <div className="w-full">
             <div className=" ml-10 mt-10 w-auto">
