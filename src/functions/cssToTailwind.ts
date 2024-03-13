@@ -7,8 +7,8 @@ export interface TailwindMapping {
 
 // Mapping object from CSS properties in GridInfo to Tailwind class formats
 const tailwindMapping: { [key: string]: string } = {
-    width: "w",
-    height: "h",
+    itemWidth: "w",
+    itemHeight: "h",
     backgroundColor: "bg",
     // Example mapping for borderColor, assuming you have a Tailwind plugin or custom classes for border colors
 }

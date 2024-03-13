@@ -79,7 +79,6 @@ export default function MarkdownScreen() {
         }
         let cssClass = cssToTailwind(attribs)
         if (node.childNodes.length >= amountOfElements) {
-            
             node.childNodes[lastNumber] = {
                 attribs: { className: cssClass },
                 childNodes: node.childNodes[lastNumber].childNodes,
@@ -175,6 +174,38 @@ export default function MarkdownScreen() {
                     allElementsChanges.push({ action, visualId, change: { place: key, changed: change[1] }, parentId, newIndex, newPlace })
                 } else if (action === "delete") {
                     allElementsChanges.push({ action, visualId, change: { place: "idk", changed: change[0] }, parentId, newIndex, newPlace })
+                }
+            } else if (typeof change === "object" && key === "attribs" && newIndex !== null) {
+                console.log("attribs", change)
+                if (Object.keys(change).length < 2) {
+                    let name = Object.keys(change)[0]
+                    let newText = change[name]
+                    console.log("name, ne", name, newText)
+                    let newChange: Change = ""
+                    if (newText.length === 1) newChange = newText[0]
+                    if (newText.length === 2) newChange = newText[1]
+                    if (newText.length === 3) newChange = newText[0]
+                    allElementsChanges.push({
+                        action: "modify",
+                        visualId,
+                        change: { place: name, changed: newChange },
+                        parentId,
+                        newIndex,
+                        newPlace: "attribs",
+                    })
+                } else {
+                    let place = "attributeName"
+                    let newName: string = ""
+                    Object.entries(change).forEach(([name, newText]) => {
+                        if (!Array.isArray(newText)) throw new Error(`NewText must be an array, gotten ${newText}`)
+                        if (newText.length === 3 && newText[2] === 0) {
+                            newName = name
+                        }
+                    })
+                    console.log("attribs", change)
+                    console.log("attribs", place, newName)
+
+                    allElementsChanges.push({ action: "modify", visualId, change: { place, changed: newName }, parentId, newIndex, newPlace: "attribs" })
                 }
             } else {
                 applyChangesFromDiff(change, allElements, allElementsChanges, parentId, visualId, newIndex, newPlace, key)
