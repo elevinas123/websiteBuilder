@@ -158,11 +158,11 @@ export default function ItemInfoScreen() {
                 <div className="ml-4">
                     <div className="mt-2 flex flex-row border border-white p-1  hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">X</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].info.width}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].info.itemWidth}</div>
                     </div>
                     <div className="mt-2 flex flex-row border border-white p-1  hover:border hover:border-gray-300">
                         <div className="ml-3 text-xs text-gray-400">W</div>
-                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].info.height}</div>
+                        <div className="ml-3 text-xs text-gray-600">{allElements[itemId] && allElements[itemId].info.itemHeight}</div>
                     </div>
                 </div>
             </div>

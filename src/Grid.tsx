@@ -18,7 +18,6 @@ import handleGridMove from "./functions/handleGridMove"
 import handleElementResize from "./functions/handleElementResize"
 import startElementInteraction from "./functions/startElementInteraction"
 import handlePaddingResize from "./functions/handlePaddingresize"
-import { Style } from "./Types"
 import handleBorderResize from "./functions/handleBorderResize"
 
 interface VisualsUpdated {
@@ -29,7 +28,7 @@ interface VisualsUpdated {
 interface GridProps {
     key: string
     id: string
-    childStyle: Style
+    childStyle: React.CSSProperties
     mainGrid?: string
     mainRef?: any
     className?: string

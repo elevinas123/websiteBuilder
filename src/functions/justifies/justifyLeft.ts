@@ -15,8 +15,8 @@ export default function justifyLeft(parentId: string, allElements: AllElements, 
         const newStyle = calculateNewStyle(
             accumulatedWidth,
             updatedElements[childId].info.top,
-            updatedElements[childId].info.width,
-            updatedElements[childId].info.height,
+            updatedElements[childId].info.itemWidth,
+            updatedElements[childId].info.itemHeight,
             gridPixelSize,
             updatedElements[childId].info.backgroundColor
         )
@@ -33,7 +33,7 @@ export default function justifyLeft(parentId: string, allElements: AllElements, 
         }
 
         // Add the current child's width to the accumulatedWidth for the next child's position
-        accumulatedWidth += updatedElements[childId].info.width -1 
+        accumulatedWidth += updatedElements[childId].info.itemWidth - 1 
     })
     updatedElements[parentId] = {
         ...updatedElements[parentId],

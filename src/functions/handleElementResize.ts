@@ -9,84 +9,85 @@ export default function handleElementResize(
     allElements: AllElements,
     gridPixelSize: number,
     HistoryClass: UndoTree<AllElements>,
-    setGridMoving: SetGridMoving ,
+    setGridMoving: SetGridMoving,
     setAllElements: SetAllElements,
-    setCursorType: SetCursorType,
+    setCursorType: SetCursorType
 ) {
     if (gridMoving.id === null) throw new Error("gridMoving id cant be null")
     if (!allElements[gridMoving.id].parent) throw new Error("parent id cant be null")
     let element = allElements[gridMoving.id]
-    if (!element.parent)throw new Error("parent id cant be null")
+    if (!element.parent) throw new Error("parent id cant be null")
     let parentInfo = allElements[element.parent].info
-    let { top, left, width, height, backgroundColor } = allElements[gridMoving.id].info
+    let { top, left, itemWidth, itemHeight, backgroundColor } = allElements[gridMoving.id].info
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
+    console.log("parentInfo.content", parentInfo.contentHeight, parentInfo.contentWidth)
     // Handle creating and resizing-1
     if (gridMoving.type === "creating") {
-        width += deltaX
-        height += deltaY
+        itemWidth += deltaX
+        itemHeight += deltaY
     } else if (gridMoving.type === "resizing-1") {
         top += deltaY
-        height -= deltaY
+        itemHeight -= deltaY
         left += deltaX
-        width -= deltaX
+        itemWidth -= deltaX
     }
     // Implement resizing for the rest of the directions
     else if (gridMoving.type === "resizing-5") {
         top += deltaY
-        height -= deltaY
+        itemHeight -= deltaY
     } else if (gridMoving.type === "resizing-2") {
         top += deltaY
-        height -= deltaY
-        width += deltaX
+        itemHeight -= deltaY
+        itemWidth += deltaX
     } else if (gridMoving.type === "resizing-6") {
-        width += deltaX
+        itemWidth += deltaX
     } else if (gridMoving.type === "resizing-3") {
-        width += deltaX
-        height += deltaY
+        itemWidth += deltaX
+        itemHeight += deltaY
     } else if (gridMoving.type === "resizing-7") {
-        height += deltaY
+        itemHeight += deltaY
     } else if (gridMoving.type === "resizing-4") {
         left += deltaX
-        width -= deltaX
-        height += deltaY
+        itemWidth -= deltaX
+        itemHeight += deltaY
     } else if (gridMoving.type === "resizing-8") {
         left += deltaX
-        width -= deltaX
+        itemWidth -= deltaX
     }
-    width = Math.round(width * 100) / 100
-    height = Math.round(height * 100) / 100
+    itemWidth = Math.round(itemWidth * 100) / 100
+    itemWidth = Math.round(itemWidth * 100) / 100
     top = Math.round(top * 100) / 100
     left = Math.round(left * 100) / 100
     if (left < 0) {
-        width += left
+        itemWidth += left
         left = 0
     }
     if (top < 0) {
-        height += top
+        itemHeight += top
         top = 0
     }
     // Ensuring the element does not extend outside the parent's dimensions
-    if (left + width > parentInfo.width) {
-        width = Math.max(0, parentInfo.width - left) // Adjust width if extending outside parent's right edge
+    if (left + itemWidth > parentInfo.contentWidth) {
+        itemWidth = Math.max(0, parentInfo.contentWidth - left) // Adjust width if extending outside parent's right edge
     }
-    if (top + height > parentInfo.height) {
-        height = Math.max(0, parentInfo.height - top) // Adjust height if extending outside parent's bottom edge
+    if (top + itemHeight > parentInfo.contentHeight) {
+        itemHeight = Math.max(0, parentInfo.contentHeight - top) // Adjust height if extending outside parent's bottom edge
     }
     // Prevent negative dimensions
-    let newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, backgroundColor)
+    let newStyle = calculateNewStyle(left, top, itemWidth, itemHeight, gridPixelSize, backgroundColor)
 
     if (gridMoving.moved === true) {
-        if (height < 0) {
-            top += height
-            height *= -1
+        if (itemHeight < 0) {
+            top += itemHeight
+            itemHeight *= -1
         }
-        if (width < 0) {
-            left += width
-            width *= -1
+        if (itemWidth < 0) {
+            left += itemWidth
+            itemWidth *= -1
         }
 
-        newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, backgroundColor)
+        newStyle = calculateNewStyle(left, top, itemWidth, itemHeight, gridPixelSize, backgroundColor)
         setAllElements((currentState) =>
             produce(currentState, (draft) => {
                 const element = draft[gridMoving.id]
@@ -97,10 +98,23 @@ export default function handleElementResize(
                     }
                     element.info = {
                         ...element.info,
-                        height,
-                        width,
+                        itemHeight: itemHeight,
+                        itemWidth: itemWidth,
+                        contentWidth:
+                            itemWidth -
+                            element.info.border.borderLeft.borderWidth -
+                            element.info.border.borderRight.borderWidth -
+                            element.info.padding.left -
+                            element.info.padding.right,
+                        contentHeight:
+                            itemHeight -
+                            element.info.border.borderTop.borderWidth -
+                            element.info.border.borderBottom.borderWidth -
+                            element.info.padding.top -
+                            element.info.padding.bottom,
+                        backgroundColor,
                         top,
-                        left
+                        left,
                     }
                 }
             })
@@ -123,8 +137,20 @@ export default function handleElementResize(
                 }
                 element.info = {
                     ...element.info,
-                    height,
-                    width,
+                    itemHeight: itemHeight,
+                    itemWidth: itemWidth,
+                    contentWidth:
+                        itemWidth -
+                        element.info.border.borderLeft.borderWidth -
+                        element.info.border.borderRight.borderWidth -
+                        element.info.padding.left -
+                        element.info.padding.right,
+                    contentHeight:
+                        itemHeight -
+                        element.info.border.borderTop.borderWidth -
+                        element.info.border.borderBottom.borderWidth -
+                        element.info.padding.top -
+                        element.info.padding.bottom,
                     top,
                     left,
                 }

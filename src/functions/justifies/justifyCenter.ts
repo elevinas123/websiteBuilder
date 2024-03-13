@@ -8,11 +8,11 @@ export default function justifyCenter(parentId: string, allElements:  AllElement
     const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].info.left - allElements[b].info.left)
 
     // Calculate the total width of all children
-    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.width)
+    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.itemWidth)
     const totalChildrenWidth = childrenWidths.reduce((accumulator, currentValue) => accumulator + currentValue, 1)
 
     // Calculate the total spacing and the space on each side
-    const totalSpacing = parentElement.info.width - totalChildrenWidth
+    const totalSpacing = parentElement.info.itemWidth - totalChildrenWidth
     const spaceOnEachSide = totalSpacing / 2
 
     let accumulatedWidth = spaceOnEachSide // Start from the left space
@@ -24,8 +24,8 @@ export default function justifyCenter(parentId: string, allElements:  AllElement
         const newStyle = calculateNewStyle(
             accumulatedWidth,
             updatedElements[childId].info.top,
-            updatedElements[childId].info.width,
-            updatedElements[childId].info.height,
+            updatedElements[childId].info.itemWidth,
+            updatedElements[childId].info.itemHeight,
             gridPixelSize,
             updatedElements[childId].info.backgroundColor
         )

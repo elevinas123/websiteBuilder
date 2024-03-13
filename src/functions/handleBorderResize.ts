@@ -22,15 +22,15 @@ export default function handleBorderResize(
     if (gridMoving.type === "padding-top") {
         borderTopWidth += deltaY
         // Prevent border width from becoming too large
-        if (borderTopWidth + borderBottomWidth > allElements[gridMoving.id].info.height) {
-            borderTopWidth = allElements[gridMoving.id].info.height - borderBottomWidth
+        if (borderTopWidth + borderBottomWidth > allElements[gridMoving.id].info.itemHeight) {
+            borderTopWidth = allElements[gridMoving.id].info.itemHeight - borderBottomWidth
         }
     } else if (gridMoving.type === "padding-right") {
         borderRightWidth -= deltaX
     } else if (gridMoving.type === "padding-bottom") {
         borderBottomWidth -= deltaY
-        if (borderTopWidth + borderBottomWidth > allElements[gridMoving.id].info.height) {
-            borderBottomWidth = allElements[gridMoving.id].info.height - borderTopWidth
+        if (borderTopWidth + borderBottomWidth > allElements[gridMoving.id].info.itemHeight) {
+            borderBottomWidth = allElements[gridMoving.id].info.itemHeight - borderTopWidth
         }
     } else if (gridMoving.type === "padding-left") {
         borderLeftWidth += deltaX

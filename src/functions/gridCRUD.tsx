@@ -59,7 +59,10 @@ export const createNewGrid = (
         info: {
             left,
             top,
-            width,
+            itemWidth: width,
+            itemHeight: height,
+            contentWidth: width - padding.left - padding.right - border.borderLeft.borderWidth - border.borderRight.borderWidth,
+            contentHeight: height - padding.top - padding.bottom - border.borderTop.borderWidth - border.borderBottom.borderWidth,
             height,
             padding,
             backgroundColor,

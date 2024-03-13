@@ -19,16 +19,16 @@ export default function handlePaddingResize(
     if (gridMoving.type === "padding-top") {
         top += deltaY
         // Prevent top padding from extending past the bottom padding
-        if (top + bottom > allElements[gridMoving.id].info.height) {
-            top = allElements[gridMoving.id].info.height - bottom
+        if (top + bottom > allElements[gridMoving.id].info.itemHeight) {
+            top = allElements[gridMoving.id].info.itemHeight - bottom
         }
     } else if (gridMoving.type === "padding-right") {
         right -= deltaX // Assuming this should be deltaX instead of deltaY
     } else if (gridMoving.type === "padding-bottom") {
         bottom -= deltaY
         // Prevent bottom padding from extending past the top padding
-        if (top + bottom > allElements[gridMoving.id].info.height) {
-            bottom = allElements[gridMoving.id].info.height - top
+        if (top + bottom > allElements[gridMoving.id].info.itemHeight) {
+            bottom = allElements[gridMoving.id].info.itemHeight - top
         }
     } else if (gridMoving.type === "padding-left") {
         left += deltaX
@@ -53,6 +53,18 @@ export default function handlePaddingResize(
             },
             info: {
                 ...elements[gridMoving.id].info,
+                contentHeight:
+                    elements[gridMoving.id].info.itemHeight -
+                    top -
+                    bottom -
+                    elements[gridMoving.id].info.border.borderTop.borderWidth -
+                    elements[gridMoving.id].info.border.borderBottom.borderWidth,
+                contentWidth:
+                    elements[gridMoving.id].info.itemWidth -
+                    left -
+                    right -
+                    elements[gridMoving.id].info.border.borderLeft.borderWidth -
+                    elements[gridMoving.id].info.border.borderRight.borderWidth,
                 padding: {
                     top,
                     left,
@@ -63,7 +75,7 @@ export default function handlePaddingResize(
         },
     }))
     if (gridMoving.moved) {
-        setGridMoving(i => ({...i, moving: false }))
+        setGridMoving((i) => ({ ...i, moving: false }))
         HistoryClass.performAction(allElements)
         console.log(HistoryClass.currentNode)
         return
@@ -72,4 +84,3 @@ export default function handlePaddingResize(
     setGridMoving((i) => ({ ...i, setBox: true }))
     return
 }
-

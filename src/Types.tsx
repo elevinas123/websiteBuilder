@@ -2,25 +2,7 @@ import React from "react"
 import { Dispatch, SetStateAction } from 'react';
 import { Border } from "./functions/gridCRUD";
 // Assuming the structure of the style object
-export interface Style {
-    display: string
-    gridTemplateColumns: string
-    gridTemplateRows: string
-    gridColumnStart: number
-    gridColumnEnd: number
-    gridRowStart: number
-    gridRowEnd: number
-    maxWidth: string
-    maxHeight: string
-    backgroundColor: string
-    paddingLeft?: number
-    paddingRight?: number
-    paddingTop?: number
-    paddingBottom?: number
-    width?: number,
-    height?: number
-    // Add other style properties as needed
-}
+
 export interface Padding {
     left: number
     top: number
@@ -33,8 +15,10 @@ export type Justify = "left" | "center" | "spaceBetween" | "right"
 export interface GridInfo {
     left: number
     top: number
-    width: number
-    height: number
+    itemHeight: number
+    itemWidth: number
+    contentHeight: number
+    contentWidth: number
     padding: Padding
     backgroundColor: string
     border: Border
@@ -46,7 +30,7 @@ export interface GridProps {
     key: string
     className: string
     id: string
-    childStyle: Style
+    childStyle: React.CSSProperties
 
 }
 
@@ -55,7 +39,7 @@ export interface GridElement {
     item: React.ReactElement<GridProps>
     info: GridInfo
     id: string
-    style: Style
+    style: React.CSSProperties
     text: string
     parent: string |null
     children: string[] // Assuming children are of the same type

@@ -1,4 +1,4 @@
-import { AllElements, SetAllElements, Style } from "../Types"
+import { AllElements, SetAllElements } from "../Types"
 import { v4 as uuidv4 } from "uuid"
 import { createNewGrid } from "./gridCRUD"
 import { produce } from "immer"
@@ -87,13 +87,15 @@ const handleElementModify = (changeDetails: ChangeDetails, newPlace: string, id:
 
     if (changeDetails.place === "classname") {
         const cssClasses = tailwindClassToCSS(changeDetails.changed)
-        let width: number = parseInt(cssClasses.width) || element.info.width
-        let height: number = parseInt(cssClasses.height) || element.info.height
+        let width: number = parseInt(cssClasses.width) || element.info.itemWidth
+        let height: number = parseInt(cssClasses.height) || element.info.itemHeight
         let backgroundColor = cssClasses.bg || element.info.backgroundColor
         element.info = {
             ...element.info,
-            width,
-            height,
+            itemHeight: height,
+            itemWidth: width,
+            contentWidth: width - element.info.border.borderLeft.borderWidth - element.info.border.borderRight.borderWidth - element.info.padding.left - element.info.padding.right,
+            contentHeight: height - element.info.border.borderTop.borderWidth - element.info.border.borderBottom.borderWidth - element.info.padding.top - element.info.padding.bottom,
             backgroundColor,
         }
         // Apply new styles calculated based on potential changes
@@ -158,7 +160,7 @@ const calculateStartingHeight = (parentId: string | null, itemIndex: number, all
     if (!parentId) throw new Error(`parentId must be string, got ${parentId}`)
     let minHeight = 0
     for (let i = 0; i < itemIndex; i++) {
-        minHeight += allElements[allElements[parentId].children[i]].info.height
+        minHeight += allElements[allElements[parentId].children[i]].info.itemHeight
     }
     return minHeight
 }

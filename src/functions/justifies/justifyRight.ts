@@ -10,11 +10,11 @@ export default function justifyLeft(parentId: string, allElements: AllElements, 
     const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].info.left - allElements[b].info.left)
 
     // Calculate the total width of all children
-    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.width)
+    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.itemWidth)
     const totalChildrenWidth = childrenWidths.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
 
     // Calculate starting left position for the first child based on the total width
-    let accumulatedWidth = parentElement.info.width - totalChildrenWidth // Start from the right, without grid size adjustments
+    let accumulatedWidth = parentElement.info.itemWidth - totalChildrenWidth // Start from the right, without grid size adjustments
 
     // Prepare updated elements with new positions
     const updatedElements = { ...allElements }
@@ -22,7 +22,7 @@ export default function justifyLeft(parentId: string, allElements: AllElements, 
         const child = updatedElements[childId]
 
         // Update left position for each child based on the accumulatedWidth
-        const newStyle = calculateNewStyle(accumulatedWidth, child.info.top, child.info.width, child.info.height, gridPixelSize, child.info.backgroundColor)
+        const newStyle = calculateNewStyle(accumulatedWidth, child.info.top, child.info.itemWidth, child.info.itemHeight, gridPixelSize, child.info.backgroundColor)
 
         updatedElements[childId] = {
             ...child,
@@ -37,7 +37,7 @@ export default function justifyLeft(parentId: string, allElements: AllElements, 
         }
 
         // Increment accumulatedWidth for the next child's position
-        accumulatedWidth += child.info.width
+        accumulatedWidth += child.info.itemWidth
     })
     updatedElements[parentId] = {
         ...updatedElements[parentId],

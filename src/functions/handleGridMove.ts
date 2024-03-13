@@ -14,8 +14,8 @@ export default function handleGridMove(
 ) {
     let top = allElements[gridMoving.id].info.top
     let left = allElements[gridMoving.id].info.left
-    const width = allElements[gridMoving.id].info.width
-    const height = allElements[gridMoving.id].info.height
+    const width = allElements[gridMoving.id].info.itemWidth
+    const height = allElements[gridMoving.id].info.itemHeight
     const backgroundColor = allElements[gridMoving.id].info.backgroundColor
 
     // Calculate new positions and round them to the nearest whole number
@@ -29,8 +29,8 @@ export default function handleGridMove(
     const parentInfo = {
         top: allElements[parentId].info.top,
         left: allElements[parentId].info.left,
-        width: allElements[parentId].info.width,
-        height: allElements[parentId].info.height,
+        width: allElements[parentId].info.contentWidth,
+        height: allElements[parentId].info.contentHeight,
     }
 
     // Adjust positions to ensure the moved element remains within its parent's bounds

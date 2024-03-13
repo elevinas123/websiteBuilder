@@ -88,8 +88,8 @@ export default function WebsiteScreen() {
                     style: {
                         ...element.style, // Spread to copy existing styles
                         // Update specific style properties
-                        gridTemplateColumns: `repeat(${element.info.width}, ${gridPixelSize}px)`,
-                        gridTemplateRows: `repeat(${element.info.height}, ${gridPixelSize}px)`,
+                        gridTemplateColumns: `repeat(${element.info.itemWidth}, ${gridPixelSize}px)`,
+                        gridTemplateRows: `repeat(${element.info.itemHeight}, ${gridPixelSize}px)`,
                         //width: element.info.width * gridPixelSize + element.info.padding.left * gridPixelSize + element.info.padding.right * gridPixelSize,
                         //height: element.info.height * gridPixelSize + element.info.padding.top * gridPixelSize + element.info.padding.bottom * gridPixelSize,
                         paddingLeft: element.info.padding.left * gridPixelSize,

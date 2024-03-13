@@ -8,11 +8,11 @@ export default function justifyCenter(parentId: string, allElements: AllElements
     const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].info.left - allElements[b].info.left)
 
     // Calculate the total width of all children
-    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.width)
+    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.itemWidth)
     const totalChildrenWidth = childrenWidths.reduce((total, width) => total + width, 0)
 
     // Calculate the total available space by subtracting the total children width from the parent's width
-    const availableSpace = parentElement.info.width - totalChildrenWidth
+    const availableSpace = parentElement.info.itemWidth - totalChildrenWidth
 
     // Calculate the spacing between elements based on the available space and the number of gaps
     // The number of gaps is one less than the number of children
@@ -26,7 +26,7 @@ export default function justifyCenter(parentId: string, allElements: AllElements
         const child = updatedElements[childId]
 
         // For each child, set the new left position based on the accumulatedWidth
-        const newStyle = calculateNewStyle(accumulatedWidth, child.info.top, child.info.width, child.info.height, gridPixelSize, child.info.backgroundColor)
+        const newStyle = calculateNewStyle(accumulatedWidth, child.info.top, child.info.itemWidth, child.info.itemHeight, gridPixelSize, child.info.backgroundColor)
 
         updatedElements[childId] = {
             ...updatedElements[childId],
@@ -44,7 +44,7 @@ export default function justifyCenter(parentId: string, allElements: AllElements
         // After positioning each child, add its width and the calculated space between to the accumulated width
         // Except for the last child, which does not need space added after it
         if (index < sortedChildren.length - 1) {
-            accumulatedWidth += child.info.width + spaceBetween
+            accumulatedWidth += child.info.itemWidth + spaceBetween
         }
     })
     updatedElements[parentId] = {
