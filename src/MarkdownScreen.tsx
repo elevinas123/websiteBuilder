@@ -7,9 +7,10 @@ import * as monaco from "monaco-editor"
 import { Delta, diff } from "jsondiffpatch"
 import { Ast, parseHTML, serializeASTtoHTML } from "./functions/parseHTML"
 import _ from "lodash"
-import { AllElements, GridElement } from "./Types"
+import { AllElements, GridElement, GridInfo } from "./Types"
 import { updateAllElements } from "./functions/codeToVisuals"
 import isInt from "./functions/isInt"
+import { cssToTailwind } from "./functions/cssToTailwind"
 
 interface ChildrenDiff {
     childNodes: {
@@ -52,7 +53,8 @@ export default function MarkdownScreen() {
             console.log("debounced")
             const pathToElement = createPathToElement(visualsUpdate.id, allElements)
             let updatingAst = JSON.parse(JSON.stringify(previousAst))
-            const updatedAst = updateAst(pathToElement, updatingAst, allElements[allElements[visualsUpdate.id].parent].children.length)
+            let element = allElements[visualsUpdate.id]
+            const updatedAst = updateAst(pathToElement, updatingAst, allElements[element.parent].children.length, element.info)
             let html = serializeASTtoHTML(updatedAst[0].childNodes)
             console.log("allElements", html)
             console.log("html", html)
@@ -64,26 +66,31 @@ export default function MarkdownScreen() {
 
     useEffect(() => {
         // Call the debounced function within useEffect
-        console.log("tryuing to debounce")
+        console.log("tryuing to debounce", visualsUpdate)
         debouncedUpdateTheEditor(visualsUpdate, previousAst, allElements, setPreviousAst, setText)
     }, [visualsUpdate])
 
-    const updateAst = (path: number[], ast: Ast[], amountOfElements: number, allElements: AllElements, id: string) => {
+    const updateAst = (path: number[], ast: Ast[], amountOfElements: number, attribs: GridInfo) => {
+        console.log("trying to update ast")
         let node = ast[0]
         let lastNumber = path[path.length - 1]
         for (let i = 0; i < path.length - 1; i++) {
             node = node.childNodes[path[i]]
         }
+        let cssClass = cssToTailwind(attribs)
         if (node.childNodes.length >= amountOfElements) {
-            let atribs = allElements[id].info
-            let cssClass = ""
-            Object.keys.
-            node.childNodes[lastNumber] = { attribs: { className: "w-10 h-10" }, childNodes: node.childNodes[lastNumber].childNodes, tagName: "div", textContent: "" }
+            
+            node.childNodes[lastNumber] = {
+                attribs: { className: cssClass },
+                childNodes: node.childNodes[lastNumber].childNodes,
+                tagName: "div",
+                textContent: "",
+            }
             return ast
         } else {
             console.log(JSON.stringify(amountOfElements, null, 2))
             console.log(JSON.stringify(node, null, 2))
-            node.childNodes.splice(lastNumber, 0, { attribs: { className: "w-10 h-10" }, childNodes: [], tagName: "div", textContent: "" })
+            node.childNodes.splice(lastNumber, 0, { attribs: { className: cssClass }, childNodes: [], tagName: "div", textContent: "" })
             console.log(JSON.stringify(node, null, 2))
         }
         console.log("node", node)

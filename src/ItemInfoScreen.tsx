@@ -1,7 +1,7 @@
 import { useAtom } from "jotai"
 import { useCallback, useEffect, useState } from "react"
 import { FaAlignCenter, FaAlignJustify, FaAlignLeft, FaAlignRight } from "react-icons/fa"
-import { HistoryClassAtom, allElementsAtom, gridCheckedAtom, gridPixelSizeAtom, mainGridIdAtom } from "./atoms"
+import { HistoryClassAtom, allElementsAtom, gridCheckedAtom, gridPixelSizeAtom, mainGridIdAtom, visualsUpdatedAtom } from "./atoms"
 import justifyCenter from "./functions/justifies/justifyCenter"
 import justifyLeft from "./functions/justifies/justifyLeft"
 import justifyRight from "./functions/justifies/justifyRight"
@@ -17,7 +17,7 @@ export default function ItemInfoScreen() {
     const [itemId, setItemId] = useState("")
     const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
     const [updateHistory, setUpdateHistory] = useState(true)
-
+    const [visualsUpdated, setVisualsUpdated] = useAtom(visualsUpdatedAtom)
     useEffect(() => {
         if (itemId === "") return
         HistoryClass.performAction(allElements)
@@ -27,7 +27,9 @@ export default function ItemInfoScreen() {
     }, [allElements])
 
     const debouncedUpdateHistory = useCallback(
-        debounce(() => {
+        debounce((id) => {
+            console.log("cia")
+            setVisualsUpdated((i) => ({ count: i.count + 1, id: id }))
             setUpdateHistory((i) => !i)
         }, 500),
         []
@@ -50,7 +52,7 @@ export default function ItemInfoScreen() {
                 },
             },
         }))
-        debouncedUpdateHistory()
+        debouncedUpdateHistory(itemId)
     }
     useEffect(() => {
         if (gridChecked === "") {
@@ -94,7 +96,7 @@ export default function ItemInfoScreen() {
                 },
             },
         }))
-        debouncedUpdateHistory()
+        debouncedUpdateHistory(itemId)
     }
 
     const justifyElement = (type: Justify) => {
