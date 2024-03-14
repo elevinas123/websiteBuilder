@@ -45,21 +45,32 @@ const addElementRecursively = (
     const newElementId = uuidv4()
 
     const { text, childrenIds, totalHeight } = processChildNodes(change.childNodes || [], newElementId, draft, offsetTop)
-    const elementWidth = 10
-    const elementHeigth = 10
+    console.log("change", change)
+    let elementWidth = 10
+    let elementHeight = 10
+    let bgColor = "transparent"
+    if ("classname" in change.attribs) {
+        const cssClasses = tailwindClassToCSS(change.attribs.classname)
+        elementWidth = "itemWidth" in cssClasses && typeof cssClasses.itemWidth === "number" ? cssClasses.itemWidth : 10
+        elementHeight = "itemHeight" in cssClasses && typeof cssClasses.itemHeight === "number" ? cssClasses.itemHeight : 10
+        bgColor = "backgroundColor" in cssClasses && typeof cssClasses.backgroundColor === "string" ? cssClasses.backgroundColor : "transparent"
+
+    }
     draft[newElementId] = createNewGrid(
         newElementId,
         parentId,
         offsetLeft,
         totalHeight,
         elementWidth, // elementWidth,
-        elementHeigth, // elementHeight,
+        elementHeight, // elementHeight,
         { top: 0, left: 0, bottom: 0, right: 0 },
         gridPixelSize,
-        childrenIds
+        childrenIds,
+        "",
+        bgColor
     )
 
-    return [draft, newElementId, elementWidth, elementHeigth]
+    return [draft, newElementId, elementWidth, elementHeight]
 }
 
 function isAst(value: any): value is Ast {

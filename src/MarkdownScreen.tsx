@@ -54,7 +54,9 @@ export default function MarkdownScreen() {
             const pathToElement = createPathToElement(visualsUpdate.id, allElements)
             let updatingAst = JSON.parse(JSON.stringify(previousAst))
             let element = allElements[visualsUpdate.id]
+            console.log("previousASt", previousAst)
             const updatedAst = updateAst(pathToElement, updatingAst, allElements[element.parent].children.length, element.info)
+            console.log("updatedAst", updatedAst)
             let html = serializeASTtoHTML(updatedAst[0].childNodes)
             console.log("allElements", html)
             console.log("html", html)
@@ -80,7 +82,7 @@ export default function MarkdownScreen() {
         let cssClass = cssToTailwind(attribs)
         if (node.childNodes.length >= amountOfElements) {
             node.childNodes[lastNumber] = {
-                attribs: { className: cssClass },
+                attribs: { classname: cssClass },
                 childNodes: node.childNodes[lastNumber].childNodes,
                 tagName: "div",
                 textContent: "",
@@ -89,7 +91,7 @@ export default function MarkdownScreen() {
         } else {
             console.log(JSON.stringify(amountOfElements, null, 2))
             console.log(JSON.stringify(node, null, 2))
-            node.childNodes.splice(lastNumber, 0, { attribs: { className: cssClass }, childNodes: [], tagName: "div", textContent: "" })
+            node.childNodes.splice(lastNumber, 0, { attribs: { classname: cssClass }, childNodes: [], tagName: "div", textContent: "" })
             console.log(JSON.stringify(node, null, 2))
         }
         console.log("node", node)
