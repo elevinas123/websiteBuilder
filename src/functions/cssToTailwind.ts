@@ -1,5 +1,6 @@
 import { GridInfo } from "../Types"
 import { Border } from "./gridCRUD"
+import isInt from "./isInt"
 
 export interface TailwindMapping {
     [s: string]: string
@@ -67,10 +68,12 @@ export const cssToTailwind = (elementInfo: GridInfo): string => {
         if (key in tailwindMapping) {
             const tailwindKey = key as keyof GridInfo
             const mapping = tailwindMapping[key]
+            let itemValue = elementInfo[tailwindKey]
+            if (isInt(itemValue)) itemValue = Math.abs(parseFloat(itemValue))
             let value: string
 
             // Handle specific cases as needed, assuming simple case here
-            value = `${mapping}-${elementInfo[tailwindKey]}`
+            value = `${mapping}-${itemValue}`
 
             acc.push(value)
         }

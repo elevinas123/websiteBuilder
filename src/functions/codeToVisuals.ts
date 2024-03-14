@@ -38,8 +38,8 @@ const addElementRecursively = (
     parentId: string,
     draft: AllElements,
     gridPixelSize: number,
-    offsetLeft = 1,
-    offsetTop = 1
+    offsetLeft = 10,
+    offsetTop = 10
 ): [AllElements, string, number, number] => {
     if (typeof change === "string") throw new Error(`change cant be of type string, got ${change}`)
     const newElementId = uuidv4()
@@ -54,7 +54,9 @@ const addElementRecursively = (
         elementWidth = "itemWidth" in cssClasses && typeof cssClasses.itemWidth === "number" ? cssClasses.itemWidth : 10
         elementHeight = "itemHeight" in cssClasses && typeof cssClasses.itemHeight === "number" ? cssClasses.itemHeight : 10
         bgColor = "backgroundColor" in cssClasses && typeof cssClasses.backgroundColor === "string" ? cssClasses.backgroundColor : "transparent"
-
+        console.log("elementsWIdht", elementWidth)
+        console.log("elementsWIdht", elementHeight)
+        console.log("cssClasses", cssClasses)
     }
     draft[newElementId] = createNewGrid(
         newElementId,
@@ -70,7 +72,7 @@ const addElementRecursively = (
         bgColor
     )
 
-    return [draft, newElementId, elementWidth, elementHeight]
+    return [draft, newElementId, elementWidth, totalHeight]
 }
 
 function isAst(value: any): value is Ast {
@@ -84,15 +86,15 @@ const handleElementAddition = (changeDetails: Change, parentId: string | null, i
     if (!isAst(changeDetails)) throw new Error(`ChangeDetails must be ast, got ${changeDetails}`)
     console.log(changeDetails)
     let elementsIds = []
-    let totalHeight = calculateStartingHeight(parentId, 0, draft) + 1 // +1 to start from the next possible height
-
+    let startingHeight = calculateStartingHeight(parentId, index, draft) + 1 // +1 to start from the next possible height
+    console.log("calculateStartingHeight", startingHeight, parentId, index)
     // Directly use `addElementRecursively` to modify the draft
-    const [, childId, , h] = addElementRecursively(changeDetails, parentId, draft, gridPixelSize, 1, totalHeight)
+    const [, childId, , h] = addElementRecursively(changeDetails, parentId, draft, gridPixelSize, index, startingHeight)
     elementsIds.push(childId)
-    totalHeight += h
+    startingHeight += h
     draft[parentId].children.splice(index, 0, childId)
 
-    return { draft, elementsIds, totalHeight } // Return draft for clarity, even though it's modified in place
+    return { draft, elementsIds, startingHeight } // Return draft for clarity, even though it's modified in place
 }
 const handleElementModify = (changeDetails: ChangeDetails, newPlace: string, id: string, draft: AllElements, gridPixelSize: number) => {
     const element = draft[id]
@@ -155,9 +157,10 @@ const tailwindClassToCSS = (classNames: string): CssStyles => {
     let splitClassNames = classNames.split(" ")
     for (let i = 0; i < splitClassNames.length; i++) {
         let item = splitClassNames[i].split("-")
+        console.log("item", item)
         if (item[0] in tailwindToInfoMappings && item[1]) {
             if (isInt(item[1])) {
-                cssClasses[tailwindToInfoMappings[item[0]]] = parseInt(item[1])
+                cssClasses[tailwindToInfoMappings[item[0]]] = parseFloat(item[1])
             } else {
                 cssClasses[tailwindToInfoMappings[item[0]]] = item[1]
             }
@@ -182,7 +185,7 @@ function processChildNodes(childNodes: Ast[], parentId: string, elements: AllEle
     let totalHeight = offset
 
     childNodes.forEach((child) => {
-        const [updatedElements, childId, , h] = addElementRecursively(child, parentId, elements, 1, totalHeight)
+        const [updatedElements, childId, , h] = addElementRecursively(child, parentId, elements, 10, totalHeight)
         totalHeight += h
         Object.assign(elements, updatedElements)
         childrenIds.push(childId)

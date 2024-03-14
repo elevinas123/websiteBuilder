@@ -63,3 +63,5 @@ export const mainGridOffsetAtom: PrimitiveAtom<{ top: number; left: number; widt
 export const mainGridIdAtom: PrimitiveAtom<string> = atom("")
 export const HistoryClassAtom: PrimitiveAtom<any> = atom(null) // Specify the type if you have a class/type for History
 export const visualsUpdatedAtom: PrimitiveAtom<VisualsUpdated> = atom<VisualsUpdated>({ count: 0, id: "" })
+
+export const programTypeAtom = atom("editor")
