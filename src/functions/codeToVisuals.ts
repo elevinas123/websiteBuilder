@@ -86,10 +86,11 @@ const handleElementAddition = (changeDetails: Change, parentId: string | null, i
     if (!isAst(changeDetails)) throw new Error(`ChangeDetails must be ast, got ${changeDetails}`)
     console.log(changeDetails)
     let elementsIds = []
-    let startingHeight = calculateStartingHeight(parentId, index, draft) + 1 // +1 to start from the next possible height
+    let startingHeight = calculateStartingHeight(parentId, index, draft)
+    if (startingHeight <= 0) startingHeight = 1
     console.log("calculateStartingHeight", startingHeight, parentId, index)
     // Directly use `addElementRecursively` to modify the draft
-    const [, childId, , h] = addElementRecursively(changeDetails, parentId, draft, gridPixelSize, index, startingHeight)
+    const [, childId, , h] = addElementRecursively(changeDetails, parentId, draft, gridPixelSize, 0, startingHeight)
     elementsIds.push(childId)
     startingHeight += h
     draft[parentId].children.splice(index, 0, childId)

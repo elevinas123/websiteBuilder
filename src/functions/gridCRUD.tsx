@@ -55,7 +55,7 @@ export const createNewGrid = (
 ) => {
     const newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, backgroundColor)
     return {
-        item: <Grid key={id} className="bg-red-500" id={id} childStyle={newStyle}></Grid>,
+        item: <Grid key={id} id={id} childStyle={newStyle}></Grid>,
         info: {
             left,
             top,
@@ -63,7 +63,6 @@ export const createNewGrid = (
             itemHeight: height,
             contentWidth: width - padding.left - padding.right - border.borderLeft.borderWidth - border.borderRight.borderWidth,
             contentHeight: height - padding.top - padding.bottom - border.borderTop.borderWidth - border.borderBottom.borderWidth,
-            height,
             padding,
             backgroundColor,
             border,
@@ -86,6 +85,41 @@ export const createNewGrid = (
         },
         text: text,
         parent: parentId,
+        children: children,
+    }
+}
+
+export const createMainGrid = (
+    id: string,
+    width: number,
+    height: number,
+    gridPixelSize: number,
+    children: string[] = [],
+    backgroundColor: string = "red",
+    mainRef: any
+) => {
+    const left = 1
+    const top = 1
+    const newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, backgroundColor)
+    return {
+        item: <Grid key={id} id={id} mainRef={mainRef} childStyle={newStyle}></Grid>,
+        info: {
+            left,
+            top,
+            itemWidth: width,
+            itemHeight: height,
+            contentHeight: height,
+            contentWidth: width,
+            padding: { top: 0, left: 0, right: 0, bottom: 0 },
+            backgroundColor,
+            border: initialBorder,
+        },
+        id: id,
+        style: {
+            ...newStyle,
+        },
+        text: "",
+        parent: null,
         children: children,
     }
 }

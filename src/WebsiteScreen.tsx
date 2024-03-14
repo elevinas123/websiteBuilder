@@ -18,7 +18,7 @@ import getBoundingBox from "./functions/getBoundingBox"
 import ItemInfoScreen from "./ItemInfoScreen"
 import calculateNewStyle from "./functions/calculateNewStyle"
 import UndoTree from "./UndoTree"
-import { createNewGrid } from "./functions/gridCRUD"
+import { createMainGrid, createNewGrid } from "./functions/gridCRUD"
 import { AllElements } from "./Types"
 
 export interface BoundingBox {
@@ -41,10 +41,10 @@ export default function WebsiteScreen() {
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
     const latestValuesRef = useRef({ cursorX: 0, cursorY: 0 })
-    const MIN_GRID_PIXEL_SIZE = 0.25 // Example minimum zoom level
-    const MAX_GRID_PIXEL_SIZE = 10 // Example maximum zoom level
+    const MIN_GRID_PIXEL_SIZE = 0.125 // Example minimum zoom level
+    const MAX_GRID_PIXEL_SIZE = 16 // Example maximum zoom level
 
-    const [prevSize, setPrevSize] = useState(2)
+    const [prevSize, setPrevSize] = useState(gridPixelSize)
     function roundBoundingBox(boundingBox: BoundingBox) {
         if (!boundingBox) return
         return {
@@ -68,14 +68,18 @@ export default function WebsiteScreen() {
         // Calculate the new scroll positions based on the updated gridPixelSize
         const newScrollLeft = logicalXPreZoom * gridPixelSize - cursorX
         const newScrollTop = logicalYPreZoom * gridPixelSize - cursorY
-
+        console.log("newScrollLeft", newScrollLeft)
+        console.log("newScrollTop", newScrollTop)
+        console.log("cursorX", cursorX)
+        console.log("cursorY", cursorY)
         // Apply the new scroll positions
         mainRef.current.scrollLeft = newScrollLeft
         mainRef.current.scrollTop = newScrollTop
     }, [gridPixelSize]) // This effect runs every time gridPixelSize changes
     useEffect(() => {
-        
-        setMainGridOffset((i) => (mainRef.current? { ...i, top: mainRef.current.scrollTop / gridPixelSize, left: mainRef.current.scrollLeft / gridPixelSize }: {...i}))
+        setMainGridOffset((i) =>
+            mainRef.current ? { ...i, top: mainRef.current.scrollTop / gridPixelSize, left: mainRef.current.scrollLeft / gridPixelSize } : { ...i }
+        )
         setAllElements((currentElements) => {
             const updatedElements: AllElements = {}
 
@@ -119,12 +123,12 @@ export default function WebsiteScreen() {
         setStartingElementBoundingBox(mainGridBoundingBox)
 
         setAllElements({
-            [mainId]: createNewGrid(mainId, null, 0, 0, 10000, 10000, { top: 0, left: 0, right: 0, bottom: 0 }, gridPixelSize, ["main-webGrid"]),
+            [mainId]: createMainGrid(mainId, 30000, 30000, gridPixelSize, ["main-webGrid"], "gray", mainRef),
             ["main-webGrid"]: createNewGrid(
                 "main-webGrid",
                 mainId,
-                50,
-                50,
+                10000,
+                10000,
                 1920,
                 1080,
                 { top: 50, left: 50, right: 50, bottom: 50 },
@@ -160,11 +164,11 @@ export default function WebsiteScreen() {
 
     useEffect(() => {
         if (!mainRef.current) return
-        mainRef.current.scrollTop = 0
-        mainRef.current.scrollLeft = 0
-        setMainGridOffset({ top: 0, left: 0, width: 10000, height: 10000 })
+        mainRef.current.scrollTop = 10000
+        mainRef.current.scrollLeft = 10000
+        setMainGridOffset({ top: 10000, left: 10000, width: 30000, height: 30000 })
     }, [mainGridId])
-    const handleMousemove:  React.MouseEventHandler<HTMLDivElement>= (event) => {
+    const handleMousemove: React.MouseEventHandler<HTMLDivElement> = (event) => {
         if (gridMoving.moving) {
             setGridMoving((i) => {
                 if (i.moved) return { ...i, setBox: false }
@@ -206,7 +210,7 @@ export default function WebsiteScreen() {
             if (event.ctrlKey) {
                 event.preventDefault()
 
-                const scaleFactor = event.deltaY < 0 ? 1.5 : 0.6666 // Adjusting scale factor for zoom in/out
+                const scaleFactor = event.deltaY < 0 ? 2 : 0.5 // Adjusting scale factor for zoom in/out
                 setGridPixelSize((prevSize) => {
                     // Apply the scale factor and clamp the value between min and max zoom levels
                     let newSize = prevSize * scaleFactor
@@ -214,13 +218,14 @@ export default function WebsiteScreen() {
 
                     // Optionally, round the newSize to a desired precision
                     // For example, rounding to two decimal places
-                    newSize = Math.round(newSize * 100) / 100
+                    newSize = Math.round(newSize * 1000) / 1000
 
                     return newSize
                 })
 
                 // Capture the latest event details for use in layout effect
                 const boundingBox = mainRef.current.getBoundingClientRect()
+                console.log("bounding box", boundingBox, event.clientX, event.clientY)
                 latestValuesRef.current = {
                     cursorX: event.clientX - boundingBox.left,
                     cursorY: event.clientY - boundingBox.top,
@@ -291,7 +296,7 @@ export default function WebsiteScreen() {
                     onScroll={handleDragStart}
                     tabIndex={0}
                     onKeyDown={handleTextWritten}
-                    className="element bg-red mt-10  h-full w-full overflow-scroll text-black"
+                    className="element mt-10  grid  overflow-scroll text-black"
                     onMouseMove={handleMousemove}
                 >
                     {mainGridId && allElements[mainGridId].item}

@@ -75,12 +75,13 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
 
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
+            console.log("gridMoing.type", gridMoving, props)
             if (gridMoving.type === "moving") {
                 handleGridMove(gridMoving, allElements, gridPixelSize, HistoryClass, setGridMoving, setAllElements)
                 setVisualsUpdated((i) => ({ count: i.count + 1, id: gridMoving.id }))
             } else if (gridMoving.type === "grid-moving") {
                 if (!props.mainRef) return
-
+                console.log("cia")
                 setMainGridOffset((i) => ({
                     ...i,
                     left: Math.max(0, i.left - (gridMoving.x2 - gridMoving.x1) / gridPixelSize),
@@ -116,11 +117,13 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
         event.preventDefault()
         const mouseX = event.clientX - startElementBoundingBox.left
         const mouseY = event.clientY - startElementBoundingBox.top
+        console.log("event", event)
         if (gridMoving.id !== props.id) {
             setGridChecked("")
         }
         if (event.button === 1) {
             startElementInteraction(mainGridId, mouseX, mouseY, "grid-moving", setGridMoving)
+            console.log("started")
             return
         }
         if (cursorType === "padding") {
@@ -179,7 +182,7 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
             style={allElements[props.id].style}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            className={`relative z-10 box-content grid h-full w-full  select-none    `}
+            className={`relative z-10  select-none `}
         >
             {/* Conditionally render the padding resize handles if padding is being adjusted or is non-zero */}
             {(Object.values(allElements[props.id].info.padding).some((value) => value > 0) || ((cursorType === "padding" || cursorType === "border") && gridChecked === props.id)) && (
@@ -231,7 +234,6 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
             {lines}
             {allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}
-            {props.id === "main"}
             {gridChecked === props.id && !props.mainGrid && cursorType !== "padding" && cursorType !== "border" ? (
                 <div className="absolute h-full w-full ">
                     <div

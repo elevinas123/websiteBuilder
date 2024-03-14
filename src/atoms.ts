@@ -53,7 +53,7 @@ export const elementUpdatedAtom: PrimitiveAtom<string> = atom("")
 export const allElementsAtom: PrimitiveAtom<AllElements> = atom<AllElements>({})
 export const mainGridBoundingRectAtom = atom<DOMRect | null>(null)
 export const startElementBoundingBoxAtom: PrimitiveAtom<any> = atom({}) // Specify if possible
-export const gridPixelSizeAtom: PrimitiveAtom<number> = atom(2)
+export const gridPixelSizeAtom: PrimitiveAtom<number> = atom(1)
 export const mainGridOffsetAtom: PrimitiveAtom<{ top: number; left: number; width: number; height: number }> = atom({
     top: 0,
     left: 0,
