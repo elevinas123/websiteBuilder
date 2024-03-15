@@ -11,6 +11,13 @@ export interface Padding {
 }
 export type Justify = "left" | "center" | "spaceBetween" | "right"
 
+export interface Margin {
+    left: number
+    top: number
+    right: number
+    bottom: number
+}
+
 // Define the structure for the "info" part of the grid element
 export interface GridInfo {
     left: number
@@ -22,6 +29,7 @@ export interface GridInfo {
     padding: Padding
     backgroundColor: string
     border: Border
+    margin: Margin
     justify?: Justify
 }
 

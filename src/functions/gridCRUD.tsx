@@ -1,5 +1,5 @@
 import Grid from "../Grid"
-import { Padding } from "../Types"
+import { GridElement, Margin, Padding } from "../Types"
 import calculateNewStyle from "./calculateNewStyle"
 
 export interface Border {
@@ -47,13 +47,14 @@ export const createNewGrid = (
     width: number,
     height: number,
     padding: Padding,
+    margin: Margin,
     gridPixelSize: number,
     children: string[] = [],
     text: string = "",
     backgroundColor: string = "red",
     border: Border = initialBorder
-) => {
-    const newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, backgroundColor)
+): GridElement => {
+    const newStyle = calculateNewStyle(left + margin.left, top + margin.top, width, height, gridPixelSize, backgroundColor)
     return {
         item: <Grid key={id} id={id} childStyle={newStyle}></Grid>,
         info: {
@@ -66,6 +67,7 @@ export const createNewGrid = (
             padding,
             backgroundColor,
             border,
+            margin
         },
         id: id,
         style: {
@@ -97,7 +99,7 @@ export const createMainGrid = (
     children: string[] = [],
     backgroundColor: string = "red",
     mainRef: any
-) => {
+): GridElement => {
     const left = 1
     const top = 1
     const newStyle = calculateNewStyle(left, top, width, height, gridPixelSize, backgroundColor)
@@ -113,6 +115,7 @@ export const createMainGrid = (
             padding: { top: 0, left: 0, right: 0, bottom: 0 },
             backgroundColor,
             border: initialBorder,
+            margin: { top: 0, left: 0, right: 0, bottom: 0 },
         },
         id: id,
         style: {

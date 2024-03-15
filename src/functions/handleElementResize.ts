@@ -18,7 +18,8 @@ export default function handleElementResize(
     let element = allElements[gridMoving.id]
     if (!element.parent) throw new Error("parent id cant be null")
     let parentInfo = allElements[element.parent].info
-    let { top, left, itemWidth, itemHeight, backgroundColor } = allElements[gridMoving.id].info
+    let { itemWidth, itemHeight, backgroundColor } = allElements[gridMoving.id].info
+    let { top, left } = allElements[gridMoving.id].info.margin
     let deltaX = (gridMoving.x2 - gridMoving.x1) / gridPixelSize
     let deltaY = (gridMoving.y2 - gridMoving.y1) / gridPixelSize
     console.log("parentInfo.content", parentInfo.contentHeight, parentInfo.contentWidth)
@@ -75,7 +76,14 @@ export default function handleElementResize(
         itemHeight = Math.max(0, parentInfo.contentHeight - top) // Adjust height if extending outside parent's bottom edge
     }
     // Prevent negative dimensions
-    let newStyle = calculateNewStyle(left, top, itemWidth, itemHeight, gridPixelSize, backgroundColor)
+    let newStyle = calculateNewStyle(
+        left + allElements[gridMoving.id].info.left,
+        top + allElements[gridMoving.id].info.top,
+        itemWidth,
+        itemHeight,
+        gridPixelSize,
+        backgroundColor
+    )
 
     if (gridMoving.moved === true) {
         if (itemHeight < 0) {
@@ -87,7 +95,14 @@ export default function handleElementResize(
             itemWidth *= -1
         }
 
-        newStyle = calculateNewStyle(left, top, itemWidth, itemHeight, gridPixelSize, backgroundColor)
+        newStyle = calculateNewStyle(
+            left + allElements[gridMoving.id].info.left,
+            top + allElements[gridMoving.id].info.top,
+            itemWidth,
+            itemHeight,
+            gridPixelSize,
+            backgroundColor
+        )
         setAllElements((currentState) =>
             produce(currentState, (draft) => {
                 const element = draft[gridMoving.id]
@@ -113,8 +128,11 @@ export default function handleElementResize(
                             element.info.padding.top -
                             element.info.padding.bottom,
                         backgroundColor,
-                        top,
-                        left,
+                        margin: {
+                            ...element.info.margin,
+                            top: top,
+                            left: left,
+                        },
                     }
                 }
             })
@@ -151,8 +169,11 @@ export default function handleElementResize(
                         element.info.border.borderBottom.borderWidth -
                         element.info.padding.top -
                         element.info.padding.bottom,
-                    top,
-                    left,
+                    margin: {
+                        ...element.info.margin,
+                        top: top,
+                        left: left,
+                    },
                 }
             }
         })

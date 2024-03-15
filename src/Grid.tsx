@@ -71,7 +71,7 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
             setGridSelect(false)
         }
     }, [gridChecked, props.id])
-    useEffect(() => {}, [allElements[props.id].style])
+    useEffect(() => {console.log(allElements)}, [visualsUpdate])
 
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {

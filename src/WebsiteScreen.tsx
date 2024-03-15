@@ -11,6 +11,7 @@ import {
     gridPixelSizeAtom,
     mainGridIdAtom,
     mainGridOffsetAtom,
+    programTypeAtom,
     startElementBoundingBoxAtom,
     visualsUpdatedAtom,
 } from "./atoms"
@@ -40,6 +41,7 @@ export default function WebsiteScreen() {
     const [mainGridOffset, setMainGridOffset] = useAtom(mainGridOffsetAtom)
     const [mainGridId, setMainGridId] = useAtom(mainGridIdAtom)
     const [HistoryClass, setHistoryClass] = useAtom(HistoryClassAtom)
+    const [programType, setProgramType] = useAtom(programTypeAtom)
     const latestValuesRef = useRef({ cursorX: 0, cursorY: 0 })
     const MIN_GRID_PIXEL_SIZE = 0.125 // Example minimum zoom level
     const MAX_GRID_PIXEL_SIZE = 16 // Example maximum zoom level
@@ -132,6 +134,7 @@ export default function WebsiteScreen() {
                 1920,
                 1080,
                 { top: 50, left: 50, right: 50, bottom: 50 },
+                { top: 0, left: 0, right: 0, bottom: 0 },
                 gridPixelSize,
                 [],
                 "",
@@ -288,6 +291,9 @@ export default function WebsiteScreen() {
                             }}
                         >
                             Undo
+                        </button>
+                        <button onClick={() => setProgramType("test")} className={`ml-20  select-none rounded-md bg-zinc-600 p-2  `}>
+                            Change
                         </button>
                     </div>
                 </div>
