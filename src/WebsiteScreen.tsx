@@ -129,12 +129,12 @@ export default function WebsiteScreen() {
             ["main-webGrid"]: createNewGrid(
                 "main-webGrid",
                 mainId,
-                10000,
-                10000,
+                0,
+                0,
                 1920,
                 1080,
                 { top: 50, left: 50, right: 50, bottom: 50 },
-                { top: 0, left: 0, right: 0, bottom: 0 },
+                { top: 10000, left: 10000, right: 0, bottom: 0 },
                 gridPixelSize,
                 [],
                 "",
@@ -290,8 +290,9 @@ export default function WebsiteScreen() {
                                 setAllElements({ ...HistoryClass.currentNode.state })
                             }}
                         >
-                            Undo
+                            Redo
                         </button>
+                        
                         <button onClick={() => setProgramType("test")} className={`ml-20  select-none rounded-md bg-zinc-600 p-2  `}>
                             Change
                         </button>

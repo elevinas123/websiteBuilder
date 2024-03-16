@@ -15,6 +15,8 @@ export default function handleGridMove(
     let elementInfo = allElements[gridMoving.id].info
     let top = elementInfo.margin.top
     let left =  elementInfo.margin.left
+    let bottom =  elementInfo.margin.bottom
+    let right =  elementInfo.margin.right
     const width = elementInfo.itemWidth
     const height = elementInfo.itemHeight
     const backgroundColor = elementInfo.backgroundColor
@@ -24,6 +26,8 @@ export default function handleGridMove(
     let newTop = Math.round((top + (gridMoving.y2 - gridMoving.y1) / gridPixelSize) * 100) / 100
     let borderLeft = elementInfo.border.borderLeft.borderWidth
     let borderTop = elementInfo.border.borderTop.borderWidth
+    let borderBottom = elementInfo.border.borderBottom.borderWidth
+    let borderRight = elementInfo.border.borderRight.borderWidth
 
     const parentId = allElements[gridMoving.id].parent
     if (!parentId) throw new Error("parentId must be a string when moving elements")
@@ -33,16 +37,26 @@ export default function handleGridMove(
         width: allElements[parentId].info.contentWidth,
         height: allElements[parentId].info.contentHeight,
     }
-
-    // Adjust positions to ensure the moved element remains within its parent's bounds
-    if (newTop + height + borderTop > parentInfo.height) {
-        newTop = parentInfo.height - height
+    let nextElementIndex = allElements[parentId].children.indexOf(gridMoving.id) + 1
+    if (allElements[parentId].children.length > nextElementIndex) {
+        const nextElementInfo = allElements[allElements[parentId].children[nextElementIndex]].info
+        if (elementInfo.top + newTop + height + borderTop + borderBottom + bottom > parentInfo.height) {
+            newTop = top
+        }
+        if (elementInfo.left + newLeft + width + borderLeft + borderRight + right > nextElementInfo.left) {
+            newLeft = left
+        }
+    } else {
+        if (elementInfo.top + newTop + height + borderTop + borderBottom + bottom  > parentInfo.height) {
+            newTop = top
+        }
+        if (elementInfo.left + newLeft + width + borderLeft + borderRight + right > parentInfo.width) {
+            newLeft = left
+        }
     }
+    // Adjust positions to ensure the moved element remains within its parent's bounds
     if (newTop < 0) {
         newTop = 0
-    }
-    if (newLeft + width + borderLeft > parentInfo.width) {
-        newLeft = parentInfo.width - width
     }
     if (newLeft < 0) {
         newLeft = 0

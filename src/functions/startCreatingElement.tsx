@@ -28,8 +28,8 @@ export default function startCreatingElement(
     let pId: string | null = parentId
     while (pId !== null) {
         const ell: GridElement = allElements[pId]
-        offSetLeft -= ell.info.left + ell.info.padding.left + ell.info.border.borderLeft.borderWidth - 1
-        offSetTop -= ell.info.top + ell.info.padding.top + ell.info.border.borderTop.borderWidth - 1
+        offSetLeft -= ell.info.left + ell.info.padding.left + ell.info.border.borderLeft.borderWidth - 1 + ell.info.margin.left + ell.info.margin.right
+        offSetTop -= ell.info.top + ell.info.padding.top + ell.info.border.borderTop.borderWidth - 1 + ell.info.margin.top + ell.info.margin.bottom
         pId = ell.parent
     }
     const elementBefore = allElements[allElements[parentId].children[allElements[parentId].children.length - 1]]

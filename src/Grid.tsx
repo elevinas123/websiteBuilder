@@ -185,7 +185,8 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
             className={`relative z-10  select-none `}
         >
             {/* Conditionally render the padding resize handles if padding is being adjusted or is non-zero */}
-            {(Object.values(allElements[props.id].info.padding).some((value) => value > 0) || ((cursorType === "padding" || cursorType === "border") && gridChecked === props.id)) && (
+            {(Object.values(allElements[props.id].info.padding).some((value) => value > 0) ||
+                ((cursorType === "padding" || cursorType === "border") && gridChecked === props.id)) && (
                 <div className="pointer-events-none absolute h-full w-full">
                     {/* Padding area rectangle with resize handles */}
                     <div
@@ -231,9 +232,29 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
                     </div>
                 </div>
             )}
-            {lines}
             {allElements[props.id].children.map((i) => allElements[i].item)}
             {allElements[props.id].text}
+            {props.id !== "main-webGrid" && (
+                <div
+                    className="absolute top-1/2 border-t-2 border-dashed border-t-green-500"
+                    style={{
+                        height: "2px", // Ensures the line has a visible thickness
+                        width: allElements[props.id].info.margin.left * gridPixelSize + "px", // Sets the width of the line
+                        left: -allElements[props.id].info.margin.left * gridPixelSize + "px", // Positions the line based on the margin
+                    }}
+                ></div>
+            )}
+            {props.id !== "main-webGrid" && (
+                <div
+                    className="absolute left-1/2 border-l-2 border-dashed border-l-green-500"
+                    style={{
+                        width: "2px", // Ensures the line has a visible thickness
+                        height: allElements[props.id].info.margin.top * gridPixelSize + "px", // Sets the width of the line
+                        top: -allElements[props.id].info.margin.top * gridPixelSize + "px", // Positions the line based on the margin
+                    }}
+                ></div>
+            )}
+
             {gridChecked === props.id && !props.mainGrid && cursorType !== "padding" && cursorType !== "border" ? (
                 <div className="absolute h-full w-full ">
                     <div
