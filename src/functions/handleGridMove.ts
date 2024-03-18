@@ -1,8 +1,8 @@
 import { produce } from "immer"
 import calculateNewStyle from "./calculateNewStyle"
 import { GridMoving, SetGridMoving } from "./../atoms"
-import { AllElements, SetAllElements } from "../Types";
-import UndoTree from "../UndoTree";
+import { AllElements, SetAllElements } from "../Types"
+import UndoTree from "../UndoTree"
 
 export default function handleGridMove(
     gridMoving: GridMoving,
@@ -10,13 +10,13 @@ export default function handleGridMove(
     gridPixelSize: number,
     HistoryClass: UndoTree<AllElements>,
     setGridMoving: SetGridMoving,
-    setAllElements: SetAllElements,
+    setAllElements: SetAllElements
 ) {
     let elementInfo = allElements[gridMoving.id].info
     let top = elementInfo.margin.top
-    let left =  elementInfo.margin.left
-    let bottom =  elementInfo.margin.bottom
-    let right =  elementInfo.margin.right
+    let left = elementInfo.margin.left
+    let bottom = elementInfo.margin.bottom
+    let right = elementInfo.margin.right
     const width = elementInfo.itemWidth
     const height = elementInfo.itemHeight
     const backgroundColor = elementInfo.backgroundColor
@@ -40,17 +40,17 @@ export default function handleGridMove(
     let nextElementIndex = allElements[parentId].children.indexOf(gridMoving.id) + 1
     if (allElements[parentId].children.length > nextElementIndex) {
         const nextElementInfo = allElements[allElements[parentId].children[nextElementIndex]].info
-        if (elementInfo.top + newTop + height + borderTop + borderBottom + bottom > parentInfo.height) {
+        if (elementInfo.top + newTop + height + borderTop + borderBottom > parentInfo.height) {
             newTop = top
         }
-        if (elementInfo.left + newLeft + width + borderLeft + borderRight + right > nextElementInfo.left) {
+        if (elementInfo.left + newLeft + width + borderLeft + borderRight > nextElementInfo.left) {
             newLeft = left
         }
     } else {
-        if (elementInfo.top + newTop + height + borderTop + borderBottom + bottom  > parentInfo.height) {
+        if (elementInfo.top + newTop + height + borderTop + borderBottom > parentInfo.height) {
             newTop = top
         }
-        if (elementInfo.left + newLeft + width + borderLeft + borderRight + right > parentInfo.width) {
+        if (elementInfo.left + newLeft + width + borderLeft + borderRight > parentInfo.width) {
             newLeft = left
         }
     }
@@ -69,8 +69,12 @@ export default function handleGridMove(
     let newStyle = calculateNewStyle(newLeft + elementInfo.left, newTop + elementInfo.top, width, height, gridPixelSize, backgroundColor)
     console.log("gridMoving", gridMoving)
 
-
-    
+    console.log(allElements[parentId].children.indexOf(gridMoving.id) + 1, allElements[parentId].children.length)
+    if (allElements[parentId].children.indexOf(gridMoving.id) + 1 < allElements[parentId].children.length) {
+        const nextChild = allElements[allElements[parentId].children[allElements[parentId].children.indexOf(gridMoving.id) + 1]].info
+        right = nextChild.left - elementInfo.left - newLeft - width - borderLeft - borderRight
+        bottom = nextChild.top - elementInfo.top - newTop - height - borderTop - borderBottom
+    }
 
     // Update elements' positions and styles
     setAllElements((currentState) =>
@@ -83,7 +87,9 @@ export default function handleGridMove(
                         ...element.info.margin,
                         top: newTop,
                         left: newLeft,
-                    }
+                        bottom: bottom,
+                        right: right,
+                    },
                 }
                 element.style = {
                     ...element.style,
@@ -95,7 +101,7 @@ export default function handleGridMove(
 
     // Reset moving state if the move is completed
     if (gridMoving.moved === true) {
-        setGridMoving(i => ({...i, moving: false }))
+        setGridMoving((i) => ({ ...i, moving: false }))
         HistoryClass.performAction(allElements)
 
         return

@@ -71,7 +71,9 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
             setGridSelect(false)
         }
     }, [gridChecked, props.id])
-    useEffect(() => {console.log(allElements)}, [visualsUpdate])
+    useEffect(() => {
+        console.log(allElements)
+    }, [visualsUpdate])
 
     useEffect(() => {
         if (gridMoving.id === props.id && gridMoving.moving && !gridMoving.setBox) {
@@ -251,6 +253,16 @@ const Grid: React.FC<GridProps> = (props: GridProps) => {
                         width: "2px", // Ensures the line has a visible thickness
                         height: allElements[props.id].info.margin.top * gridPixelSize + "px", // Sets the width of the line
                         top: -allElements[props.id].info.margin.top * gridPixelSize + "px", // Positions the line based on the margin
+                    }}
+                ></div>
+            )}
+            {props.id !== "main-webGrid" && (
+                <div
+                    className="absolute top-1/2 border-t-2 border-dashed border-t-blue-500"
+                    style={{
+                        height: "2px", // Ensures the line has a visible thickness
+                        width: allElements[props.id].info.margin.right * gridPixelSize + "px", // Sets the width of the line
+                        right: -allElements[props.id].info.margin.right * gridPixelSize + "px", // Positions the line based on the margin
                     }}
                 ></div>
             )}
