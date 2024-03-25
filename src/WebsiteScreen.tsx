@@ -133,7 +133,7 @@ export default function WebsiteScreen() {
                 0,
                 1920,
                 1080,
-                { top: 50, left: 50, right: 50, bottom: 50 },
+                { top: 0, left: 0, right: 0, bottom: 0 },
                 { top: 10000, left: 10000, right: 0, bottom: 0 },
                 gridPixelSize,
                 [],

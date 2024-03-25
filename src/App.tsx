@@ -3,6 +3,7 @@ import MarkdownScreen from "./MarkdownScreen"
 import WebsiteScreen from "./WebsiteScreen"
 import { programTypeAtom } from "./atoms"
 import TestShit from "./TestShit"
+import LeftHandMenu from "./LeftHandMenu"
 
 function App() {
 
@@ -11,6 +12,7 @@ function App() {
     if (programType === "editor") {
         return (
             <div className="flex h-screen  flex-row bg-zinc-600 text-white">
+                <LeftHandMenu />
                 <MarkdownScreen />
                 <WebsiteScreen />
             </div>
