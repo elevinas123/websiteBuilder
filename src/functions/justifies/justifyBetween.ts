@@ -7,28 +7,37 @@ export default function justifyCenter(parentId: string, allElements: AllElements
     // Sort children by their current left position to maintain their visual order
     const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].info.left - allElements[b].info.left)
 
-    // Calculate the total width of all children
-    const childrenWidths = sortedChildren.map((childId) => allElements[childId].info.itemWidth)
-    const totalChildrenWidth = childrenWidths.reduce((total, width) => total + width, 0)
+    // Calculate the total width of all children including their margins
+    const totalChildrenWidthWithMargins = sortedChildren.reduce((total, childId) => {
+        const { itemWidth, margin } = allElements[childId].info
+        return total + itemWidth + margin.left + margin.right
+    }, 0)
 
-    // Calculate the total available space by subtracting the total children width from the parent's width
-    const availableSpace = parentElement.info.itemWidth - totalChildrenWidth
+    // Calculate the available space by subtracting the total children width from the parent's width
+    const availableSpace = parentElement.info.contentWidth - totalChildrenWidthWithMargins
 
-    // Calculate the spacing between elements based on the available space and the number of gaps
-    // The number of gaps is one less than the number of children
-    const spaceBetween = availableSpace / (sortedChildren.length - 1)
+    // Calculate the spacing between elements
+    const gaps = Math.max(sortedChildren.length - 1, 1) // Ensure there's at least one gap to avoid division by zero
+    const spaceBetween = availableSpace / gaps
 
-    let accumulatedWidth = 1 // Start from the left edge of the parent
+    let accumulatedWidth = 1 // Start with half of spaceBetween to center-align the group of elements within the parent
 
     // Prepare updated elements with new positions
     const updatedElements = { ...allElements }
     sortedChildren.forEach((childId, index) => {
-        const child = updatedElements[childId]
+        const { itemWidth, top, margin } = updatedElements[childId].info
 
-        // For each child, set the new left position based on the accumulatedWidth
-        const newStyle = calculateNewStyle(accumulatedWidth, child.info.top, child.info.itemWidth, child.info.itemHeight, gridPixelSize, child.info.backgroundColor)
+        // For each child, set the new left position based on the accumulatedWidth and include left margin
+        const newStyle = calculateNewStyle(
+            accumulatedWidth + margin.left,
+            top + margin.top,
+            itemWidth,
+            updatedElements[childId].info.itemHeight,
+            gridPixelSize,
+            updatedElements[childId].info.backgroundColor
+        )
 
-        updatedElements[childId] = {
+        updatedElements[childId] = {    
             ...updatedElements[childId],
             info: {
                 ...updatedElements[childId].info,
@@ -40,13 +49,10 @@ export default function justifyCenter(parentId: string, allElements: AllElements
             },
         }
 
-        // Update accumulatedWidth for the next child's position
-        // After positioning each child, add its width and the calculated space between to the accumulated width
-        // Except for the last child, which does not need space added after it
-        if (index < sortedChildren.length - 1) {
-            accumulatedWidth += child.info.itemWidth + spaceBetween
-        }
+        // Update accumulatedWidth for the next child's position, include the child's width and its margins
+        accumulatedWidth += itemWidth + margin.left + margin.right + spaceBetween
     })
+
     updatedElements[parentId] = {
         ...updatedElements[parentId],
         info: {

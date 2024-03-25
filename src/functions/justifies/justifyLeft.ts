@@ -7,39 +7,45 @@ export default function justifyLeft(parentId: string, allElements: AllElements, 
     // Sort children by their current left position
     const sortedChildren = [...parentElement.children].sort((a, b) => allElements[a].info.left - allElements[b].info.left)
 
-    let accumulatedWidth = 1 // Start from the left edge of the parent
+    let accumulatedWidth = 1 // Start from the left edge of the parent, assuming starting at 1 means starting at the very beginning
 
     // Prepare updated elements with new positions
     const updatedElements = { ...allElements }
-    sortedChildren.forEach((childId, index) => {
+    sortedChildren.forEach((childId) => {
+        const child = updatedElements[childId]
+        const childMarginLeft = child.info.margin.left // Assuming margin left is defined in your info object
+        const childMarginRight = child.info.margin.right // Assuming margin right is defined in your info object
+
         const newStyle = calculateNewStyle(
-            accumulatedWidth,
-            updatedElements[childId].info.top,
-            updatedElements[childId].info.itemWidth,
-            updatedElements[childId].info.itemHeight,
+            accumulatedWidth + childMarginLeft, // Incorporate marginLeft into the position
+            child.info.top + child.info.margin.top, // Assuming margin top is also to be considered
+            child.info.itemWidth,
+            child.info.itemHeight,
             gridPixelSize,
-            updatedElements[childId].info.backgroundColor
+            child.info.backgroundColor
         )
+
         updatedElements[childId] = {
-            ...updatedElements[childId],
+            ...child,
             info: {
-                ...updatedElements[childId].info,
-                left: accumulatedWidth
+                ...child.info,
+                left: accumulatedWidth, // Update left position including margin
             },
             style: {
-                ...updatedElements[childId].style,
+                ...child.style,
                 ...newStyle,
             },
         }
 
-        // Add the current child's width to the accumulatedWidth for the next child's position
-        accumulatedWidth += updatedElements[childId].info.itemWidth - 1 
+        // Add the current child's width and its margins to the accumulatedWidth for the next child's position
+        accumulatedWidth += child.info.itemWidth + childMarginLeft + childMarginRight
     })
+
     updatedElements[parentId] = {
         ...updatedElements[parentId],
         info: {
             ...updatedElements[parentId].info,
-            justify: "left",
+            justify: "left", // Make sure the justification is set correctly according to your needs
         },
     }
 

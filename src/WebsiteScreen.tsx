@@ -272,6 +272,12 @@ export default function WebsiteScreen() {
                             border
                         </button>
                         <button
+                            className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "border" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
+                            onClick={() => setCursorType("margin")}
+                        >
+                            margin
+                        </button>
+                        <button
                             className={`ml-2 select-none rounded-md bg-zinc-300 p-2  ${cursorType === "padding" ? "bg-blue-500" : "hover:bg-zinc-400"} `}
                             onClick={() => {
                                 HistoryClass.undo()
@@ -292,7 +298,7 @@ export default function WebsiteScreen() {
                         >
                             Redo
                         </button>
-                        
+
                         <button onClick={() => setProgramType("test")} className={`ml-20  select-none rounded-md bg-zinc-600 p-2  `}>
                             Change
                         </button>

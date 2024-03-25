@@ -30,6 +30,7 @@ export interface GridInfo {
     backgroundColor: string
     border: Border
     margin: Margin
+    justifyDirection: "row" |"coll"
     justify?: Justify
 }
 

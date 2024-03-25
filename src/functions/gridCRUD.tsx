@@ -58,6 +58,7 @@ export const createNewGrid = (
     return {
         item: <Grid key={id} id={id} childStyle={newStyle}></Grid>,
         info: {
+            justifyDirection: "row",
             left,
             top,
             itemWidth: width,
@@ -106,6 +107,7 @@ export const createMainGrid = (
     return {
         item: <Grid key={id} id={id} mainRef={mainRef} childStyle={newStyle}></Grid>,
         info: {
+            justifyDirection: "row",
             left,
             top,
             itemWidth: width,

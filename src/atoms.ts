@@ -41,7 +41,7 @@ const initialGridMoving: GridMoving = {
     offsetTop: 0,
 }
 export type SetGridMoving = Dispatch<SetStateAction<GridMoving>>
-export type CursorType = "moving" | "grid-moving" | "resizing" | "resizingH" | "resizingT" | "creating" | "padding" | "border"
+export type CursorType = "moving" | "grid-moving" | "resizing" | "resizingH" | "resizingT" | "creating" | "padding" | "border" | "margin"
 export type SetCursorType = Dispatch<SetStateAction<CursorType>>
 export type SetGridChecked = Dispatch<SetStateAction<string>>
 // Atoms definition
