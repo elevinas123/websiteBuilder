@@ -34,7 +34,33 @@ export default function handleMarginResize(
     } else if (gridMoving.type === "margin-left") {
         marginLeftAdded += deltaX
     }
-    
+    const parentId = allElements[gridMoving.id].parent
+    if (!parentId) throw new Error("parent id must be a string")
+    const lastElement = allElements[allElements[parentId].children[allElements[parentId].children.length - 1]]
+    console.log("lastElement", lastElement)
+    if (
+        marginLeftAdded >= 0 &&
+        marginRightAdded >= 0 &&
+        allElements[parentId].info.contentWidth <
+            lastElement.info.left +
+                lastElement.info.itemWidth +
+                lastElement.info.margin.left +
+                lastElement.info.margin.right +
+                marginLeftAdded +
+                marginRightAdded
+    ) {
+        marginLeftAdded = 0
+        marginRightAdded = 0
+    }
+    if (
+        marginTopAdded >= 0 &&
+        marginBottomAdded >= 0 &&
+        allElements[parentId].info.contentHeight <
+            lastElement.info.top + lastElement.info.itemHeight + lastElement.info.margin.top + lastElement.info.margin.bottom + marginTopAdded + marginBottom
+    ) {
+        marginTopAdded = 0
+        marginBottomAdded = 0
+    }
     // Ensure border widths do not go negative
     marginTop += marginTopAdded
     marginLeft += marginLeftAdded
@@ -44,8 +70,6 @@ export default function handleMarginResize(
     marginRight = Math.max(marginRight, 0)
     marginBottom = Math.max(marginBottom, 0)
     marginLeft = Math.max(marginLeft, 0)
-    const parentId = allElements[gridMoving.id].parent
-    if (!parentId) throw new Error("parent id must be a string")
     const parentJustify = allElements[parentId].info.justifyDirection
     const idsToUpdate = allElements[parentId].children.slice(allElements[parentId].children.indexOf(gridMoving.id))
 
@@ -109,7 +133,6 @@ export default function handleMarginResize(
             })
         })
     )
-
 
     if (gridMoving.moved) {
         setGridMoving((i) => ({ ...i, moving: false }))

@@ -50,7 +50,6 @@ export default function MarkdownScreen() {
     const debouncedUpdateTheEditor = useCallback(
         
         debounce((visualsUpdate, previousAst, allElements, setPreviousAst, setText) => {
-            return
             if (!visualsUpdate.id) return
             console.log("debounced")
             const pathToElement = createPathToElement(visualsUpdate.id, allElements)

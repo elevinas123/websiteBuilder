@@ -1,4 +1,4 @@
-import { GridInfo } from "../Types"
+import { GridInfo, Margin } from "../Types"
 import { Border } from "./gridCRUD"
 import isInt from "./isInt"
 
@@ -11,6 +11,10 @@ const tailwindMapping: { [key: string]: string } = {
     itemWidth: "w",
     itemHeight: "h",
     backgroundColor: "bg",
+    marginLeft: "ml",
+    marginTop: "mt",
+    marginRight: "mr",
+    marginBottom: "mb"
     // Example mapping for borderColor, assuming you have a Tailwind plugin or custom classes for border colors
 }
 function generateBorderClass(border: Border) {
@@ -57,13 +61,26 @@ function generateBorderClass(border: Border) {
 
     return [...widthClasses, ...colorClasses].join(" ")
 }
+const generateMarginClass = (margins: Margin) => {
+    let classes: string[] = []
+    if (margins.left !== 0) classes.push(`ml-${margins.left}`)
+    if (margins.top !== 0) classes.push(`mt-${margins.top}`)
+    if (margins.right !== 0) classes.push(`mr-${margins.right}`)
+    if (margins.bottom !== 0) classes.push(`mb-${margins.bottom}`)
+
+    return classes.join(" ")
+}
 
 // Function to convert GridInfo properties to Tailwind CSS classes
 export const cssToTailwind = (elementInfo: GridInfo): string => {
     let cssClasses: string[] = Object.keys(elementInfo).reduce((acc: string[], key: string) => {
         // Ensure the key is actually a keyof GridInfo to satisfy TypeScript's type checking
+        console.log("key", key)
         if (key === "border") {
             acc.push(generateBorderClass(elementInfo[key]))
+        }
+        if (key === "margin") {
+            acc.push(generateMarginClass(elementInfo[key]))
         }
         if (key in tailwindMapping) {
             const tailwindKey = key as keyof GridInfo
