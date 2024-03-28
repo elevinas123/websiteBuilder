@@ -12,7 +12,6 @@ function App() {
     if (programType === "editor") {
         return (
             <div className="flex h-screen  flex-row bg-zinc-600 text-white">
-                <LeftHandMenu />
                 <MarkdownScreen />
                 <WebsiteScreen />
             </div>

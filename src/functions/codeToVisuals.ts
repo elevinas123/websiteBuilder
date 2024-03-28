@@ -49,15 +49,18 @@ const addElementRecursively = (
     let elementWidth = 10
     let elementHeight = 10
     let bgColor = "transparent"
+    let margin = { top: 0, left: 0, bottom: 0, right: 0 }
     if ("classname" in change.attribs) {
         const cssClasses = tailwindClassToCSS(change.attribs.classname)
         elementWidth = "itemWidth" in cssClasses && typeof cssClasses.itemWidth === "number" ? cssClasses.itemWidth : 10
         elementHeight = "itemHeight" in cssClasses && typeof cssClasses.itemHeight === "number" ? cssClasses.itemHeight : 10
+        margin = "margin" in cssClasses ? cssClasses.margin : margin
         bgColor = "backgroundColor" in cssClasses && typeof cssClasses.backgroundColor === "string" ? cssClasses.backgroundColor : "transparent"
         console.log("elementsWIdht", elementWidth)
         console.log("elementsWIdht", elementHeight)
         console.log("cssClasses", cssClasses)
     }
+    console.log("margin", margin)
     draft[newElementId] = createNewGrid(
         newElementId,
         parentId,
@@ -66,7 +69,7 @@ const addElementRecursively = (
         elementWidth, // elementWidth,
         elementHeight, // elementHeight,
         { top: 0, left: 0, bottom: 0, right: 0 },
-        { top: 0, left: 0, bottom: 0, right: 0 },
+        margin,
         gridPixelSize,
         childrenIds,
         "",
@@ -125,8 +128,8 @@ const handleElementModify = (changeDetails: ChangeDetails, newPlace: string, id:
             element.info.padding.bottom
         // Apply new styles calculated based on potential changes
         const newStyles = calculateNewStyle(
-            element.info.left,
-            element.info.top,
+            element.info.left + cssClasses.margin.left,
+            element.info.top + cssClasses.margin.top,
             element.info.itemWidth,
             element.info.itemHeight,
             gridPixelSize,
@@ -142,10 +145,9 @@ const handleElementModify = (changeDetails: ChangeDetails, newPlace: string, id:
     return
 }
 
-export interface CssStyles {
-    [s: string]: string | number
+type CssStyles = {
+    [key: string]: string | number | { top: number; left: number; right: number; bottom: number }
 }
-
 const tailwindClassToCSS = (classNames: string): CssStyles => {
     const unitToPx = (unit: number) => `${unit * 4}px` // Ensure the unit is a string with px for CSS
 
@@ -153,15 +155,29 @@ const tailwindClassToCSS = (classNames: string): CssStyles => {
         w: "itemWidth",
         h: "itemHeight",
         bg: "backgroundColor",
+        ml: "margin",
+        mr: "margin",
+        mt: "margin",
+        mb: "margin",
     }
-    const cssClasses: CssStyles = {}
+    const marginMappings = {
+        ml: "left",
+        mr: "right",
+        mt: "top",
+        mb: "bottom",
+    }
+    const cssClasses: CssStyles = { margin: { top: 0, left: 0, bottom: 0, right: 0 } }
     console.log("tailwindclass", classNames)
     let splitClassNames = classNames.split(" ")
     for (let i = 0; i < splitClassNames.length; i++) {
         let item = splitClassNames[i].split("-")
         console.log("item", item)
         if (item[0] in tailwindToInfoMappings && item[1]) {
-            if (isInt(item[1])) {
+            if (tailwindToInfoMappings[item[0]] === "margin") {
+                console.log("cssGot", marginMappings[item[0]])
+
+                cssClasses.margin[marginMappings[item[0]]] = parseFloat(item[1])
+            } else if (isInt(item[1])) {
                 cssClasses[tailwindToInfoMappings[item[0]]] = parseFloat(item[1])
             } else {
                 cssClasses[tailwindToInfoMappings[item[0]]] = item[1]
